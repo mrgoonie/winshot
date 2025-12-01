@@ -1,0 +1,50 @@
+﻿# Dependencies
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build outputs
+out/
+*.exe
+*.dll
+*.so
+*.dylib
+*.app/
+
+# Development
+.env
+.env.local
+.env.*.local
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# IDE specific
+*.sublime-workspace
+*.sublime-project
+
+# Testing
+coverage/
+.nyc_output/
+
+# Logging
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# OS specific
+Desktop.ini
+
+# Python
+*.pyc
+*.pyo
