@@ -4,6 +4,8 @@ A lightweight, feature-rich screenshot application built with Wails (Go + React)
 
 **90% smaller than Electron** (~10MB) | **Native performance** | **Rich annotation tools**
 
+![WinShot Screenshot](demo.png)
+
 ---
 
 ## Features
