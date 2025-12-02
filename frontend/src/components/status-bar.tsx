@@ -7,14 +7,14 @@ interface StatusBarProps {
 
 export function StatusBar({ screenshot, message }: StatusBarProps) {
   return (
-    <div className="p-2 bg-slate-800 border-t border-slate-700 text-sm text-slate-400 flex justify-between">
-      <span>
+    <div className="flex items-center justify-between px-4 py-1.5 bg-surface-950 border-t border-surface-800/30">
+      <span className="text-2xs text-surface-500">
         {message || (screenshot
-          ? `Image: ${screenshot.width} x ${screenshot.height}`
+          ? `${screenshot.width} × ${screenshot.height}`
           : 'Ready'
         )}
       </span>
-      <span>WinShot v1.0</span>
+      <span className="text-2xs text-surface-600">v1.0</span>
     </div>
   );
 }

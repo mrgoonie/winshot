@@ -137,172 +137,185 @@ export function SettingsPanel({
   };
 
   return (
-    <div className="w-64 bg-slate-800 border-l border-slate-700 p-4 overflow-y-auto">
-      <h2 className="text-sm font-semibold text-white mb-4">Settings</h2>
-
-      {/* Padding */}
-      <div className="mb-6">
-        <label className="block text-sm text-slate-400 mb-2">
-          Padding: {padding}px
-        </label>
-        <input
-          type="range"
-          min="0"
-          max={maxPadding}
-          value={Math.min(padding, maxPadding)}
-          onChange={(e) => onPaddingChange(Number(e.target.value))}
-          className="w-full accent-blue-500"
-        />
+    <div className="w-72 bg-surface-900/50 border-l border-surface-800/50 flex flex-col">
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-surface-800/50">
+        <h2 className="text-xs font-semibold text-surface-300 uppercase tracking-wider">Style</h2>
       </div>
 
-      {/* Corner Radius */}
-      <div className="mb-6">
-        <label className="block text-sm text-slate-400 mb-2">
-          Corner Radius: {cornerRadius}px
-        </label>
-        <input
-          type="range"
-          min="0"
-          max="200"
-          value={cornerRadius}
-          onChange={(e) => onCornerRadiusChange(Number(e.target.value))}
-          className="w-full accent-blue-500"
-        />
-      </div>
-
-      {/* Shadow/Blur */}
-      <div className="mb-6">
-        <label className="block text-sm text-slate-400 mb-2">
-          Shadow Blur: {shadowSize}px
-        </label>
-        <input
-          type="range"
-          min="0"
-          max="100"
-          value={shadowSize}
-          onChange={(e) => onShadowSizeChange(Number(e.target.value))}
-          className="w-full accent-blue-500"
-        />
-      </div>
-
-      {/* Output Ratio */}
-      <div className="mb-6">
-        <label className="block text-sm text-slate-400 mb-2">
-          Output Ratio
-        </label>
-        <div className="grid grid-cols-3 gap-1.5">
-          {OUTPUT_RATIO_PRESETS.map((preset) => (
-            <button
-              key={preset.value}
-              onClick={() => onOutputRatioChange(preset.value)}
-              className={`px-2 py-1.5 text-xs rounded-md transition-all
-                ${outputRatio === preset.value
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                }`}
-            >
-              {preset.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Background Gradients */}
-      <div className="mb-6">
-        <label className="block text-sm text-slate-400 mb-2">
-          Background
-        </label>
-        <div className="grid grid-cols-4 gap-2">
-          {GRADIENT_PRESETS.map((gradient) => (
-            <button
-              key={gradient.name}
-              onClick={() => onBackgroundChange(gradient.value)}
-              className={`w-full aspect-square rounded-lg border-2 transition-all
-                ${backgroundColor === gradient.value
-                  ? 'border-blue-500 scale-110'
-                  : 'border-transparent hover:border-slate-500'
-                }`}
-              style={{ background: gradient.value }}
-              title={gradient.name}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Custom Color */}
-      <div className="mb-6">
-        <label className="block text-sm text-slate-400 mb-2">
-          Custom Color
-        </label>
-        <input
-          type="color"
-          value={backgroundColor.startsWith('#') ? backgroundColor : '#1a1a2e'}
-          onChange={(e) => onBackgroundChange(e.target.value)}
-          className="w-full h-10 rounded-lg cursor-pointer bg-transparent"
-        />
-      </div>
-
-      {/* Image Background */}
-      <div className="mb-6">
-        <label className="block text-sm text-slate-400 mb-2">
-          Image Background ({uploadedImages.length}/{MAX_BACKGROUND_IMAGES})
-        </label>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleImageUpload}
-          className="hidden"
-        />
-
-        {/* Image Gallery Grid */}
-        {uploadedImages.length > 0 && (
-          <div className="grid grid-cols-4 gap-2 mb-3">
-            {uploadedImages.map((imageUrl, index) => {
-              const isSelected = backgroundColor === `url(${imageUrl})`;
-              return (
-                <div key={index} className="relative group">
-                  <button
-                    onClick={() => handleSelectImage(imageUrl)}
-                    className={`w-full aspect-square rounded-lg border-2 transition-all bg-cover bg-center
-                      ${isSelected
-                        ? 'border-blue-500 scale-110 z-10'
-                        : 'border-transparent hover:border-slate-500'
-                      }`}
-                    style={{ backgroundImage: `url(${imageUrl})` }}
-                    title={`Image ${index + 1}`}
-                  />
-                  {/* Remove button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemoveImage(index);
-                    }}
-                    className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Remove image"
-                  >
-                    <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              );
-            })}
+      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        {/* Padding */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs text-surface-400">Padding</label>
+            <span className="text-xs text-surface-500 tabular-nums">{padding}px</span>
           </div>
-        )}
+          <input
+            type="range"
+            min="0"
+            max={maxPadding}
+            value={Math.min(padding, maxPadding)}
+            onChange={(e) => onPaddingChange(Number(e.target.value))}
+            className="w-full"
+          />
+        </div>
 
-        {/* Upload button - only show if under limit */}
-        {uploadedImages.length < MAX_BACKGROUND_IMAGES && (
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            Upload Image
-          </button>
-        )}
+        {/* Corner Radius */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs text-surface-400">Corners</label>
+            <span className="text-xs text-surface-500 tabular-nums">{cornerRadius}px</span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="200"
+            value={cornerRadius}
+            onChange={(e) => onCornerRadiusChange(Number(e.target.value))}
+            className="w-full"
+          />
+        </div>
+
+        {/* Shadow/Blur */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs text-surface-400">Shadow</label>
+            <span className="text-xs text-surface-500 tabular-nums">{shadowSize}px</span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={shadowSize}
+            onChange={(e) => onShadowSizeChange(Number(e.target.value))}
+            className="w-full"
+          />
+        </div>
+
+        {/* Output Ratio */}
+        <div>
+          <label className="block text-xs text-surface-400 mb-2">Aspect Ratio</label>
+          <div className="grid grid-cols-3 gap-1">
+            {OUTPUT_RATIO_PRESETS.map((preset) => (
+              <button
+                key={preset.value}
+                onClick={() => onOutputRatioChange(preset.value)}
+                className={`px-2 py-1.5 text-xs rounded-md transition-all duration-150
+                  ${outputRatio === preset.value
+                    ? 'bg-accent-500/20 text-accent-400 font-medium'
+                    : 'bg-surface-800/50 text-surface-400 hover:bg-surface-700/50 hover:text-surface-300'
+                  }`}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Background Gradients */}
+        <div>
+          <label className="block text-xs text-surface-400 mb-2">Background</label>
+          <div className="grid grid-cols-4 gap-1.5">
+            {GRADIENT_PRESETS.map((gradient) => (
+              <button
+                key={gradient.name}
+                onClick={() => onBackgroundChange(gradient.value)}
+                className={`aspect-square rounded-lg transition-all duration-150
+                  ${backgroundColor === gradient.value
+                    ? 'ring-2 ring-accent-400 ring-offset-1 ring-offset-surface-900 scale-105'
+                    : 'hover:scale-105'
+                  }`}
+                style={{ background: gradient.value }}
+                title={gradient.name}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Custom Color */}
+        <div>
+          <label className="block text-xs text-surface-400 mb-2">Custom Color</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={backgroundColor.startsWith('#') ? backgroundColor : '#1a1a2e'}
+              onChange={(e) => onBackgroundChange(e.target.value)}
+              className="w-10 h-10 rounded-lg cursor-pointer bg-transparent border-0 p-0"
+            />
+            <span className="text-xs text-surface-500">
+              {backgroundColor.startsWith('#') ? backgroundColor : 'Gradient'}
+            </span>
+          </div>
+        </div>
+
+        {/* Image Background */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs text-surface-400">Images</label>
+            <span className="text-2xs text-surface-500">{uploadedImages.length}/{MAX_BACKGROUND_IMAGES}</span>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            className="hidden"
+          />
+
+          {/* Image Gallery Grid */}
+          {uploadedImages.length > 0 && (
+            <div className="grid grid-cols-4 gap-1.5 mb-2">
+              {uploadedImages.map((imageUrl, index) => {
+                const isSelected = backgroundColor === `url(${imageUrl})`;
+                return (
+                  <div key={index} className="relative group">
+                    <button
+                      onClick={() => handleSelectImage(imageUrl)}
+                      className={`w-full aspect-square rounded-lg bg-cover bg-center transition-all duration-150
+                        ${isSelected
+                          ? 'ring-2 ring-accent-400 ring-offset-1 ring-offset-surface-900 scale-105'
+                          : 'hover:scale-105'
+                        }`}
+                      style={{ backgroundImage: `url(${imageUrl})` }}
+                      title={`Image ${index + 1}`}
+                    />
+                    {/* Remove button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveImage(index);
+                      }}
+                      className="absolute -top-1 -right-1 w-4 h-4 bg-danger-500 hover:bg-danger-600
+                                 rounded-full flex items-center justify-center
+                                 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                      title="Remove image"
+                    >
+                      <svg className="w-2 h-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Upload button - only show if under limit */}
+          {uploadedImages.length < MAX_BACKGROUND_IMAGES && (
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full px-3 py-2 bg-surface-800/50 hover:bg-surface-700/50
+                         text-surface-400 hover:text-surface-300
+                         rounded-lg transition-all duration-150
+                         flex items-center justify-center gap-2 text-xs"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4v16m8-8H4" />
+              </svg>
+              Add Image
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

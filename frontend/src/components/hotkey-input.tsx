@@ -126,19 +126,19 @@ export function HotkeyInput({ value, onChange, label, disabled = false }: Hotkey
   };
 
   return (
-    <div className="mb-4">
-      <label className="block text-sm text-slate-400 mb-2">{label}</label>
+    <div className="mb-3">
+      <label className="block text-xs text-surface-400 mb-1.5">{label}</label>
       <div className="flex gap-2">
         <button
           ref={inputRef}
           onClick={startRecording}
           onBlur={cancelRecording}
           disabled={disabled}
-          className={`flex-1 px-3 py-2 rounded-lg text-left transition-colors ${
+          className={`flex-1 px-3 py-2 rounded-lg text-left text-sm transition-all duration-150 ${
             isRecording
-              ? 'bg-blue-600 text-white ring-2 ring-blue-400'
-              : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
-          } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              ? 'bg-accent-500/20 text-accent-400 ring-2 ring-accent-500/50'
+              : 'bg-surface-800/50 text-surface-300 hover:bg-surface-700/50'
+          } ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
         >
           {isRecording
             ? currentKeys.length > 0
@@ -150,11 +150,13 @@ export function HotkeyInput({ value, onChange, label, disabled = false }: Hotkey
           <button
             onClick={clearHotkey}
             disabled={disabled}
-            className="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-400 rounded-lg"
+            className="px-3 py-2 bg-surface-800/50 hover:bg-surface-700/50
+                       text-surface-500 hover:text-surface-300 rounded-lg
+                       transition-all duration-150"
             title="Clear hotkey"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         )}
