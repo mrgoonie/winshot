@@ -58,7 +58,7 @@ jobs:
         if: steps.check.outputs.should_release == 'true'
         run: |
           cd frontend
-          npm ci
+          npm install
 
       - name: Build portable executable
         if: steps.check.outputs.should_release == 'true'
