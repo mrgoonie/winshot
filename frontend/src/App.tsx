@@ -11,7 +11,7 @@ import { StatusBar } from './components/status-bar';
 import { AnnotationToolbar } from './components/annotation-toolbar';
 import { CropToolbar } from './components/crop-toolbar';
 import { ExportToolbar } from './components/export-toolbar';
-import { CaptureResult, CaptureMode, WindowInfo, Annotation, EditorTool, CropArea, AspectRatio } from './types';
+import { CaptureResult, CaptureMode, WindowInfo, Annotation, EditorTool, CropArea, AspectRatio, OutputRatio } from './types';
 import {
   CaptureFullscreen,
   CaptureWindow,
@@ -32,6 +32,7 @@ interface EditorSettings {
   cornerRadius: number;
   shadowSize: number;
   backgroundColor: string;
+  outputRatio: OutputRatio;
 }
 
 const DEFAULT_EDITOR_SETTINGS: EditorSettings = {
@@ -39,6 +40,7 @@ const DEFAULT_EDITOR_SETTINGS: EditorSettings = {
   cornerRadius: 12,
   shadowSize: 20,
   backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  outputRatio: 'auto',
 };
 
 // Load settings from localStorage
@@ -76,6 +78,7 @@ function App() {
   const [cornerRadius, setCornerRadius] = useState(() => loadEditorSettings().cornerRadius);
   const [shadowSize, setShadowSize] = useState(() => loadEditorSettings().shadowSize);
   const [backgroundColor, setBackgroundColor] = useState(() => loadEditorSettings().backgroundColor);
+  const [outputRatio, setOutputRatio] = useState<OutputRatio>(() => loadEditorSettings().outputRatio);
 
   // Annotation state
   const [activeTool, setActiveTool] = useState<EditorTool>('select');
@@ -96,8 +99,8 @@ function App() {
 
   // Persist editor settings to localStorage when they change
   useEffect(() => {
-    saveEditorSettings({ padding, cornerRadius, shadowSize, backgroundColor });
-  }, [padding, cornerRadius, shadowSize, backgroundColor]);
+    saveEditorSettings({ padding, cornerRadius, shadowSize, backgroundColor, outputRatio });
+  }, [padding, cornerRadius, shadowSize, backgroundColor, outputRatio]);
 
   const handleCapture = useCallback(async (mode: CaptureMode) => {
     if (mode === 'window') {
@@ -606,6 +609,7 @@ function App() {
           cornerRadius={cornerRadius}
           shadowSize={shadowSize}
           backgroundColor={backgroundColor}
+          outputRatio={outputRatio}
           stageRef={stageRef}
           activeTool={activeTool}
           annotations={annotations}
@@ -626,12 +630,14 @@ function App() {
             cornerRadius={cornerRadius}
             shadowSize={shadowSize}
             backgroundColor={backgroundColor}
+            outputRatio={outputRatio}
             imageWidth={screenshot.width}
             imageHeight={screenshot.height}
             onPaddingChange={setPadding}
             onCornerRadiusChange={setCornerRadius}
             onShadowSizeChange={setShadowSize}
             onBackgroundChange={setBackgroundColor}
+            onOutputRatioChange={setOutputRatio}
           />
         )}
       </div>

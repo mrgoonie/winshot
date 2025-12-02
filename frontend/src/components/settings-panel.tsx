@@ -1,19 +1,35 @@
 import { useRef, useState, useEffect } from 'react';
+import { OutputRatio } from '../types';
 
 const MAX_BACKGROUND_IMAGES = 8;
 const STORAGE_KEY = 'winshot-background-images';
+
+// Output ratio presets with display labels
+const OUTPUT_RATIO_PRESETS: { value: OutputRatio; label: string }[] = [
+  { value: 'auto', label: 'Auto' },
+  { value: '1:1', label: '1:1' },
+  { value: '4:3', label: '4:3' },
+  { value: '3:2', label: '3:2' },
+  { value: '16:9', label: '16:9' },
+  { value: '5:3', label: '5:3' },
+  { value: '9:16', label: '9:16' },
+  { value: '3:4', label: '3:4' },
+  { value: '2:3', label: '2:3' },
+];
 
 interface SettingsPanelProps {
   padding: number;
   cornerRadius: number;
   shadowSize: number;
   backgroundColor: string;
+  outputRatio: OutputRatio;
   imageWidth: number;
   imageHeight: number;
   onPaddingChange: (value: number) => void;
   onCornerRadiusChange: (value: number) => void;
   onShadowSizeChange: (value: number) => void;
   onBackgroundChange: (value: string) => void;
+  onOutputRatioChange: (value: OutputRatio) => void;
 }
 
 const GRADIENT_PRESETS = [
@@ -54,12 +70,14 @@ export function SettingsPanel({
   cornerRadius,
   shadowSize,
   backgroundColor,
+  outputRatio,
   imageWidth,
   imageHeight,
   onPaddingChange,
   onCornerRadiusChange,
   onShadowSizeChange,
   onBackgroundChange,
+  onOutputRatioChange,
 }: SettingsPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
@@ -164,6 +182,28 @@ export function SettingsPanel({
           onChange={(e) => onShadowSizeChange(Number(e.target.value))}
           className="w-full accent-blue-500"
         />
+      </div>
+
+      {/* Output Ratio */}
+      <div className="mb-6">
+        <label className="block text-sm text-slate-400 mb-2">
+          Output Ratio
+        </label>
+        <div className="grid grid-cols-3 gap-1.5">
+          {OUTPUT_RATIO_PRESETS.map((preset) => (
+            <button
+              key={preset.value}
+              onClick={() => onOutputRatioChange(preset.value)}
+              className={`px-2 py-1.5 text-xs rounded-md transition-all
+                ${outputRatio === preset.value
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                }`}
+            >
+              {preset.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Background Gradients */}

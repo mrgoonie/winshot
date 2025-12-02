@@ -56,6 +56,9 @@ export interface CropArea {
 
 export type AspectRatio = 'free' | '16:9' | '4:3' | '1:1' | '9:16' | '3:4';
 
+// Output canvas ratio - determines the final export dimensions
+export type OutputRatio = 'auto' | '1:1' | '4:3' | '3:2' | '16:9' | '5:3' | '9:16' | '3:4' | '2:3';
+
 // App configuration types
 export interface HotkeyConfig {
   fullscreen: string;

@@ -2,7 +2,7 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 import { Stage, Layer, Image as KonvaImage, Rect, Group } from 'react-konva';
 import useImage from 'use-image';
 import Konva from 'konva';
-import { CaptureResult, Annotation, AnnotationType, EditorTool, CropArea, AspectRatio } from '../types';
+import { CaptureResult, Annotation, AnnotationType, EditorTool, CropArea, AspectRatio, OutputRatio } from '../types';
 import { AnnotationShapes } from './annotation-shapes';
 import { CropOverlay } from './crop-overlay';
 
@@ -12,6 +12,7 @@ interface EditorCanvasProps {
   cornerRadius: number;
   shadowSize: number;
   backgroundColor: string;
+  outputRatio: OutputRatio;
   stageRef?: React.RefObject<Konva.Stage>;
   // Annotation props
   activeTool: EditorTool;
@@ -26,6 +27,47 @@ interface EditorCanvasProps {
   cropArea: CropArea | null;
   aspectRatio: AspectRatio;
   onCropChange: (area: CropArea) => void;
+}
+
+// Helper to parse ratio string into numeric ratio
+function parseRatio(ratio: OutputRatio): number | null {
+  if (ratio === 'auto') return null;
+  const [w, h] = ratio.split(':').map(Number);
+  return w / h;
+}
+
+// Calculate output dimensions based on ratio, screenshot, and padding
+function calculateOutputDimensions(
+  screenshotWidth: number,
+  screenshotHeight: number,
+  padding: number,
+  outputRatio: OutputRatio
+): { totalWidth: number; totalHeight: number } {
+  const targetRatio = parseRatio(outputRatio);
+
+  if (targetRatio === null) {
+    // Auto mode: output size same as screenshot dimensions
+    return { totalWidth: screenshotWidth, totalHeight: screenshotHeight };
+  }
+
+  // Calculate dimensions to fit the screenshot with padding while maintaining target ratio
+  const minWidth = screenshotWidth + padding * 2;
+  const minHeight = screenshotHeight + padding * 2;
+  const minAspect = minWidth / minHeight;
+
+  if (targetRatio > minAspect) {
+    // Target is wider - expand width to match ratio
+    return {
+      totalWidth: Math.round(minHeight * targetRatio),
+      totalHeight: minHeight,
+    };
+  } else {
+    // Target is taller - expand height to match ratio
+    return {
+      totalWidth: minWidth,
+      totalHeight: Math.round(minWidth / targetRatio),
+    };
+  }
 }
 
 function ScreenshotImage({
@@ -87,6 +129,7 @@ export function EditorCanvas({
   cornerRadius,
   shadowSize,
   backgroundColor,
+  outputRatio,
   stageRef,
   activeTool,
   annotations,
@@ -126,15 +169,20 @@ export function EditorCanvas({
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
-  // Calculate scale to fit screenshot in container
+  // Calculate scale to fit output in container
   useEffect(() => {
     if (screenshot) {
-      // Output size is same as screenshot dimensions (padding doesn't affect it)
-      const scaleX = (containerSize.width - 80) / screenshot.width;
-      const scaleY = (containerSize.height - 80) / screenshot.height;
+      const { totalWidth, totalHeight } = calculateOutputDimensions(
+        screenshot.width,
+        screenshot.height,
+        padding,
+        outputRatio
+      );
+      const scaleX = (containerSize.width - 80) / totalWidth;
+      const scaleY = (containerSize.height - 80) / totalHeight;
       setScale(Math.min(scaleX, scaleY, 1));
     }
-  }, [screenshot, containerSize]);
+  }, [screenshot, containerSize, padding, outputRatio]);
 
   // Generate unique ID for annotations
   const generateId = useCallback(() => {
@@ -278,9 +326,14 @@ export function EditorCanvas({
   }
 
   const imageSrc = `data:image/png;base64,${screenshot.data}`;
-  // Output size stays constant (same as screenshot dimensions)
-  const totalWidth = screenshot.width;
-  const totalHeight = screenshot.height;
+
+  // Calculate output dimensions based on ratio
+  const { totalWidth, totalHeight } = calculateOutputDimensions(
+    screenshot.width,
+    screenshot.height,
+    padding,
+    outputRatio
+  );
 
   // Calculate image size while preserving aspect ratio
   // The padding value is the MINIMUM padding (applied to the constraining dimension)
