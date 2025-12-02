@@ -21,6 +21,7 @@ import {
   MinimizeToTray,
   PrepareRegionCapture,
   FinishRegionCapture,
+  UpdateWindowSize,
 } from '../wailsjs/go/main/App';
 import { EventsOn, EventsOff } from '../wailsjs/runtime/runtime';
 
@@ -101,6 +102,24 @@ function App() {
   useEffect(() => {
     saveEditorSettings({ padding, cornerRadius, shadowSize, backgroundColor, outputRatio });
   }, [padding, cornerRadius, shadowSize, backgroundColor, outputRatio]);
+
+  // Track window size for persistence on close
+  useEffect(() => {
+    let resizeTimeout: ReturnType<typeof setTimeout>;
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        UpdateWindowSize(window.outerWidth, window.outerHeight);
+      }, 200);
+    };
+    window.addEventListener('resize', handleResize);
+    // Initial size report
+    UpdateWindowSize(window.outerWidth, window.outerHeight);
+    return () => {
+      clearTimeout(resizeTimeout);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   const handleCapture = useCallback(async (mode: CaptureMode) => {
     if (mode === 'window') {
@@ -323,24 +342,6 @@ function App() {
     }
   }, [selectedAnnotationId]);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (selectedAnnotationId) {
-          handleDeleteSelected();
-        }
-      } else if (e.key === 'Escape') {
-        setSelectedAnnotationId(null);
-        setActiveTool('select');
-        setCropArea(null);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedAnnotationId, handleDeleteSelected]);
-
   // Helper to calculate inner dimensions preserving aspect ratio
   const calculateInnerDimensions = useCallback((imgWidth: number, imgHeight: number, pad: number) => {
     const availableWidth = imgWidth - pad * 2;
@@ -382,6 +383,55 @@ function App() {
       setCropArea(null);
     }
   }, [screenshot, padding, calculateInnerDimensions]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Skip if typing in an input field
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedAnnotationId) {
+          handleDeleteSelected();
+        }
+      } else if (e.key === 'Escape') {
+        setSelectedAnnotationId(null);
+        setActiveTool('select');
+        setCropArea(null);
+      } else if (!e.ctrlKey && !e.altKey && !e.metaKey) {
+        // Tool shortcuts (single keys without modifiers)
+        const key = e.key.toLowerCase();
+        switch (key) {
+          case 'v':
+            handleToolChange('select');
+            break;
+          case 'r':
+            handleToolChange('rectangle');
+            break;
+          case 'e':
+            handleToolChange('ellipse');
+            break;
+          case 'a':
+            handleToolChange('arrow');
+            break;
+          case 'l':
+            handleToolChange('line');
+            break;
+          case 't':
+            handleToolChange('text');
+            break;
+          case 'c':
+            handleToolChange('crop');
+            break;
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedAnnotationId, handleDeleteSelected, handleToolChange]);
 
   // Crop handlers
   const handleCropChange = useCallback((area: CropArea) => {

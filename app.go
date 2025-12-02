@@ -22,6 +22,8 @@ type App struct {
 	hotkeyManager *hotkeys.HotkeyManager
 	trayIcon      *tray.TrayIcon
 	config        *config.Config
+	lastWidth     int
+	lastHeight    int
 }
 
 // NewApp creates a new App application struct
@@ -57,19 +59,19 @@ func (a *App) startup(ctx context.Context) {
 		runtime.WindowSetAlwaysOnTop(a.ctx, false)
 	})
 	a.trayIcon.Start()
+
+	// Initialize window size tracking with config values
+	a.lastWidth = cfg.Window.Width
+	a.lastHeight = cfg.Window.Height
 }
 
 // shutdown is called when the app is closing
 func (a *App) shutdown(ctx context.Context) {
-	// Save window size before closing
-	if a.config != nil {
-		width, height := runtime.WindowGetSize(ctx)
-		// Only save if size is reasonable (not minimized or fullscreen overlay)
-		if width >= 800 && height >= 600 {
-			a.config.Window.Width = width
-			a.config.Window.Height = height
-			a.config.Save()
-		}
+	// Save window size before closing using tracked values
+	if a.config != nil && a.lastWidth >= 800 && a.lastHeight >= 600 {
+		a.config.Window.Width = a.lastWidth
+		a.config.Window.Height = a.lastHeight
+		a.config.Save()
 	}
 
 	// Cleanup resources
@@ -105,6 +107,14 @@ func (a *App) onTrayMenu(menuID int) {
 		runtime.EventsEmit(a.ctx, "hotkey:window")
 	case tray.MenuQuit:
 		runtime.Quit(a.ctx)
+	}
+}
+
+// UpdateWindowSize tracks the current window size for persistence
+func (a *App) UpdateWindowSize(width, height int) {
+	if width >= 800 && height >= 600 {
+		a.lastWidth = width
+		a.lastHeight = height
 	}
 }
 

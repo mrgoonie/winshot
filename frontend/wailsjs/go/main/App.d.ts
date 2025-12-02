@@ -44,3 +44,5 @@ export function SaveImage(arg1:string,arg2:string):Promise<main.SaveImageResult>
 export function SelectFolder():Promise<string>;
 
 export function ShowWindow():Promise<void>;
+
+export function UpdateWindowSize(arg1:number,arg2:number):Promise<void>;

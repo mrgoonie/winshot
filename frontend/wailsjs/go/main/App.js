@@ -81,3 +81,7 @@ export function SelectFolder() {
 export function ShowWindow() {
   return window['go']['main']['App']['ShowWindow']();
 }
+
+export function UpdateWindowSize(arg1, arg2) {
+  return window['go']['main']['App']['UpdateWindowSize'](arg1, arg2);
+}
