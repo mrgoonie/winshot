@@ -1,3 +1,33 @@
+# 1.0.0 (2025-12-02)
+
+
+### Bug Fixes
+
+* **annotations:** prevent arrow/line endpoint drag from jumping ([1e2107e](https://github.com/mrgoonie/winshot/commit/1e2107ebd3ccedc7387427a82a2654289f79d611))
+* **ci:** clean node_modules before install to fix esbuild platform mismatch ([4939f11](https://github.com/mrgoonie/winshot/commit/4939f1135ca3a4c4fd1ee00767654f723a8241fe))
+* **ci:** use npm install instead of npm ci for frontend deps ([c1fdbe2](https://github.com/mrgoonie/winshot/commit/c1fdbe217f5cb5407e9c100561ceb734ef1ea282))
+* correct repository URL in package.json ([75904ee](https://github.com/mrgoonie/winshot/commit/75904eea62c5f87ba9d13e6b0157a9387708b742))
+* demo screenshot ([a5a8c70](https://github.com/mrgoonie/winshot/commit/a5a8c70414e57333a022ef376fb02a46f9f1404c))
+* max corner radius 200 ([beda413](https://github.com/mrgoonie/winshot/commit/beda413783160754d43ebcd38f01933f7641621a))
+* region capture issue ([2e80755](https://github.com/mrgoonie/winshot/commit/2e80755d69ce516585e5c8babeb99de6d088dcc2))
+* **settings:** persist background images using backend storage ([7bd8c87](https://github.com/mrgoonie/winshot/commit/7bd8c87b197fd4fa1879b2de95a62051f12d65fa))
+* stroke width settings ([25b7699](https://github.com/mrgoonie/winshot/commit/25b769920c81ebf4b1178d2db2e1c5d0310921dd))
+* transform issue ([77406a3](https://github.com/mrgoonie/winshot/commit/77406a30e56512955808c38de8ab49fe85f831d4))
+* window resize persistent ([7977f4a](https://github.com/mrgoonie/winshot/commit/7977f4adcc49b63d760c155d894a644d8d530d3d))
+
+
+### Features
+
+* add custom title bar for frameless window ([5acf087](https://github.com/mrgoonie/winshot/commit/5acf08765230685b7f53fc4f296aa4bcfc642ec2))
+* add region capture, fix DPI scaling, enhance editor controls ([59eb82f](https://github.com/mrgoonie/winshot/commit/59eb82f9ce8fd39c1844af6acc37db17ec088774))
+* **editor:** enhance screenshot editing with improved window capture ([2043067](https://github.com/mrgoonie/winshot/commit/204306720492c6451a2985bd074c1709a514567f))
+* improve DPI scaling and add persistent image gallery ([59ff7c2](https://github.com/mrgoonie/winshot/commit/59ff7c22b8c210650ba7b6467ae3a41bbe3e04fc)), closes [hi#DPI](https://github.com/hi/issues/DPI)
+* output ratio ([a31a06c](https://github.com/mrgoonie/winshot/commit/a31a06c9a54d03026b06287d5330ef8ea008e7ff))
+* persist window size and fix aspect ratio handling in editor ([01af006](https://github.com/mrgoonie/winshot/commit/01af0060ca0596e57c0adbedc5857b847f6dd309))
+* **settings:** add settings page for hotkeys, startup, quicksave, export ([2e8436e](https://github.com/mrgoonie/winshot/commit/2e8436ec26a01d1199ad9b08f5c858b846832147))
+* **settings:** expand gradient presets with 12 new themed options ([7cb9d56](https://github.com/mrgoonie/winshot/commit/7cb9d5688a4764e6f0a8e6cfc1557c41a6fa34af))
+* **ui:** implement Vibrant Glassmorphism design system ([35b45a2](https://github.com/mrgoonie/winshot/commit/35b45a2afe28fdd6d074c76b5a90190da8e3b2b9))
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
