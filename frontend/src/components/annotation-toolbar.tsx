@@ -17,7 +17,7 @@ const COLORS = [
   '#ffffff', '#000000', '#64748b', '#1e293b',
 ];
 
-const STROKE_WIDTHS = [2, 3, 4, 6, 8];
+const STROKE_WIDTHS = [2, 4, 6, 8, 10];
 
 export function AnnotationToolbar({
   activeTool,

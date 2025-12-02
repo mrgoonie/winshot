@@ -85,7 +85,7 @@ function App() {
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
   const [strokeColor, setStrokeColor] = useState('#ef4444');
-  const [strokeWidth, setStrokeWidth] = useState(3);
+  const [strokeWidth, setStrokeWidth] = useState(4);
 
   // Crop state
   const [cropArea, setCropArea] = useState<CropArea | null>(null);
