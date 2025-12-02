@@ -81,12 +81,14 @@ export function RegionSelector({
     <div
       className="fixed inset-0 z-[9999] cursor-crosshair select-none"
       style={{
-        width: screenWidth,
-        height: screenHeight,
+        // Use viewport units to fill the entire window regardless of DPI scaling
+        width: '100vw',
+        height: '100vh',
         background: screenshotData
-          ? `url(data:image/png;base64,${screenshotData}) no-repeat center center`
+          ? `url(data:image/png;base64,${screenshotData}) no-repeat 0 0`
           : 'rgba(0, 0, 0, 0.3)',
-        backgroundSize: 'cover',
+        // Scale the physical screenshot to fit the viewport (handles DPI scaling)
+        backgroundSize: '100vw 100vh',
       }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -157,7 +159,8 @@ export function RegionSelector({
                 ? `url(data:image/png;base64,${screenshotData}) no-repeat`
                 : 'transparent',
               backgroundPosition: `-${selectionX}px -${selectionY}px`,
-              backgroundSize: `${screenWidth}px ${screenHeight}px`,
+              // Use viewport units to match the main background scaling
+              backgroundSize: '100vw 100vh',
             }}
           />
 

@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Konva from 'konva';
+import { TitleBar } from './components/title-bar';
 import { CaptureToolbar } from './components/capture-toolbar';
 import { WindowPicker } from './components/window-picker';
 import { RegionSelector } from './components/region-selector';
@@ -67,6 +68,9 @@ function App() {
       // Prepare region capture - this will hide window, take screenshot, and make window fullscreen
       try {
         const data = await PrepareRegionCapture();
+        if (!data.screenshot) {
+          throw new Error('No screenshot data received');
+        }
         setDisplayBounds({ width: data.width, height: data.height });
         setRegionScreenshot(data.screenshot.data);
         setRegionScaleRatio(data.scaleRatio || 1);
@@ -204,6 +208,9 @@ function App() {
       // Prepare region capture - this will hide window, take screenshot, and make window fullscreen
       try {
         const data = await PrepareRegionCapture();
+        if (!data.screenshot) {
+          throw new Error('No screenshot data received');
+        }
         setDisplayBounds({ width: data.width, height: data.height });
         setRegionScreenshot(data.screenshot.data);
         setRegionScaleRatio(data.scaleRatio || 1);
@@ -485,6 +492,7 @@ function App() {
 
   return (
     <div className="flex flex-col h-screen bg-slate-900">
+      <TitleBar />
       <CaptureToolbar
         onCapture={handleCapture}
         isCapturing={isCapturing}

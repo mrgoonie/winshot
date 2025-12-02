@@ -11,11 +11,7 @@ interface CaptureToolbarProps {
 
 export function CaptureToolbar({ onCapture, isCapturing, hasScreenshot, onClear, onMinimize, onOpenSettings }: CaptureToolbarProps) {
   return (
-    <div className="flex items-center gap-4 p-4 bg-slate-800 border-b border-slate-700">
-      <h1 className="text-xl font-semibold text-white">WinShot</h1>
-
-      <div className="h-6 w-px bg-slate-600" />
-
+    <div className="flex items-center gap-4 px-4 py-3 bg-slate-800 border-b border-slate-700">
       <div className="flex gap-2">
         <button
           onClick={() => onCapture('fullscreen')}

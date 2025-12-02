@@ -48,3 +48,21 @@ Desktop.ini
 # Python
 *.pyc
 *.pyo
+
+repomix-output.xml
+.serena/cache
+plans/**/*
+!plans/templates/*
+screenshots/*
+docs/screenshots/*
+docs/journals/*
+docs/research/*
+logs.txt
+test-ck
+__pycache__
+prompt.md
+
+# Gemini CLI settings (symlink to .claude/.mcp.json)
+.gemini/settings.json
+.claude/settings.bak.json
+.claude/active-plan
