@@ -1,4 +1,4 @@
-# 1.0.0 (2025-12-02)
+# 1.0.0-beta.1 (2025-12-03)
 
 
 ### Bug Fixes
@@ -20,6 +20,7 @@
 
 * add custom title bar for frameless window ([5acf087](https://github.com/mrgoonie/winshot/commit/5acf08765230685b7f53fc4f296aa4bcfc642ec2))
 * add region capture, fix DPI scaling, enhance editor controls ([59eb82f](https://github.com/mrgoonie/winshot/commit/59eb82f9ce8fd39c1844af6acc37db17ec088774))
+* **branding:** add vibrant glass logo variations and update app icon ([12e7b19](https://github.com/mrgoonie/winshot/commit/12e7b19d96c151662ef4a420b8a0e99a9656a046))
 * **editor:** enhance screenshot editing with improved window capture ([2043067](https://github.com/mrgoonie/winshot/commit/204306720492c6451a2985bd074c1709a514567f))
 * improve DPI scaling and add persistent image gallery ([59ff7c2](https://github.com/mrgoonie/winshot/commit/59ff7c22b8c210650ba7b6467ae3a41bbe3e04fc)), closes [hi#DPI](https://github.com/hi/issues/DPI)
 * output ratio ([a31a06c](https://github.com/mrgoonie/winshot/commit/a31a06c9a54d03026b06287d5330ef8ea008e7ff))
