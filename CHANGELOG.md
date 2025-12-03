@@ -1,3 +1,11 @@
+# [1.1.0-beta.1](https://github.com/mrgoonie/winshot/compare/v1.0.0...v1.1.0-beta.1) (2025-12-03)
+
+
+### Features
+
+* **branding:** add vibrant glass logo variations and update app icon ([12e7b19](https://github.com/mrgoonie/winshot/commit/12e7b19d96c151662ef4a420b8a0e99a9656a046))
+* **text-annotation:** enhance UX with font controls and auto-edit mode ([b20fdea](https://github.com/mrgoonie/winshot/commit/b20fdea79e203f92726726352ad794ad1cd62631))
+
 # 1.0.0-beta.1 (2025-12-03)
 
 
