@@ -87,6 +87,8 @@ function App() {
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
   const [strokeColor, setStrokeColor] = useState('#ef4444');
   const [strokeWidth, setStrokeWidth] = useState(4);
+  const [fontSize, setFontSize] = useState(48);
+  const [fontStyle, setFontStyle] = useState<'normal' | 'bold' | 'italic' | 'bold italic'>('normal');
 
   // Crop state
   const [cropArea, setCropArea] = useState<CropArea | null>(null);
@@ -334,6 +336,28 @@ function App() {
       handleAnnotationUpdate(selectedAnnotationId, { strokeWidth: width });
     }
   }, [selectedAnnotationId, handleAnnotationUpdate]);
+
+  // Update selected text annotation font size when it changes
+  const handleFontSizeChange = useCallback((size: number) => {
+    setFontSize(size);
+    if (selectedAnnotationId) {
+      const selectedAnnotation = annotations.find(a => a.id === selectedAnnotationId);
+      if (selectedAnnotation?.type === 'text') {
+        handleAnnotationUpdate(selectedAnnotationId, { fontSize: size });
+      }
+    }
+  }, [selectedAnnotationId, annotations, handleAnnotationUpdate]);
+
+  // Update selected text annotation font style when it changes
+  const handleFontStyleChange = useCallback((style: 'normal' | 'bold' | 'italic' | 'bold italic') => {
+    setFontStyle(style);
+    if (selectedAnnotationId) {
+      const selectedAnnotation = annotations.find(a => a.id === selectedAnnotationId);
+      if (selectedAnnotation?.type === 'text') {
+        handleAnnotationUpdate(selectedAnnotationId, { fontStyle: style });
+      }
+    }
+  }, [selectedAnnotationId, annotations, handleAnnotationUpdate]);
 
   const handleDeleteSelected = useCallback(() => {
     if (selectedAnnotationId) {
@@ -636,11 +660,16 @@ function App() {
             activeTool={activeTool}
             strokeColor={strokeColor}
             strokeWidth={strokeWidth}
+            fontSize={fontSize}
+            fontStyle={fontStyle}
             onToolChange={handleToolChange}
             onColorChange={handleStrokeColorChange}
             onStrokeWidthChange={handleStrokeWidthChange}
+            onFontSizeChange={handleFontSizeChange}
+            onFontStyleChange={handleFontStyleChange}
             onDeleteSelected={handleDeleteSelected}
             hasSelection={!!selectedAnnotationId}
+            selectedAnnotation={selectedAnnotationId ? annotations.find(a => a.id === selectedAnnotationId) : undefined}
           />
           <CropToolbar
             aspectRatio={aspectRatio}
@@ -666,6 +695,8 @@ function App() {
           selectedAnnotationId={selectedAnnotationId}
           strokeColor={strokeColor}
           strokeWidth={strokeWidth}
+          fontSize={fontSize}
+          fontStyle={fontStyle}
           onAnnotationAdd={handleAnnotationAdd}
           onAnnotationSelect={handleAnnotationSelect}
           onAnnotationUpdate={handleAnnotationUpdate}

@@ -21,6 +21,8 @@ interface EditorCanvasProps {
   selectedAnnotationId: string | null;
   strokeColor: string;
   strokeWidth: number;
+  fontSize: number;
+  fontStyle: 'normal' | 'bold' | 'italic' | 'bold italic';
   onAnnotationAdd: (annotation: Annotation) => void;
   onAnnotationSelect: (id: string | null) => void;
   onAnnotationUpdate: (id: string, updates: Partial<Annotation>) => void;
@@ -137,6 +139,8 @@ export function EditorCanvas({
   selectedAnnotationId,
   strokeColor,
   strokeWidth,
+  fontSize,
+  fontStyle,
   onAnnotationAdd,
   onAnnotationSelect,
   onAnnotationUpdate,
@@ -234,7 +238,7 @@ export function EditorCanvas({
     const x = pos.x / scale;
     const y = pos.y / scale;
 
-    // For text tool, create text immediately on click
+    // For text tool, create text immediately on click with empty text to trigger edit mode
     if (activeTool === 'text') {
       const textAnnotation: Annotation = {
         id: generateId(),
@@ -245,13 +249,14 @@ export function EditorCanvas({
         height: 60,
         stroke: strokeColor,
         strokeWidth,
-        text: 'Text',
-        fontSize: 48,
+        text: '', // Empty text triggers immediate edit mode
+        fontSize,
         fontFamily: 'Arial',
-        fontStyle: 'normal',
+        fontStyle,
         textAlign: 'left',
       };
       onAnnotationAdd(textAnnotation);
+      onAnnotationSelect(textAnnotation.id);
       return;
     }
 

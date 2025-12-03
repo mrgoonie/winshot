@@ -468,6 +468,7 @@ function TextShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps) {
   const shapeRef = useRef<Konva.Text>(null);
   const trRef = useRef<Konva.Transformer>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const hasInitializedRef = useRef(false);
 
   useEffect(() => {
     if (isSelected && trRef.current && shapeRef.current && !isEditing) {
@@ -476,7 +477,18 @@ function TextShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps) {
     }
   }, [isSelected, isEditing]);
 
-  const handleDblClick = () => {
+  // Auto-enter edit mode for new text annotations (empty text)
+  useEffect(() => {
+    if (!hasInitializedRef.current && isSelected && (!annotation.text || annotation.text === '')) {
+      hasInitializedRef.current = true;
+      // Small delay to ensure the shape is fully rendered
+      setTimeout(() => {
+        startEditing();
+      }, 50);
+    }
+  }, [isSelected, annotation.text]);
+
+  const startEditing = () => {
     setIsEditing(true);
     const textNode = shapeRef.current;
     if (!textNode) return;
@@ -486,37 +498,68 @@ function TextShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps) {
 
     const textPosition = textNode.absolutePosition();
     const stageBox = stage.container().getBoundingClientRect();
+    const stageScale = stage.scaleX(); // Get stage scale
     const areaPosition = {
-      x: stageBox.left + textPosition.x,
-      y: stageBox.top + textPosition.y,
+      x: stageBox.left + textPosition.x * stageScale,
+      y: stageBox.top + textPosition.y * stageScale,
     };
 
     const textarea = document.createElement('textarea');
     document.body.appendChild(textarea);
 
-    textarea.value = annotation.text || 'Text';
+    const currentFontSize = annotation.fontSize || 48;
+    const scaledFontSize = currentFontSize * stageScale;
+
+    // Calculate font weight and style for CSS
+    const fontStyle = annotation.fontStyle || 'normal';
+    const fontWeight = fontStyle.includes('bold') ? 'bold' : 'normal';
+    const fontStyleCss = fontStyle.includes('italic') ? 'italic' : 'normal';
+
+    textarea.value = annotation.text || '';
+    textarea.placeholder = 'Type here...';
     textarea.style.position = 'absolute';
     textarea.style.top = `${areaPosition.y}px`;
     textarea.style.left = `${areaPosition.x}px`;
-    textarea.style.width = `${textNode.width() * textNode.scaleX() + 20}px`;
-    textarea.style.height = `${textNode.height() * textNode.scaleY() + 20}px`;
-    textarea.style.fontSize = `${(annotation.fontSize || 16) * textNode.scaleX()}px`;
-    textarea.style.border = '2px solid #3b82f6';
-    textarea.style.padding = '4px';
+    textarea.style.minWidth = `${200 * stageScale}px`;
+    textarea.style.minHeight = `${scaledFontSize + 16}px`;
+    textarea.style.fontSize = `${scaledFontSize}px`;
+    textarea.style.lineHeight = '1.2';
+    textarea.style.fontWeight = fontWeight;
+    textarea.style.fontStyle = fontStyleCss;
+    textarea.style.border = '2px solid #8b5cf6';
+    textarea.style.padding = '8px 12px';
     textarea.style.margin = '0';
     textarea.style.overflow = 'hidden';
-    textarea.style.background = 'rgba(30, 41, 59, 0.95)';
+    textarea.style.background = 'rgba(15, 23, 42, 0.95)';
     textarea.style.color = annotation.stroke;
     textarea.style.outline = 'none';
     textarea.style.resize = 'none';
     textarea.style.fontFamily = annotation.fontFamily || 'Arial';
     textarea.style.zIndex = '10000';
-    textarea.style.borderRadius = '4px';
+    textarea.style.borderRadius = '8px';
+    textarea.style.boxShadow = '0 4px 20px rgba(139, 92, 246, 0.3)';
+    textarea.style.backdropFilter = 'blur(8px)';
+
+    // Auto-resize function
+    const autoResize = () => {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+      // Also update width for long single lines
+      const textWidth = Math.max(200 * stageScale, textarea.scrollWidth);
+      textarea.style.width = `${textWidth}px`;
+    };
+
+    textarea.addEventListener('input', autoResize);
+
+    // Initial resize
+    requestAnimationFrame(autoResize);
 
     textarea.focus();
+    textarea.select();
 
     const removeTextarea = () => {
       if (textarea.parentNode) {
+        textarea.removeEventListener('input', autoResize);
         document.body.removeChild(textarea);
       }
       setIsEditing(false);
@@ -524,19 +567,32 @@ function TextShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps) {
 
     textarea.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
-        onUpdate({ text: textarea.value });
+        e.preventDefault();
+        const newText = textarea.value || 'Text';
+        onUpdate({ text: newText });
         removeTextarea();
       }
       if (e.key === 'Escape') {
+        // On escape, keep existing text or set default
+        const newText = textarea.value || annotation.text || 'Text';
+        onUpdate({ text: newText });
         removeTextarea();
       }
     });
 
     textarea.addEventListener('blur', () => {
-      onUpdate({ text: textarea.value });
+      const newText = textarea.value || 'Text';
+      onUpdate({ text: newText });
       removeTextarea();
     });
   };
+
+  const handleDblClick = () => {
+    startEditing();
+  };
+
+  // Display text or placeholder
+  const displayText = annotation.text || 'Text';
 
   return (
     <>
@@ -544,8 +600,8 @@ function TextShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps) {
         ref={shapeRef}
         x={annotation.x}
         y={annotation.y}
-        text={annotation.text || 'Text'}
-        fontSize={annotation.fontSize || 16}
+        text={displayText}
+        fontSize={annotation.fontSize || 48}
         fontFamily={annotation.fontFamily || 'Arial'}
         fontStyle={annotation.fontStyle || 'normal'}
         fill={annotation.stroke}
@@ -571,7 +627,7 @@ function TextShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps) {
           onUpdate({
             x: node.x(),
             y: node.y(),
-            fontSize: Math.max(8, (annotation.fontSize || 16) * scaleX),
+            fontSize: Math.max(8, (annotation.fontSize || 48) * scaleX),
           });
         }}
       />
