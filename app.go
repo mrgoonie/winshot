@@ -336,6 +336,12 @@ func (a *App) GetWindowList() ([]winEnum.WindowInfo, error) {
 	return winEnum.EnumWindows()
 }
 
+// GetWindowListWithThumbnails returns a list of all visible windows with thumbnails
+func (a *App) GetWindowListWithThumbnails() ([]winEnum.WindowInfoWithThumbnail, error) {
+	// Use 160x120 for thumbnails (4:3 aspect, good balance of quality and speed)
+	return winEnum.EnumWindowsWithThumbnails(160, 120)
+}
+
 // GetWindowInfo returns information about a specific window
 func (a *App) GetWindowInfo(hwnd int) (*winEnum.WindowInfo, error) {
 	return winEnum.GetWindowInfo(uintptr(hwnd))

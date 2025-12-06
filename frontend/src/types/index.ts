@@ -14,6 +14,10 @@ export interface WindowInfo {
   height: number;
 }
 
+export interface WindowInfoWithThumbnail extends WindowInfo {
+  thumbnail: string; // Base64 encoded PNG thumbnail
+}
+
 export type CaptureMode = 'fullscreen' | 'region' | 'window';
 
 export interface EditorState {

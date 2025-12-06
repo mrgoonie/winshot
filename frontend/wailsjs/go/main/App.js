@@ -54,6 +54,10 @@ export function GetWindowList() {
   return window['go']['main']['App']['GetWindowList']();
 }
 
+export function GetWindowListWithThumbnails() {
+  return window['go']['main']['App']['GetWindowListWithThumbnails']();
+}
+
 export function MinimizeToTray() {
   return window['go']['main']['App']['MinimizeToTray']();
 }

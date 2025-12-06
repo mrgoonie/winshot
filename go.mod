@@ -5,6 +5,7 @@ go 1.24.0
 require (
 	github.com/kbinani/screenshot v0.0.0-20250624051815-089614a94018
 	github.com/wailsapp/wails/v2 v2.10.2
+	golang.org/x/image v0.33.0
 	golang.org/x/sys v0.38.0
 )
 
@@ -37,7 +38,7 @@ require (
 	github.com/wailsapp/mimetype v1.4.1 // indirect
 	golang.org/x/crypto v0.33.0 // indirect
 	golang.org/x/net v0.35.0 // indirect
-	golang.org/x/text v0.22.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
 )
 
 // replace github.com/wailsapp/wails/v2 v2.10.2 => C:\Users\admin\go\pkg\mod

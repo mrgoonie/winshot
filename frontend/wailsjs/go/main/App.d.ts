@@ -31,6 +31,8 @@ export function GetWindowInfo(arg1:number):Promise<windows.WindowInfo>;
 
 export function GetWindowList():Promise<Array<windows.WindowInfo>>;
 
+export function GetWindowListWithThumbnails():Promise<Array<windows.WindowInfoWithThumbnail>>;
+
 export function MinimizeToTray():Promise<void>;
 
 export function PrepareRegionCapture():Promise<main.RegionCaptureData>;

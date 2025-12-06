@@ -275,6 +275,32 @@ export namespace windows {
 	        this.height = source["height"];
 	    }
 	}
+	export class WindowInfoWithThumbnail {
+	    handle: any;
+	    title: string;
+	    className: string;
+	    x: number;
+	    y: number;
+	    width: number;
+	    height: number;
+	    thumbnail: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new WindowInfoWithThumbnail(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.handle = source["handle"];
+	        this.title = source["title"];
+	        this.className = source["className"];
+	        this.x = source["x"];
+	        this.y = source["y"];
+	        this.width = source["width"];
+	        this.height = source["height"];
+	        this.thumbnail = source["thumbnail"];
+	    }
+	}
 
 }
 
