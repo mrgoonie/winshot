@@ -1,3 +1,29 @@
+# [1.1.0-beta.2](https://github.com/mrgoonie/winshot/compare/v1.1.0-beta.1...v1.1.0-beta.2) (2025-12-06)
+
+
+### Bug Fixes
+
+* crop issue ([817c0fa](https://github.com/mrgoonie/winshot/commit/817c0faa04103039e07c9f2d7a0e4ab7753d91b0))
+* **crop:** export with correct dimensions and hide overlay during capture ([065fbb3](https://github.com/mrgoonie/winshot/commit/065fbb390b346346c4455c114df8e5e81ba42e0a))
+* display version in footer ([66176cd](https://github.com/mrgoonie/winshot/commit/66176cd06267ccc1aaf31c38c560b94f9d0a2844))
+* **overlay:** increase window hide delay to prevent capture in screenshots ([5a60329](https://github.com/mrgoonie/winshot/commit/5a6032908e922fc48d323d1e781ae09821575f00))
+* **window:** preserve size during capture and improve Wails API usage ([2225710](https://github.com/mrgoonie/winshot/commit/2225710a4d228034ea051e363f613bbfa263b7d6))
+
+
+### Features
+
+* **annotations:** add draggable control point for curved arrow tension ([b56bc57](https://github.com/mrgoonie/winshot/commit/b56bc5769c95ed46889b1d4c091e22f6cfe7d845))
+* **annotations:** implement GitHub [#8](https://github.com/mrgoonie/winshot/issues/8) UX improvements ([12d7358](https://github.com/mrgoonie/winshot/commit/12d735837c2cab292cd9780cdf112b61d163e561))
+* **annotations:** implement spotlight feature ([#13](https://github.com/mrgoonie/winshot/issues/13)) ([1a38058](https://github.com/mrgoonie/winshot/commit/1a3805862aecd69770ddf4fe719431a51d2194c3))
+* **crop:** add CropToolbar component with aspect ratio controls ([19dc437](https://github.com/mrgoonie/winshot/commit/19dc4377e501ee5c45d941efaa65c3380d09c48a))
+* **crop:** add types and state setup for crop feature ([e2ef567](https://github.com/mrgoonie/winshot/commit/e2ef5674adf5ad99c1c5b20a0289721d45462701))
+* **crop:** implement CropOverlay component with handles and constraints ([90e8db4](https://github.com/mrgoonie/winshot/commit/90e8db4f014bfd84ae16483a8ba53e64fd4635a2))
+* **crop:** integrate crop feature into editor workflow ([225f6a7](https://github.com/mrgoonie/winshot/commit/225f6a75f6dce9565242541eeb3db65d0cb76e9d))
+* **display:** implement active monitor detection for multi-monitor support ([711ec33](https://github.com/mrgoonie/winshot/commit/711ec339fc65d0f02931706a5fe938aa9b1cb487))
+* implement GitHub [#7](https://github.com/mrgoonie/winshot/issues/7) UX improvements ([7274a4d](https://github.com/mrgoonie/winshot/commit/7274a4dd56598ff6827947f0a2c425cf2a26336e))
+* **import:** implement image import from computer (GitHub [#10](https://github.com/mrgoonie/winshot/issues/10)) ([0173594](https://github.com/mrgoonie/winshot/commit/01735945bb9e73a8ec368f38890185c38877fecf))
+* **windows:** add thumbnail capture for window selection list ([22b113c](https://github.com/mrgoonie/winshot/commit/22b113c7d06534b66399a63113210952d3773624)), closes [#12](https://github.com/mrgoonie/winshot/issues/12)
+
 # [1.1.0-beta.1](https://github.com/mrgoonie/winshot/compare/v1.0.0...v1.1.0-beta.1) (2025-12-03)
 
 
