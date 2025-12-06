@@ -15,6 +15,8 @@ export function CaptureWindow(arg1:number):Promise<screenshot.CaptureResult>;
 
 export function FinishRegionCapture():Promise<void>;
 
+export function GetActiveDisplayIndex():Promise<number>;
+
 export function GetBackgroundImages():Promise<Array<string>>;
 
 export function GetConfig():Promise<config.Config>;
@@ -29,7 +31,11 @@ export function GetWindowInfo(arg1:number):Promise<windows.WindowInfo>;
 
 export function GetWindowList():Promise<Array<windows.WindowInfo>>;
 
+export function GetWindowListWithThumbnails():Promise<Array<windows.WindowInfoWithThumbnail>>;
+
 export function MinimizeToTray():Promise<void>;
+
+export function OpenImage():Promise<screenshot.CaptureResult>;
 
 export function PrepareRegionCapture():Promise<main.RegionCaptureData>;
 

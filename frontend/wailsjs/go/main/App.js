@@ -22,6 +22,10 @@ export function FinishRegionCapture() {
   return window['go']['main']['App']['FinishRegionCapture']();
 }
 
+export function GetActiveDisplayIndex() {
+  return window['go']['main']['App']['GetActiveDisplayIndex']();
+}
+
 export function GetBackgroundImages() {
   return window['go']['main']['App']['GetBackgroundImages']();
 }
@@ -50,8 +54,16 @@ export function GetWindowList() {
   return window['go']['main']['App']['GetWindowList']();
 }
 
+export function GetWindowListWithThumbnails() {
+  return window['go']['main']['App']['GetWindowListWithThumbnails']();
+}
+
 export function MinimizeToTray() {
   return window['go']['main']['App']['MinimizeToTray']();
+}
+
+export function OpenImage() {
+  return window['go']['main']['App']['OpenImage']();
 }
 
 export function PrepareRegionCapture() {

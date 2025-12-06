@@ -389,7 +389,7 @@ wails dev  # Prints Go errors and exceptions to console
 
 ## License
 
-[LICENSE TO BE DETERMINED - MIT/GPL/Proprietary]
+BSD 3-Clause License
 
 See [LICENSE](./LICENSE) file for details.
 

@@ -18,6 +18,7 @@ type StartupConfig struct {
 	LaunchOnStartup  bool `json:"launchOnStartup"`
 	MinimizeToTray   bool `json:"minimizeToTray"`
 	ShowNotification bool `json:"showNotification"`
+	CloseToTray      bool `json:"closeToTray"`
 }
 
 // QuickSaveConfig holds quick save settings
@@ -28,9 +29,10 @@ type QuickSaveConfig struct {
 
 // ExportConfig holds export default settings
 type ExportConfig struct {
-	DefaultFormat     string `json:"defaultFormat"` // "png" or "jpeg"
-	JpegQuality       int    `json:"jpegQuality"`   // 0-100
-	IncludeBackground bool   `json:"includeBackground"`
+	DefaultFormat      string `json:"defaultFormat"`      // "png" or "jpeg"
+	JpegQuality        int    `json:"jpegQuality"`        // 0-100
+	IncludeBackground  bool   `json:"includeBackground"`
+	AutoCopyToClipboard bool  `json:"autoCopyToClipboard"`
 }
 
 // WindowConfig holds window size and position settings
@@ -64,15 +66,17 @@ func Default() *Config {
 			LaunchOnStartup:  false,
 			MinimizeToTray:   false,
 			ShowNotification: true,
+			CloseToTray:      true,
 		},
 		QuickSave: QuickSaveConfig{
 			Folder:  defaultFolder,
 			Pattern: "timestamp",
 		},
 		Export: ExportConfig{
-			DefaultFormat:     "png",
-			JpegQuality:       95,
-			IncludeBackground: true,
+			DefaultFormat:       "png",
+			JpegQuality:         95,
+			IncludeBackground:   true,
+			AutoCopyToClipboard: true,
 		},
 		Window: WindowConfig{
 			Width:  1200,

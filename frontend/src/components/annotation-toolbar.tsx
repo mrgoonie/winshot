@@ -1,4 +1,4 @@
-import { EditorTool } from '../types';
+import { EditorTool, Annotation } from '../types';
 import {
   MousePointer2,
   Square,
@@ -6,19 +6,29 @@ import {
   MoveRight,
   Minus,
   Type,
-  Crop,
   Trash2,
+  Bold,
+  Italic,
+  Spline,
+  Lightbulb,
+  Crop,
 } from 'lucide-react';
 
 interface AnnotationToolbarProps {
   activeTool: EditorTool;
   strokeColor: string;
   strokeWidth: number;
+  fontSize: number;
+  fontStyle: 'normal' | 'bold' | 'italic' | 'bold italic';
   onToolChange: (tool: EditorTool) => void;
   onColorChange: (color: string) => void;
   onStrokeWidthChange: (width: number) => void;
+  onFontSizeChange: (size: number) => void;
+  onFontStyleChange: (style: 'normal' | 'bold' | 'italic' | 'bold italic') => void;
+  onCurvedChange?: (curved: boolean) => void;
   onDeleteSelected: () => void;
   hasSelection: boolean;
+  selectedAnnotation?: Annotation;
 }
 
 const COLORS = [
@@ -29,16 +39,61 @@ const COLORS = [
 
 const STROKE_WIDTHS = [2, 4, 6, 8, 10];
 
+const FONT_SIZES = [16, 24, 32, 48, 64, 80, 96];
+
 export function AnnotationToolbar({
   activeTool,
   strokeColor,
   strokeWidth,
+  fontSize,
+  fontStyle,
   onToolChange,
   onColorChange,
   onStrokeWidthChange,
+  onFontSizeChange,
+  onFontStyleChange,
+  onCurvedChange,
   onDeleteSelected,
   hasSelection,
+  selectedAnnotation,
 }: AnnotationToolbarProps) {
+  // Show text controls when text tool is active or a text annotation is selected
+  const showTextControls = activeTool === 'text' || selectedAnnotation?.type === 'text';
+
+  // Show arrow controls when an arrow annotation is selected
+  const showArrowControls = selectedAnnotation?.type === 'arrow';
+  const isArrowCurved = selectedAnnotation?.type === 'arrow' && selectedAnnotation?.curved;
+
+  // Get current font values (from selected annotation or defaults)
+  const currentFontSize = selectedAnnotation?.type === 'text' ? selectedAnnotation.fontSize || 48 : fontSize;
+  const currentFontStyle = selectedAnnotation?.type === 'text' ? selectedAnnotation.fontStyle || 'normal' : fontStyle;
+
+  // Helper to toggle bold
+  const toggleBold = () => {
+    const isBold = currentFontStyle === 'bold' || currentFontStyle === 'bold italic';
+    const isItalic = currentFontStyle === 'italic' || currentFontStyle === 'bold italic';
+
+    if (isBold) {
+      onFontStyleChange(isItalic ? 'italic' : 'normal');
+    } else {
+      onFontStyleChange(isItalic ? 'bold italic' : 'bold');
+    }
+  };
+
+  // Helper to toggle italic
+  const toggleItalic = () => {
+    const isBold = currentFontStyle === 'bold' || currentFontStyle === 'bold italic';
+    const isItalic = currentFontStyle === 'italic' || currentFontStyle === 'bold italic';
+
+    if (isItalic) {
+      onFontStyleChange(isBold ? 'bold' : 'normal');
+    } else {
+      onFontStyleChange(isBold ? 'bold italic' : 'italic');
+    }
+  };
+
+  const isBoldActive = currentFontStyle === 'bold' || currentFontStyle === 'bold italic';
+  const isItalicActive = currentFontStyle === 'italic' || currentFontStyle === 'bold italic';
   const tools: { id: EditorTool; icon: JSX.Element; label: string; shortcut: string }[] = [
     {
       id: 'select',
@@ -75,6 +130,12 @@ export function AnnotationToolbar({
       label: 'Text',
       shortcut: 'T',
       icon: <Type className="w-5 h-5" />,
+    },
+    {
+      id: 'spotlight',
+      label: 'Spotlight',
+      shortcut: 'S',
+      icon: <Lightbulb className="w-5 h-5" />,
     },
     {
       id: 'crop',
@@ -124,29 +185,95 @@ export function AnnotationToolbar({
         </div>
       </div>
 
-      {/* Stroke Width */}
-      <div className="flex items-center gap-2 px-3 border-r border-white/10">
-        <span className="text-xs text-slate-400 font-medium">Width</span>
-        <div className="flex gap-1">
-          {STROKE_WIDTHS.map((width) => (
-            <button
-              key={width}
-              onClick={() => onStrokeWidthChange(width)}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                strokeWidth === width
-                  ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/30'
-                  : 'text-slate-400 hover:text-white hover:bg-white/10'
-              }`}
-              title={`${width}px`}
-            >
-              <div
-                className="rounded-full bg-current"
-                style={{ width: width + 2, height: width + 2 }}
-              />
-            </button>
-          ))}
+      {/* Stroke Width - hide when text tool active */}
+      {!showTextControls && (
+        <div className="flex items-center gap-2 px-3 border-r border-white/10">
+          <span className="text-xs text-slate-400 font-medium">Width</span>
+          <div className="flex gap-1">
+            {STROKE_WIDTHS.map((width) => (
+              <button
+                key={width}
+                onClick={() => onStrokeWidthChange(width)}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                  strokeWidth === width
+                    ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/30'
+                    : 'text-slate-400 hover:text-white hover:bg-white/10'
+                }`}
+                title={`${width}px`}
+              >
+                <div
+                  className="rounded-full bg-current"
+                  style={{ width: width + 2, height: width + 2 }}
+                />
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Text Controls - Font Size */}
+      {showTextControls && (
+        <div className="flex items-center gap-2 px-3 border-r border-white/10">
+          <span className="text-xs text-slate-400 font-medium">Size</span>
+          <select
+            value={currentFontSize}
+            onChange={(e) => onFontSizeChange(Number(e.target.value))}
+            className="px-2 py-1 rounded-lg bg-white/10 text-white text-sm border border-white/10 focus:outline-none focus:ring-2 focus:ring-violet-500/50 cursor-pointer"
+          >
+            {FONT_SIZES.map((size) => (
+              <option key={size} value={size} className="bg-slate-800">
+                {size}px
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Text Controls - Bold & Italic */}
+      {showTextControls && (
+        <div className="flex items-center gap-1 px-3 border-r border-white/10">
+          <button
+            onClick={toggleBold}
+            className={`p-2 rounded-lg transition-all duration-200 ${
+              isBoldActive
+                ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/30'
+                : 'text-slate-400 hover:text-white hover:bg-white/10'
+            }`}
+            title="Bold"
+          >
+            <Bold className="w-4 h-4" />
+          </button>
+          <button
+            onClick={toggleItalic}
+            className={`p-2 rounded-lg transition-all duration-200 ${
+              isItalicActive
+                ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/30'
+                : 'text-slate-400 hover:text-white hover:bg-white/10'
+            }`}
+            title="Italic"
+          >
+            <Italic className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Arrow Controls - Curved Toggle */}
+      {showArrowControls && onCurvedChange && (
+        <div className="flex items-center gap-1 px-3 border-r border-white/10">
+          <button
+            onClick={() => onCurvedChange(!isArrowCurved)}
+            className={`p-2 rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
+              isArrowCurved
+                ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/30'
+                : 'text-slate-400 hover:text-white hover:bg-white/10'
+            }`}
+            title="Curved Arrow"
+          >
+            <Spline className="w-4 h-4" />
+            <span className="text-xs font-medium">Curve</span>
+          </button>
+        </div>
+      )}
 
       {/* Delete Button */}
       <button

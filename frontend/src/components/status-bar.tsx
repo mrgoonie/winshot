@@ -27,7 +27,18 @@ export function StatusBar({ screenshot, message }: StatusBarProps) {
           </span>
         )}
       </span>
-      <span className="text-gradient font-semibold">WinShot v1.0</span>
+      <span className="flex items-center gap-3">
+        <span className="text-gradient font-semibold">WinShot v{__APP_VERSION__}</span>
+        <span className="text-slate-500">•</span>
+        <a
+          href="https://ClaudeKit.cc"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-slate-400 hover:text-cyan-400 transition-colors"
+        >
+          Built with 💖 by ClaudeKit
+        </a>
+      </span>
     </div>
   );
 }

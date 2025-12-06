@@ -1,11 +1,32 @@
-import { WindowMinimise, WindowToggleMaximise, Quit } from '../../wailsjs/runtime/runtime';
+import { WindowMinimise, WindowToggleMaximise, Quit, WindowHide } from '../../wailsjs/runtime/runtime';
 import { Minus, Square, X, Camera } from 'lucide-react';
+import { GetConfig } from '../../wailsjs/go/main/App';
 
 interface TitleBarProps {
   title?: string;
+  onMinimize?: () => void;
 }
 
-export function TitleBar({ title = 'WinShot' }: TitleBarProps) {
+export function TitleBar({ title = 'WinShot', onMinimize }: TitleBarProps) {
+  const handleClose = async () => {
+    try {
+      const cfg = await GetConfig();
+      if (cfg.startup?.closeToTray) {
+        // Use onMinimize callback if provided, otherwise use WindowHide directly
+        if (onMinimize) {
+          onMinimize();
+        } else {
+          WindowHide();
+        }
+      } else {
+        Quit();
+      }
+    } catch {
+      // If config fetch fails, just quit
+      Quit();
+    }
+  };
+
   return (
     <div
       className="flex items-center h-10 glass select-none border-b-0"
@@ -47,7 +68,7 @@ export function TitleBar({ title = 'WinShot' }: TitleBarProps) {
 
         {/* Close button */}
         <button
-          onClick={() => Quit()}
+          onClick={handleClose}
           className="w-11 h-full flex items-center justify-center text-slate-400
                      hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:text-white transition-all duration-200"
           title="Close"

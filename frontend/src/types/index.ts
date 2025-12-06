@@ -14,6 +14,10 @@ export interface WindowInfo {
   height: number;
 }
 
+export interface WindowInfoWithThumbnail extends WindowInfo {
+  thumbnail: string; // Base64 encoded PNG thumbnail
+}
+
 export type CaptureMode = 'fullscreen' | 'region' | 'window';
 
 export interface EditorState {
@@ -23,7 +27,17 @@ export interface EditorState {
 }
 
 // Annotation types
-export type AnnotationType = 'rectangle' | 'ellipse' | 'arrow' | 'line' | 'text';
+export type AnnotationType = 'rectangle' | 'ellipse' | 'arrow' | 'line' | 'text' | 'spotlight';
+
+// Crop types
+export interface CropArea {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export type CropAspectRatio = 'free' | '16:9' | '4:3' | '1:1' | '9:16' | '3:4';
 
 export interface Annotation {
   id: string;
@@ -37,24 +51,35 @@ export interface Annotation {
   fill?: string;
   // For arrows and lines
   points?: number[];
+  // For arrows - curved style
+  curved?: boolean;
+  // Control point offset for curved arrows (relative to midpoint, perpendicular direction)
+  curveOffset?: { x: number; y: number };
   // For text annotations
   text?: string;
   fontSize?: number;
   fontFamily?: string;
   fontStyle?: 'normal' | 'bold' | 'italic' | 'bold italic';
   textAlign?: 'left' | 'center' | 'right';
+  // For spotlight annotations
+  dimOpacity?: number; // Opacity of the dimmed area (0-1, default 0.7)
 }
 
 export type EditorTool = 'select' | 'crop' | AnnotationType;
 
-export interface CropArea {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+// Crop state for snapshot-based crop workflow
+export interface CropState {
+  // Original image data (always preserved for re-crop)
+  originalImage: CaptureResult | null;
+  // Cropped image result (displayed when crop is applied)
+  croppedImage: CaptureResult | null;
+  // Original annotations before crop (for restore)
+  originalAnnotations: Annotation[];
+  // Last applied crop area (for showing previous selection on re-crop)
+  lastCropArea: CropArea | null;
+  // Whether crop is currently applied (showing cropped view)
+  isCropApplied: boolean;
 }
-
-export type AspectRatio = 'free' | '16:9' | '4:3' | '1:1' | '9:16' | '3:4';
 
 // Output canvas ratio - determines the final export dimensions
 export type OutputRatio = 'auto' | '1:1' | '4:3' | '3:2' | '16:9' | '5:3' | '9:16' | '3:4' | '2:3';

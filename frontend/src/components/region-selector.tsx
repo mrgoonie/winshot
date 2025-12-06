@@ -20,9 +20,14 @@ export function RegionSelector({
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [currentPos, setCurrentPos] = useState({ x: 0, y: 0 });
+  const [spacePressed, setSpacePressed] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    // Start drawing a new selection
     setIsDrawing(true);
+    setIsDragging(false);
     setStartPos({ x: e.clientX, y: e.clientY });
     setCurrentPos({ x: e.clientX, y: e.clientY });
   }, []);
@@ -30,12 +35,40 @@ export function RegionSelector({
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
       if (!isDrawing) return;
+
+      // If space is pressed while drawing, move the entire selection
+      if (spacePressed) {
+        // Initialize drag start position if not set yet
+        if (!isDragging) {
+          setIsDragging(true);
+          setDragStartPos({ x: e.clientX, y: e.clientY });
+          return;
+        }
+
+        const deltaX = e.clientX - dragStartPos.x;
+        const deltaY = e.clientY - dragStartPos.y;
+
+        setStartPos(prev => ({ x: prev.x + deltaX, y: prev.y + deltaY }));
+        setCurrentPos(prev => ({ x: prev.x + deltaX, y: prev.y + deltaY }));
+        setDragStartPos({ x: e.clientX, y: e.clientY });
+        return;
+      } else if (isDragging) {
+        // Space was released, stop dragging mode
+        setIsDragging(false);
+      }
+
       setCurrentPos({ x: e.clientX, y: e.clientY });
     },
-    [isDrawing]
+    [isDrawing, isDragging, spacePressed, dragStartPos]
   );
 
   const handleMouseUp = useCallback(() => {
+    // If we were dragging, just stop dragging but continue drawing
+    if (isDragging) {
+      setIsDragging(false);
+      return;
+    }
+
     if (!isDrawing) return;
     setIsDrawing(false);
 
@@ -53,20 +86,34 @@ export function RegionSelector({
     // Reset
     setStartPos({ x: 0, y: 0 });
     setCurrentPos({ x: 0, y: 0 });
-  }, [isDrawing, startPos, currentPos, onSelect]);
+  }, [isDrawing, isDragging, startPos, currentPos, onSelect]);
 
-  // Handle Escape key to cancel
+  // Handle keyboard events for Escape and Space
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onClose();
+      } else if (e.code === 'Space') {
+        e.preventDefault();
+        setSpacePressed(true);
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        setSpacePressed(false);
+        setIsDragging(false);
       }
     };
 
     if (isOpen) {
       window.addEventListener('keydown', handleKeyDown);
+      window.addEventListener('keyup', handleKeyUp);
     }
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
@@ -79,7 +126,7 @@ export function RegionSelector({
 
   return (
     <div
-      className="fixed inset-0 z-[9999] cursor-crosshair select-none"
+      className={`fixed inset-0 z-[9999] select-none ${spacePressed ? 'cursor-move' : 'cursor-crosshair'}`}
       style={{
         // Use viewport units to fill the entire window regardless of DPI scaling
         width: '100vw',
@@ -103,7 +150,9 @@ export function RegionSelector({
 
       {/* Instructions */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/80 text-white rounded-lg text-sm z-10">
-        Drag to select region. Press ESC to cancel.
+        {isDrawing && spacePressed
+          ? 'Hold Space + Drag to reposition selection'
+          : 'Drag to select region. Hold Space to move. ESC to cancel.'}
       </div>
 
       {/* Selection rectangle */}

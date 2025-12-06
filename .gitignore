@@ -8,7 +8,6 @@ frontend/node_modules
 # Build outputs
 out/
 dist/
-!dist/index.html
 *.exe
 *.dll
 *.so

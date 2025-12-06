@@ -22,6 +22,7 @@ interface LocalConfig {
     launchOnStartup: boolean;
     minimizeToTray: boolean;
     showNotification: boolean;
+    closeToTray: boolean;
   };
   quickSave: {
     folder: string;
@@ -31,6 +32,7 @@ interface LocalConfig {
     defaultFormat: string;
     jpegQuality: number;
     includeBackground: boolean;
+    autoCopyToClipboard: boolean;
   };
 }
 
@@ -44,6 +46,7 @@ const defaultConfig: LocalConfig = {
     launchOnStartup: false,
     minimizeToTray: false,
     showNotification: true,
+    closeToTray: true,
   },
   quickSave: {
     folder: '',
@@ -53,6 +56,7 @@ const defaultConfig: LocalConfig = {
     defaultFormat: 'png',
     jpegQuality: 95,
     includeBackground: true,
+    autoCopyToClipboard: true,
   },
 };
 
@@ -83,6 +87,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           launchOnStartup: cfg.startup?.launchOnStartup || false,
           minimizeToTray: cfg.startup?.minimizeToTray || false,
           showNotification: cfg.startup?.showNotification ?? true,
+          closeToTray: cfg.startup?.closeToTray ?? true,
         },
         quickSave: {
           folder: cfg.quickSave?.folder || '',
@@ -92,6 +97,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           defaultFormat: cfg.export?.defaultFormat || 'png',
           jpegQuality: cfg.export?.jpegQuality || 95,
           includeBackground: cfg.export?.includeBackground ?? true,
+          autoCopyToClipboard: cfg.export?.autoCopyToClipboard ?? true,
         },
       };
       setLocalConfig(local);
@@ -272,6 +278,23 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 />
                 <span className="text-slate-200">Show notification on capture</span>
               </label>
+
+              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg bg-white/5 hover:bg-white/8 border border-white/5 transition-all duration-200">
+                <input
+                  type="checkbox"
+                  checked={localConfig.startup.closeToTray}
+                  onChange={(e) =>
+                    setLocalConfig((prev) => ({
+                      ...prev,
+                      startup: { ...prev.startup, closeToTray: e.target.checked },
+                    }))
+                  }
+                />
+                <div>
+                  <span className="text-slate-200">Close to tray instead of quitting</span>
+                  <p className="text-xs text-slate-400 mt-0.5">Use "Quit" from tray menu to fully exit</p>
+                </div>
+              </label>
             </div>
           )}
 
@@ -400,6 +423,23 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   }
                 />
                 <span className="text-slate-200">Include styled background</span>
+              </label>
+
+              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg bg-white/5 hover:bg-white/8 border border-white/5 transition-all duration-200">
+                <input
+                  type="checkbox"
+                  checked={localConfig.export.autoCopyToClipboard}
+                  onChange={(e) =>
+                    setLocalConfig((prev) => ({
+                      ...prev,
+                      export: { ...prev.export, autoCopyToClipboard: e.target.checked },
+                    }))
+                  }
+                />
+                <div>
+                  <span className="text-slate-200">Auto-copy to clipboard on capture</span>
+                  <p className="text-xs text-slate-400 mt-0.5">Uses your default export format (PNG/JPEG)</p>
+                </div>
               </label>
             </div>
           )}
