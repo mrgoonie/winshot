@@ -1,5 +1,5 @@
 import { CaptureMode } from '../types';
-import { Monitor, Scan, AppWindow, Settings, ChevronDown } from 'lucide-react';
+import { Monitor, Scan, AppWindow, Settings, ChevronDown, FolderOpen } from 'lucide-react';
 
 interface CaptureToolbarProps {
   onCapture: (mode: CaptureMode) => void;
@@ -8,9 +8,10 @@ interface CaptureToolbarProps {
   onClear: () => void;
   onMinimize?: () => void;
   onOpenSettings?: () => void;
+  onImportImage?: () => void;
 }
 
-export function CaptureToolbar({ onCapture, isCapturing, hasScreenshot, onClear, onMinimize, onOpenSettings }: CaptureToolbarProps) {
+export function CaptureToolbar({ onCapture, isCapturing, hasScreenshot, onClear, onMinimize, onOpenSettings, onImportImage }: CaptureToolbarProps) {
   return (
     <div className="flex items-center gap-4 px-4 py-3 glass">
       <div className="flex gap-2">
@@ -58,6 +59,23 @@ export function CaptureToolbar({ onCapture, isCapturing, hasScreenshot, onClear,
           <AppWindow className="w-4 h-4" />
           Window
         </button>
+
+        {/* Import - Amber/orange gradient */}
+        {onImportImage && (
+          <button
+            onClick={onImportImage}
+            disabled={isCapturing}
+            className="px-4 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-2
+                       bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400
+                       disabled:from-slate-600 disabled:to-slate-700 disabled:opacity-50
+                       text-white font-medium shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40
+                       hover:-translate-y-0.5 active:translate-y-0"
+            title="Import image from file (Ctrl+O)"
+          >
+            <FolderOpen className="w-4 h-4" />
+            Import
+          </button>
+        )}
       </div>
 
       {hasScreenshot && (

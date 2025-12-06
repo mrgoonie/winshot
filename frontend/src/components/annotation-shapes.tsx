@@ -3,7 +3,7 @@ import { Rect, Ellipse, Arrow, Line, Transformer, Group, Text, Circle } from 're
 import Konva from 'konva';
 
 // Constants for better hit detection on thin shapes
-const HIT_STROKE_WIDTH = 20; // Larger clickable area for lines/arrows
+const HIT_STROKE_WIDTH = 28; // Larger clickable area for lines/arrows (increased for easier selection)
 const ENDPOINT_RADIUS = 6; // Radius of draggable endpoint handles
 const ENDPOINT_HOVER_RADIUS = 8; // Slightly larger on hover
 
@@ -151,40 +151,74 @@ function ArrowShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps) 
   const groupRef = useRef<Konva.Group>(null);
   const startCircleRef = useRef<Konva.Circle>(null);
   const endCircleRef = useRef<Konva.Circle>(null);
-  const [hoveredEndpoint, setHoveredEndpoint] = useState<'start' | 'end' | null>(null);
-  const [draggingEndpoint, setDraggingEndpoint] = useState<'start' | 'end' | null>(null);
+  const ctrlCircleRef = useRef<Konva.Circle>(null);
+  const [hoveredEndpoint, setHoveredEndpoint] = useState<'start' | 'end' | 'ctrl' | null>(null);
+  const [draggingEndpoint, setDraggingEndpoint] = useState<'start' | 'end' | 'ctrl' | null>(null);
 
   // Use annotation points or fallback
-  const points = annotation.points || [0, 0, annotation.width, annotation.height];
+  const basePoints = annotation.points || [0, 0, annotation.width, annotation.height];
+  const [x1, y1, x2, y2] = basePoints;
 
-  const handleEndpointDragStart = (endpoint: 'start' | 'end') => {
+  // Calculate midpoint and default perpendicular offset for curved arrows
+  const midX = (x1 + x2) / 2;
+  const midY = (y1 + y2) / 2;
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const length = Math.sqrt(dx * dx + dy * dy) || 1;
+
+  // Get control point position (use custom offset or calculate default)
+  const getControlPoint = () => {
+    if (annotation.curveOffset) {
+      return {
+        x: midX + annotation.curveOffset.x,
+        y: midY + annotation.curveOffset.y,
+      };
+    }
+    // Default: 20% of length perpendicular offset
+    const curveAmount = length * 0.2;
+    const perpX = (-dy / length) * curveAmount;
+    const perpY = (dx / length) * curveAmount;
+    return { x: midX + perpX, y: midY + perpY };
+  };
+
+  const ctrlPoint = getControlPoint();
+
+  // For curved arrows, add a control point to create the curve
+  const points = annotation.curved
+    ? [x1, y1, ctrlPoint.x, ctrlPoint.y, x2, y2]
+    : basePoints;
+
+  const handleEndpointDragStart = (endpoint: 'start' | 'end' | 'ctrl') => {
     if (groupRef.current) {
       groupRef.current.draggable(false);
     }
     setDraggingEndpoint(endpoint);
   };
 
-  const handleEndpointDragMove = (e: Konva.KonvaEventObject<DragEvent>, endpoint: 'start' | 'end') => {
+  const handleEndpointDragMove = (e: Konva.KonvaEventObject<DragEvent>, endpoint: 'start' | 'end' | 'ctrl') => {
     const node = e.target;
     const newX = node.x();
     const newY = node.y();
 
     // Update arrow visually in real-time
     if (shapeRef.current) {
-      if (endpoint === 'start') {
-        const endX = points[2];
-        const endY = points[3];
+      if (endpoint === 'ctrl') {
+        // Update curve control point
+        shapeRef.current.points([x1, y1, newX, newY, x2, y2]);
+      } else if (endpoint === 'start') {
+        const endX = basePoints[2];
+        const endY = basePoints[3];
         shapeRef.current.points([newX, newY, endX, endY]);
       } else {
-        const startX = points[0];
-        const startY = points[1];
+        const startX = basePoints[0];
+        const startY = basePoints[1];
         shapeRef.current.points([startX, startY, newX, newY]);
       }
       shapeRef.current.getLayer()?.batchDraw();
     }
   };
 
-  const handleEndpointDragEnd = (e: Konva.KonvaEventObject<DragEvent>, endpoint: 'start' | 'end') => {
+  const handleEndpointDragEnd = (e: Konva.KonvaEventObject<DragEvent>, endpoint: 'start' | 'end' | 'ctrl') => {
     // Stop event propagation to prevent Group's onDragEnd from firing
     e.cancelBubble = true;
 
@@ -197,12 +231,19 @@ function ArrowShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps) 
     }
     setDraggingEndpoint(null);
 
-    if (endpoint === 'start') {
+    if (endpoint === 'ctrl') {
+      // When control point is dragged, save the offset from midpoint
+      const offsetX = newX - midX;
+      const offsetY = newY - midY;
+      onUpdate({
+        curveOffset: { x: offsetX, y: offsetY },
+      });
+    } else if (endpoint === 'start') {
       // When start point is dragged:
       // 1. Move the Group to the new start position
       // 2. Recalculate end point relative to new origin
-      const endX = points[2];
-      const endY = points[3];
+      const endX = basePoints[2];
+      const endY = basePoints[3];
 
       // The new group position is old position + start point offset
       const newGroupX = annotation.x + newX;
@@ -216,20 +257,23 @@ function ArrowShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps) 
       node.x(0);
       node.y(0);
 
+      // Clear curve offset when endpoints change (will recalculate default)
       onUpdate({
         x: newGroupX,
         y: newGroupY,
         points: [0, 0, relativeEndX, relativeEndY],
         width: relativeEndX,
         height: relativeEndY,
+        curveOffset: undefined,
       });
     } else {
       // When end point is dragged, just update the end point
-      // Keep the circle at its new position
+      // Clear curve offset when endpoints change (will recalculate default)
       onUpdate({
         points: [0, 0, newX, newY],
         width: newX,
         height: newY,
+        curveOffset: undefined,
       });
     }
   };
@@ -258,6 +302,9 @@ function ArrowShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps) 
         pointerLength={annotation.strokeWidth * 3}
         pointerWidth={annotation.strokeWidth * 3}
         hitStrokeWidth={HIT_STROKE_WIDTH}
+        lineCap="square"
+        lineJoin="miter"
+        tension={annotation.curved ? 0.5 : 0}
       />
       {/* Draggable endpoint handles when selected */}
       {isSelected && (
@@ -265,8 +312,8 @@ function ArrowShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps) 
           {/* Start point handle */}
           <Circle
             ref={startCircleRef}
-            x={points[0]}
-            y={points[1]}
+            x={basePoints[0]}
+            y={basePoints[1]}
             radius={hoveredEndpoint === 'start' ? ENDPOINT_HOVER_RADIUS : ENDPOINT_RADIUS}
             fill="white"
             stroke={annotation.stroke}
@@ -284,8 +331,8 @@ function ArrowShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps) 
           {/* End point handle */}
           <Circle
             ref={endCircleRef}
-            x={points[2]}
-            y={points[3]}
+            x={basePoints[2]}
+            y={basePoints[3]}
             radius={hoveredEndpoint === 'end' ? ENDPOINT_HOVER_RADIUS : ENDPOINT_RADIUS}
             fill="white"
             stroke={annotation.stroke}
@@ -300,6 +347,27 @@ function ArrowShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps) 
             shadowBlur={3}
             shadowOpacity={0.3}
           />
+          {/* Control point handle for curved arrows */}
+          {annotation.curved && (
+            <Circle
+              ref={ctrlCircleRef}
+              x={ctrlPoint.x}
+              y={ctrlPoint.y}
+              radius={hoveredEndpoint === 'ctrl' ? ENDPOINT_HOVER_RADIUS : ENDPOINT_RADIUS}
+              fill="#a855f7"
+              stroke="white"
+              strokeWidth={2}
+              draggable
+              onMouseEnter={() => setHoveredEndpoint('ctrl')}
+              onMouseLeave={() => setHoveredEndpoint(null)}
+              onDragStart={() => handleEndpointDragStart('ctrl')}
+              onDragMove={(e) => handleEndpointDragMove(e, 'ctrl')}
+              onDragEnd={(e) => handleEndpointDragEnd(e, 'ctrl')}
+              shadowColor="black"
+              shadowBlur={3}
+              shadowOpacity={0.3}
+            />
+          )}
         </>
       )}
     </Group>
@@ -414,7 +482,8 @@ function LineShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps) {
         points={points}
         stroke={annotation.stroke}
         strokeWidth={annotation.strokeWidth}
-        lineCap="round"
+        lineCap="square"
+        lineJoin="miter"
         hitStrokeWidth={HIT_STROKE_WIDTH}
       />
       {/* Draggable endpoint handles when selected */}
@@ -461,6 +530,68 @@ function LineShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps) {
         </>
       )}
     </Group>
+  );
+}
+
+function SpotlightShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps) {
+  const shapeRef = useRef<Konva.Rect>(null);
+  const trRef = useRef<Konva.Transformer>(null);
+
+  useEffect(() => {
+    if (isSelected && trRef.current && shapeRef.current) {
+      trRef.current.nodes([shapeRef.current]);
+      trRef.current.getLayer()?.batchDraw();
+    }
+  }, [isSelected]);
+
+  return (
+    <>
+      <Rect
+        ref={shapeRef}
+        x={annotation.x}
+        y={annotation.y}
+        width={annotation.width}
+        height={annotation.height}
+        stroke={isSelected ? annotation.stroke : 'transparent'}
+        strokeWidth={isSelected ? 2 : 0}
+        dash={isSelected ? [8, 4] : undefined}
+        fill="transparent"
+        draggable
+        onClick={onSelect}
+        onTap={onSelect}
+        onDragEnd={(e) => {
+          onUpdate({
+            x: e.target.x(),
+            y: e.target.y(),
+          });
+        }}
+        onTransformEnd={() => {
+          const node = shapeRef.current;
+          if (!node) return;
+          const scaleX = node.scaleX();
+          const scaleY = node.scaleY();
+          node.scaleX(1);
+          node.scaleY(1);
+          onUpdate({
+            x: node.x(),
+            y: node.y(),
+            width: Math.max(20, node.width() * scaleX),
+            height: Math.max(20, node.height() * scaleY),
+          });
+        }}
+      />
+      {isSelected && (
+        <Transformer
+          ref={trRef}
+          boundBoxFunc={(oldBox, newBox) => {
+            if (newBox.width < 20 || newBox.height < 20) {
+              return oldBox;
+            }
+            return newBox;
+          }}
+        />
+      )}
+    </>
   );
 }
 
@@ -673,6 +804,8 @@ export function AnnotationShapes({
             return <LineShape key={annotation.id} {...props} />;
           case 'text':
             return <TextShape key={annotation.id} {...props} />;
+          case 'spotlight':
+            return <SpotlightShape key={annotation.id} {...props} />;
           default:
             return null;
         }

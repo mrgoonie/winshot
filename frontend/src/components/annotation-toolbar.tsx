@@ -6,10 +6,12 @@ import {
   MoveRight,
   Minus,
   Type,
-  Crop,
   Trash2,
   Bold,
   Italic,
+  Spline,
+  Lightbulb,
+  Crop,
 } from 'lucide-react';
 
 interface AnnotationToolbarProps {
@@ -23,6 +25,7 @@ interface AnnotationToolbarProps {
   onStrokeWidthChange: (width: number) => void;
   onFontSizeChange: (size: number) => void;
   onFontStyleChange: (style: 'normal' | 'bold' | 'italic' | 'bold italic') => void;
+  onCurvedChange?: (curved: boolean) => void;
   onDeleteSelected: () => void;
   hasSelection: boolean;
   selectedAnnotation?: Annotation;
@@ -49,12 +52,17 @@ export function AnnotationToolbar({
   onStrokeWidthChange,
   onFontSizeChange,
   onFontStyleChange,
+  onCurvedChange,
   onDeleteSelected,
   hasSelection,
   selectedAnnotation,
 }: AnnotationToolbarProps) {
   // Show text controls when text tool is active or a text annotation is selected
   const showTextControls = activeTool === 'text' || selectedAnnotation?.type === 'text';
+
+  // Show arrow controls when an arrow annotation is selected
+  const showArrowControls = selectedAnnotation?.type === 'arrow';
+  const isArrowCurved = selectedAnnotation?.type === 'arrow' && selectedAnnotation?.curved;
 
   // Get current font values (from selected annotation or defaults)
   const currentFontSize = selectedAnnotation?.type === 'text' ? selectedAnnotation.fontSize || 48 : fontSize;
@@ -122,6 +130,12 @@ export function AnnotationToolbar({
       label: 'Text',
       shortcut: 'T',
       icon: <Type className="w-5 h-5" />,
+    },
+    {
+      id: 'spotlight',
+      label: 'Spotlight',
+      shortcut: 'S',
+      icon: <Lightbulb className="w-5 h-5" />,
     },
     {
       id: 'crop',
@@ -239,6 +253,24 @@ export function AnnotationToolbar({
             title="Italic"
           >
             <Italic className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Arrow Controls - Curved Toggle */}
+      {showArrowControls && onCurvedChange && (
+        <div className="flex items-center gap-1 px-3 border-r border-white/10">
+          <button
+            onClick={() => onCurvedChange(!isArrowCurved)}
+            className={`p-2 rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
+              isArrowCurved
+                ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/30'
+                : 'text-slate-400 hover:text-white hover:bg-white/10'
+            }`}
+            title="Curved Arrow"
+          >
+            <Spline className="w-4 h-4" />
+            <span className="text-xs font-medium">Curve</span>
           </button>
         </div>
       )}

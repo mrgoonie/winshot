@@ -18,6 +18,7 @@ export namespace config {
 	    defaultFormat: string;
 	    jpegQuality: number;
 	    includeBackground: boolean;
+	    autoCopyToClipboard: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new ExportConfig(source);
@@ -28,6 +29,7 @@ export namespace config {
 	        this.defaultFormat = source["defaultFormat"];
 	        this.jpegQuality = source["jpegQuality"];
 	        this.includeBackground = source["includeBackground"];
+	        this.autoCopyToClipboard = source["autoCopyToClipboard"];
 	    }
 	}
 	export class QuickSaveConfig {
@@ -48,6 +50,7 @@ export namespace config {
 	    launchOnStartup: boolean;
 	    minimizeToTray: boolean;
 	    showNotification: boolean;
+	    closeToTray: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new StartupConfig(source);
@@ -58,6 +61,7 @@ export namespace config {
 	        this.launchOnStartup = source["launchOnStartup"];
 	        this.minimizeToTray = source["minimizeToTray"];
 	        this.showNotification = source["showNotification"];
+	        this.closeToTray = source["closeToTray"];
 	    }
 	}
 	export class HotkeyConfig {
@@ -168,6 +172,7 @@ export namespace main {
 	    scaleRatio: number;
 	    physicalW: number;
 	    physicalH: number;
+	    displayIndex: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new RegionCaptureData(source);
@@ -183,6 +188,7 @@ export namespace main {
 	        this.scaleRatio = source["scaleRatio"];
 	        this.physicalW = source["physicalW"];
 	        this.physicalH = source["physicalH"];
+	        this.displayIndex = source["displayIndex"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -267,6 +273,32 @@ export namespace windows {
 	        this.y = source["y"];
 	        this.width = source["width"];
 	        this.height = source["height"];
+	    }
+	}
+	export class WindowInfoWithThumbnail {
+	    handle: any;
+	    title: string;
+	    className: string;
+	    x: number;
+	    y: number;
+	    width: number;
+	    height: number;
+	    thumbnail: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new WindowInfoWithThumbnail(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.handle = source["handle"];
+	        this.title = source["title"];
+	        this.className = source["className"];
+	        this.x = source["x"];
+	        this.y = source["y"];
+	        this.width = source["width"];
+	        this.height = source["height"];
+	        this.thumbnail = source["thumbnail"];
 	    }
 	}
 

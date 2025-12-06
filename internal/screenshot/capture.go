@@ -16,14 +16,27 @@ type CaptureResult struct {
 	Data   string `json:"data"` // Base64 encoded PNG
 }
 
-// CaptureFullscreen captures the entire primary display
+// CaptureFullscreen captures the display where the cursor is currently located
 func CaptureFullscreen() (*CaptureResult, error) {
-	bounds := screenshot.GetDisplayBounds(0)
+	displayIndex := GetMonitorAtCursor()
+	bounds := screenshot.GetDisplayBounds(displayIndex)
 	img, err := screenshot.CaptureRect(bounds)
 	if err != nil {
 		return nil, err
 	}
 	return encodeImage(img)
+}
+
+// CaptureActiveDisplay captures the display where the cursor is located and returns display info
+func CaptureActiveDisplay() (*CaptureResult, int, error) {
+	displayIndex := GetMonitorAtCursor()
+	bounds := screenshot.GetDisplayBounds(displayIndex)
+	img, err := screenshot.CaptureRect(bounds)
+	if err != nil {
+		return nil, displayIndex, err
+	}
+	result, err := encodeImage(img)
+	return result, displayIndex, err
 }
 
 // CaptureRegion captures a specific region of the screen

@@ -20,6 +20,7 @@ var (
 	procBringWindowToTop       = user32Win.NewProc("BringWindowToTop")
 	procShowWindow             = user32Win.NewProc("ShowWindow")
 	procIsIconic               = user32Win.NewProc("IsIconic")
+	procGetCursorPos           = user32Win.NewProc("GetCursorPos")
 )
 
 const (
@@ -30,6 +31,10 @@ const (
 
 type RECT struct {
 	Left, Top, Right, Bottom int32
+}
+
+type POINT struct {
+	X, Y int32
 }
 
 func init() {
@@ -100,4 +105,30 @@ func CaptureWindowByCoords(hwnd uintptr) (*CaptureResult, error) {
 
 	// Capture the screen region at window coordinates
 	return CaptureRegion(x, y, width, height)
+}
+
+// GetCursorPosition returns the current cursor position in screen coordinates
+func GetCursorPosition() (x, y int) {
+	var pt POINT
+	procGetCursorPos.Call(uintptr(unsafe.Pointer(&pt)))
+	return int(pt.X), int(pt.Y)
+}
+
+// GetMonitorAtCursor returns the display index where the cursor is currently located
+// Returns 0 (primary display) if cursor position cannot be determined
+func GetMonitorAtCursor() int {
+	cursorX, cursorY := GetCursorPosition()
+
+	numDisplays := GetDisplayCount()
+	for i := 0; i < numDisplays; i++ {
+		bounds := GetDisplayBounds(i)
+		// Check if cursor is within this display's bounds
+		if cursorX >= bounds.Min.X && cursorX < bounds.Max.X &&
+			cursorY >= bounds.Min.Y && cursorY < bounds.Max.Y {
+			return i
+		}
+	}
+
+	// Fallback to primary display
+	return 0
 }

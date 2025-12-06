@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { WindowInfo } from '../types';
-import { GetWindowList } from '../../wailsjs/go/main/App';
+import { WindowInfo, WindowInfoWithThumbnail } from '../types';
+import { GetWindowListWithThumbnails } from '../../wailsjs/go/main/App';
 import { X, Search, AppWindow, ChevronRight, RefreshCw } from 'lucide-react';
 
 interface WindowPickerProps {
@@ -10,7 +10,7 @@ interface WindowPickerProps {
 }
 
 export function WindowPicker({ isOpen, onClose, onSelect }: WindowPickerProps) {
-  const [windows, setWindows] = useState<WindowInfo[]>([]);
+  const [windows, setWindows] = useState<WindowInfoWithThumbnail[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -23,9 +23,9 @@ export function WindowPicker({ isOpen, onClose, onSelect }: WindowPickerProps) {
   const loadWindows = async () => {
     setIsLoading(true);
     try {
-      const list = await GetWindowList();
+      const list = await GetWindowListWithThumbnails();
       // Filter out our own window and sort by title
-      const filtered = (list as WindowInfo[])
+      const filtered = (list as WindowInfoWithThumbnail[])
         .filter(w => !w.title.includes('WinShot'))
         .sort((a, b) => a.title.localeCompare(b.title));
       setWindows(filtered);
@@ -43,7 +43,7 @@ export function WindowPicker({ isOpen, onClose, onSelect }: WindowPickerProps) {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="glass-card rounded-2xl w-[600px] max-h-[80vh] flex flex-col overflow-hidden">
+      <div className="glass-card rounded-2xl w-[700px] max-h-[85vh] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="p-5 border-b border-white/10 flex items-center justify-between">
           <h2 className="text-lg font-bold text-gradient">Select Window</h2>
@@ -74,9 +74,13 @@ export function WindowPicker({ isOpen, onClose, onSelect }: WindowPickerProps) {
         <div className="flex-1 overflow-y-auto p-3">
           {isLoading ? (
             <div className="flex items-center justify-center py-12 text-slate-400">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
-                <span>Loading windows...</span>
+              <div className="flex flex-col items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
+                  <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" style={{ animationDelay: '0.2s' }} />
+                  <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" style={{ animationDelay: '0.4s' }} />
+                </div>
+                <span>Loading windows with previews...</span>
               </div>
             </div>
           ) : filteredWindows.length === 0 ? (
@@ -84,27 +88,38 @@ export function WindowPicker({ isOpen, onClose, onSelect }: WindowPickerProps) {
               No windows found
             </div>
           ) : (
-            <div className="space-y-1">
+            <div className="space-y-2">
               {filteredWindows.map((window) => (
                 <button
                   key={window.handle}
                   onClick={() => onSelect(window)}
                   className="w-full p-3 text-left rounded-xl transition-all duration-200
-                             bg-white/5 hover:bg-white/10 border border-transparent hover:border-white/10 group"
+                             bg-white/5 hover:bg-white/10 border border-transparent hover:border-violet-500/30 group"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500/20 to-purple-500/20 border border-violet-500/20 flex items-center justify-center">
-                      <AppWindow className="w-5 h-5 text-violet-400" />
+                  <div className="flex items-center gap-4">
+                    {/* Thumbnail */}
+                    <div className="w-24 h-16 rounded-lg bg-slate-900/50 border border-white/10 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                      {window.thumbnail ? (
+                        <img
+                          src={`data:image/png;base64,${window.thumbnail}`}
+                          alt={window.title}
+                          className="max-w-full max-h-full object-contain"
+                        />
+                      ) : (
+                        <AppWindow className="w-8 h-8 text-slate-600" />
+                      )}
                     </div>
+                    {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <div className="text-white truncate font-medium">{window.title}</div>
-                      <div className="text-xs text-slate-400">
+                      <div className="text-white truncate font-medium text-sm">{window.title}</div>
+                      <div className="text-xs text-slate-400 mt-1">
                         <span className="text-violet-400">{window.width}</span>
                         <span className="text-slate-500"> × </span>
                         <span className="text-violet-400">{window.height}</span>
+                        <span className="text-slate-500 ml-2">px</span>
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-violet-400 group-hover:translate-x-1 transition-all duration-200" />
+                    <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-violet-400 group-hover:translate-x-1 transition-all duration-200 flex-shrink-0" />
                   </div>
                 </button>
               ))}
@@ -116,9 +131,10 @@ export function WindowPicker({ isOpen, onClose, onSelect }: WindowPickerProps) {
         <div className="p-4 border-t border-white/10 flex justify-between items-center">
           <button
             onClick={loadWindows}
-            className="text-slate-400 hover:text-violet-400 transition-all duration-200 text-sm flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5"
+            disabled={isLoading}
+            className="text-slate-400 hover:text-violet-400 transition-all duration-200 text-sm flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </button>
           <span className="text-sm text-slate-400">

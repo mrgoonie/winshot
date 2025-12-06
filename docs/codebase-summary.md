@@ -240,13 +240,26 @@ Central state management and orchestration.
 
 3. **Annotation State**
    - `annotations[]` - Array of shape objects
-   - `activeTool` - Current editor tool
+   - `activeTool` - Current editor tool ('select' | 'crop' | AnnotationType)
    - `selectedAnnotationId` - Selected shape
    - `strokeColor`, `strokeWidth` - Drawing properties
+   - `fontSize`, `fontStyle` - Text annotation properties
 
-4. **Crop State**
-   - `cropArea` - {x, y, width, height}
-   - `aspectRatio` - 6 preset + free
+4. **Crop State (Phase 01 Complete)**
+   - `cropMode` - Boolean flag for active crop editing
+   - `cropArea` - CropArea {x, y, width, height} | null
+   - `cropAspectRatio` - 'free' | '16:9' | '4:3' | '1:1' | '9:16' | '3:4'
+   - `isDrawingCrop` - Boolean flag for drag operation
+   - `appliedCrop` - CropArea | null (persisted crop applied to screenshot)
+
+**Crop Handlers (Phase 01):**
+   - `handleCropToolSelect()` - Activate crop mode, restore previous crop if exists
+   - `handleCropChange(area)` - Update crop bounds during editing
+   - `handleCropApply()` - Confirm crop, persist to appliedCrop
+   - `handleCropCancel()` - Discard changes, reset crop state
+   - `handleCropAspectRatioChange(ratio)` - Update aspect ratio, constrain existing area
+   - `handleCropReset()` - Clear applied crop completely
+   - `constrainToAspectRatio()` - Helper to maintain aspect ratio during resize
 
 5. **UI State**
    - `showWindowPicker`, `showRegionSelector`, `showSettings`
@@ -305,7 +318,7 @@ interface WindowInfo {
 
 interface Annotation {
   id: string
-  type: 'rectangle' | 'ellipse' | 'arrow' | 'line' | 'text'
+  type: 'rectangle' | 'ellipse' | 'arrow' | 'line' | 'text' | 'spotlight'
   x, y, width, height: number
   stroke: string
   strokeWidth: number
@@ -313,7 +326,22 @@ interface Annotation {
   points?: number[]  // For arrows/lines
   text?: string
   fontSize?: number
+  fontFamily?: string
+  fontStyle?: 'normal' | 'bold' | 'italic' | 'bold italic'
+  textAlign?: 'left' | 'center' | 'right'
+  dimOpacity?: number  // For spotlight (0-1)
 }
+
+interface CropArea {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+type CropAspectRatio = 'free' | '16:9' | '4:3' | '1:1' | '9:16' | '3:4'
+
+type EditorTool = 'select' | 'crop' | AnnotationType
 
 type OutputRatio =
   | 'auto' | '1:1' | '4:3' | '3:2' | '16:9'

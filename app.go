@@ -1,14 +1,21 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
+	"image"
+	"image/gif"
+	"image/jpeg"
+	"image/png"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"golang.org/x/image/bmp"
+	"golang.org/x/image/webp"
 	"winshot/internal/config"
 	"winshot/internal/hotkeys"
 	"winshot/internal/screenshot"
@@ -20,10 +27,13 @@ import (
 type App struct {
 	ctx           context.Context
 	hotkeyManager *hotkeys.HotkeyManager
-	trayIcon      *tray.TrayIcon
-	config        *config.Config
-	lastWidth     int
-	lastHeight    int
+	trayIcon         *tray.TrayIcon
+	config           *config.Config
+	lastWidth        int
+	lastHeight       int
+	preCaptureWidth  int // Window size before capture (protected from resize events)
+	preCaptureHeight int
+	isCapturing      bool // Flag to prevent resize events during capture
 }
 
 // NewApp creates a new App application struct
@@ -112,6 +122,10 @@ func (a *App) onTrayMenu(menuID int) {
 
 // UpdateWindowSize tracks the current window size for persistence
 func (a *App) UpdateWindowSize(width, height int) {
+	// Skip updates during capture to preserve pre-capture size
+	if a.isCapturing {
+		return
+	}
 	if width >= 800 && height >= 600 {
 		a.lastWidth = width
 		a.lastHeight = height
@@ -123,59 +137,126 @@ func (a *App) MinimizeToTray() {
 	runtime.WindowHide(a.ctx)
 }
 
-// RegionCaptureData holds the fullscreen screenshot and display info for region selection
-type RegionCaptureData struct {
-	Screenshot  *screenshot.CaptureResult `json:"screenshot"`
-	ScreenX     int                       `json:"screenX"`
-	ScreenY     int                       `json:"screenY"`
-	Width       int                       `json:"width"`
-	Height      int                       `json:"height"`
-	ScaleRatio  float64                   `json:"scaleRatio"`  // DPI scale ratio (physical/logical)
-	PhysicalW   int                       `json:"physicalW"`   // Actual screenshot width
-	PhysicalH   int                       `json:"physicalH"`   // Actual screenshot height
+// OnBeforeClose is called when the window close button is clicked
+// Returns true to prevent the default close behavior (if close-to-tray is enabled)
+func (a *App) OnBeforeClose(ctx context.Context) bool {
+	if a.config != nil && a.config.Startup.CloseToTray {
+		// Hide window instead of closing
+		runtime.WindowHide(ctx)
+		return true // Prevent default close
+	}
+	return false // Allow normal close
 }
 
-// PrepareRegionCapture prepares for region selection by capturing fullscreen and setting up overlay
+// RegionCaptureData holds the fullscreen screenshot and display info for region selection
+type RegionCaptureData struct {
+	Screenshot   *screenshot.CaptureResult `json:"screenshot"`
+	ScreenX      int                       `json:"screenX"`
+	ScreenY      int                       `json:"screenY"`
+	Width        int                       `json:"width"`
+	Height       int                       `json:"height"`
+	ScaleRatio   float64                   `json:"scaleRatio"`   // DPI scale ratio (physical/logical)
+	PhysicalW    int                       `json:"physicalW"`    // Actual screenshot width
+	PhysicalH    int                       `json:"physicalH"`    // Actual screenshot height
+	DisplayIndex int                       `json:"displayIndex"` // Index of the captured display
+}
+
+// PrepareRegionCapture prepares for region selection by capturing the active monitor and setting up overlay
 func (a *App) PrepareRegionCapture() (*RegionCaptureData, error) {
+	// Set capturing flag to prevent resize events from overwriting saved size
+	a.isCapturing = true
+
+	// Save current window size before hiding (protected from resize events)
+	width, height := runtime.WindowGetSize(a.ctx)
+	if width >= 800 && height >= 600 {
+		a.preCaptureWidth = width
+		a.preCaptureHeight = height
+	} else if a.lastWidth >= 800 && a.lastHeight >= 600 {
+		// Fallback to last tracked size
+		a.preCaptureWidth = a.lastWidth
+		a.preCaptureHeight = a.lastHeight
+	} else {
+		// Default fallback
+		a.preCaptureWidth = 1200
+		a.preCaptureHeight = 800
+	}
+
 	// Hide the window first so it's not in the screenshot
 	runtime.WindowHide(a.ctx)
 
-	// Wait for window to fully hide
-	time.Sleep(150 * time.Millisecond)
+	// Wait for window to fully hide (350ms needed for Windows DWM compositor)
+	time.Sleep(350 * time.Millisecond)
 
-	// Capture fullscreen screenshot (at physical/native resolution)
-	result, err := screenshot.CaptureFullscreen()
+	// Capture the display where cursor is located (at physical/native resolution)
+	result, displayIndex, err := screenshot.CaptureActiveDisplay()
 	if err != nil {
 		// Show window again on error
 		runtime.WindowShow(a.ctx)
 		return nil, err
 	}
 
+	// Get the physical bounds of the captured display
+	displayBounds := screenshot.GetDisplayBounds(displayIndex)
+	screenX := displayBounds.Min.X
+	screenY := displayBounds.Min.Y
+
 	// Get logical screen info from Wails runtime
 	// Wails ScreenGetAll returns logical (DPI-scaled) dimensions
 	screens, _ := runtime.ScreenGetAll(a.ctx)
-	var primaryScreen runtime.Screen
-	for _, s := range screens {
-		if s.IsPrimary {
-			primaryScreen = s
-			break
+
+	// Calculate logical dimensions based on physical screenshot and DPI
+	// We use the screenshot dimensions directly since they represent the actual captured area
+	logicalWidth := result.Width
+	logicalHeight := result.Height
+	scaleRatio := 1.0
+
+	// Try to find matching screen from Wails to get logical dimensions
+	// This helps handle DPI scaling correctly
+	if len(screens) > 0 {
+		// Find screen that best matches our captured display
+		var matchedScreen *runtime.Screen
+		for i := range screens {
+			s := &screens[i]
+			// Check if this screen's size roughly matches our physical capture
+			// (accounting for potential DPI differences)
+			if s.Size.Width > 0 && s.Size.Height > 0 {
+				// For now, use the screen at the matching index if available
+				if i == displayIndex && i < len(screens) {
+					matchedScreen = s
+					break
+				}
+			}
+		}
+
+		// If we found a match, use its logical dimensions
+		if matchedScreen != nil {
+			logicalWidth = matchedScreen.Size.Width
+			logicalHeight = matchedScreen.Size.Height
+			scaleRatio = float64(result.Width) / float64(logicalWidth)
+			if scaleRatio < 1.0 {
+				scaleRatio = 1.0
+			}
+		} else if len(screens) > 0 {
+			// Fallback: estimate scale from first screen's DPI
+			firstScreen := screens[0]
+			if firstScreen.Size.Width > 0 {
+				estimatedScale := float64(displayBounds.Dx()) / float64(firstScreen.Size.Width)
+				if estimatedScale > 1.0 && estimatedScale < 4.0 {
+					scaleRatio = estimatedScale
+					logicalWidth = int(float64(result.Width) / scaleRatio)
+					logicalHeight = int(float64(result.Height) / scaleRatio)
+				}
+			}
 		}
 	}
-	if primaryScreen.Size.Width == 0 {
-		// Fallback to first screen if no primary found
-		primaryScreen = screens[0]
-	}
 
-	logicalWidth := primaryScreen.Size.Width
-	logicalHeight := primaryScreen.Size.Height
-
-	// Position window at screen origin (primary monitor is typically at 0,0)
-	runtime.WindowSetPosition(a.ctx, 0, 0)
+	// Position window at the captured display's origin
+	runtime.WindowSetPosition(a.ctx, screenX, screenY)
 
 	// Disable min size constraint temporarily
 	runtime.WindowSetMinSize(a.ctx, 0, 0)
 
-	// Set window size to full screen using LOGICAL dimensions
+	// Set window size to match the logical display dimensions
 	runtime.WindowSetSize(a.ctx, logicalWidth, logicalHeight)
 
 	// Make window always on top
@@ -184,21 +265,16 @@ func (a *App) PrepareRegionCapture() (*RegionCaptureData, error) {
 	// Show the window
 	runtime.WindowShow(a.ctx)
 
-	// Calculate DPI scale ratio (physical screenshot size / logical screen size)
-	scaleRatio := float64(result.Width) / float64(logicalWidth)
-	if scaleRatio < 1.0 {
-		scaleRatio = 1.0
-	}
-
 	return &RegionCaptureData{
-		Screenshot:  result,
-		ScreenX:     0,
-		ScreenY:     0,
-		Width:       logicalWidth,
-		Height:      logicalHeight,
-		ScaleRatio:  scaleRatio,
-		PhysicalW:   result.Width,
-		PhysicalH:   result.Height,
+		Screenshot:   result,
+		ScreenX:      screenX,
+		ScreenY:      screenY,
+		Width:        logicalWidth,
+		Height:       logicalHeight,
+		ScaleRatio:   scaleRatio,
+		PhysicalW:    result.Width,
+		PhysicalH:    result.Height,
+		DisplayIndex: displayIndex,
 	}, nil
 }
 
@@ -210,14 +286,18 @@ func (a *App) FinishRegionCapture() {
 	// Restore min size constraint
 	runtime.WindowSetMinSize(a.ctx, 800, 600)
 
-	// Restore window to saved size from config
-	width := 1200
-	height := 800
-	if a.config != nil && a.config.Window.Width >= 800 && a.config.Window.Height >= 600 {
-		width = a.config.Window.Width
-		height = a.config.Window.Height
+	// Restore window to the size it was before capture (protected value)
+	width := a.preCaptureWidth
+	height := a.preCaptureHeight
+	if width < 800 || height < 600 {
+		// Fallback to defaults
+		width = 1200
+		height = 800
 	}
 	runtime.WindowSetSize(a.ctx, width, height)
+
+	// Clear capturing flag to allow resize tracking again
+	a.isCapturing = false
 
 	// Center the window
 	runtime.WindowCenter(a.ctx)
@@ -230,7 +310,7 @@ func (a *App) ShowWindow() {
 	runtime.WindowSetAlwaysOnTop(a.ctx, false)
 }
 
-// CaptureFullscreen captures the entire primary display
+// CaptureFullscreen captures the display where the cursor is currently located
 func (a *App) CaptureFullscreen() (*screenshot.CaptureResult, error) {
 	return screenshot.CaptureFullscreen()
 }
@@ -263,6 +343,11 @@ func (a *App) GetDisplayCount() int {
 	return screenshot.GetDisplayCount()
 }
 
+// GetActiveDisplayIndex returns the index of the display where the cursor is located
+func (a *App) GetActiveDisplayIndex() int {
+	return screenshot.GetMonitorAtCursor()
+}
+
 // DisplayBounds represents the bounds of a display
 type DisplayBounds struct {
 	X      int `json:"x"`
@@ -285,6 +370,12 @@ func (a *App) GetDisplayBounds(displayIndex int) DisplayBounds {
 // GetWindowList returns a list of all visible windows
 func (a *App) GetWindowList() ([]winEnum.WindowInfo, error) {
 	return winEnum.EnumWindows()
+}
+
+// GetWindowListWithThumbnails returns a list of all visible windows with thumbnails
+func (a *App) GetWindowListWithThumbnails() ([]winEnum.WindowInfoWithThumbnail, error) {
+	// Use 160x120 for thumbnails (4:3 aspect, good balance of quality and speed)
+	return winEnum.EnumWindowsWithThumbnails(160, 120)
 }
 
 // GetWindowInfo returns information about a specific window
@@ -484,4 +575,73 @@ func (a *App) SaveBackgroundImages(images []string) error {
 	}
 	a.config.BackgroundImages = images
 	return a.config.Save()
+}
+
+// OpenImage opens a file dialog to select an image and returns it as a CaptureResult
+func (a *App) OpenImage() (*screenshot.CaptureResult, error) {
+	// Show open file dialog
+	filePath, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Open Image",
+		Filters: []runtime.FileFilter{
+			{DisplayName: "Image Files", Pattern: "*.png;*.jpg;*.jpeg;*.gif;*.bmp;*.webp"},
+			{DisplayName: "PNG Images", Pattern: "*.png"},
+			{DisplayName: "JPEG Images", Pattern: "*.jpg;*.jpeg"},
+			{DisplayName: "GIF Images", Pattern: "*.gif"},
+			{DisplayName: "BMP Images", Pattern: "*.bmp"},
+			{DisplayName: "WebP Images", Pattern: "*.webp"},
+		},
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if filePath == "" {
+		return nil, nil // User cancelled
+	}
+
+	// Read file
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Decode image to get dimensions
+	var img image.Image
+	ext := strings.ToLower(filepath.Ext(filePath))
+
+	switch ext {
+	case ".png":
+		img, err = png.Decode(bytes.NewReader(data))
+	case ".jpg", ".jpeg":
+		img, err = jpeg.Decode(bytes.NewReader(data))
+	case ".gif":
+		img, err = gif.Decode(bytes.NewReader(data))
+	case ".bmp":
+		img, err = bmp.Decode(bytes.NewReader(data))
+	case ".webp":
+		img, err = webp.Decode(bytes.NewReader(data))
+	default:
+		// Try to decode as any supported format
+		img, _, err = image.Decode(bytes.NewReader(data))
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	bounds := img.Bounds()
+
+	// Re-encode as PNG for consistent handling in frontend
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
+		return nil, err
+	}
+
+	// Return as base64 encoded PNG
+	return &screenshot.CaptureResult{
+		Width:  bounds.Dx(),
+		Height: bounds.Dy(),
+		Data:   base64.StdEncoding.EncodeToString(buf.Bytes()),
+	}, nil
 }

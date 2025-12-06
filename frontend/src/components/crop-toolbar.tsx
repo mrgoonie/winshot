@@ -1,71 +1,93 @@
-import { AspectRatio } from '../types';
+import React from 'react';
+import { CropAspectRatio } from '../types';
 
 interface CropToolbarProps {
-  aspectRatio: AspectRatio;
-  onAspectRatioChange: (ratio: AspectRatio) => void;
-  onApplyCrop: () => void;
-  onCancelCrop: () => void;
-  isCropActive: boolean;
+  aspectRatio: CropAspectRatio;
+  onAspectRatioChange: (ratio: CropAspectRatio) => void;
+  onApply: () => void;
+  onCancel: () => void;
+  onReset: () => void;
+  canApply: boolean;
+  canReset: boolean;
 }
 
-const ASPECT_RATIOS: { id: AspectRatio; label: string }[] = [
-  { id: 'free', label: 'Free' },
-  { id: '16:9', label: '16:9' },
-  { id: '4:3', label: '4:3' },
-  { id: '1:1', label: '1:1' },
-  { id: '9:16', label: '9:16' },
-  { id: '3:4', label: '3:4' },
+const ASPECT_RATIOS: { value: CropAspectRatio; label: string }[] = [
+  { value: 'free', label: 'Free' },
+  { value: '16:9', label: '16:9' },
+  { value: '4:3', label: '4:3' },
+  { value: '1:1', label: '1:1' },
+  { value: '9:16', label: '9:16' },
+  { value: '3:4', label: '3:4' },
 ];
 
 export function CropToolbar({
   aspectRatio,
   onAspectRatioChange,
-  onApplyCrop,
-  onCancelCrop,
-  isCropActive,
+  onApply,
+  onCancel,
+  onReset,
+  canApply,
+  canReset,
 }: CropToolbarProps) {
-  if (!isCropActive) return null;
-
   return (
-    <div className="flex items-center gap-3 px-3 py-2 glass-light border-t border-white/5">
-      <span className="text-sm text-slate-300 font-medium">Aspect Ratio</span>
-
-      <div className="flex gap-1">
-        {ASPECT_RATIOS.map((ratio) => (
+    <div className="flex items-center gap-2 px-4 py-2 bg-black/30 backdrop-blur-sm rounded-lg">
+      {/* Aspect Ratio Buttons */}
+      <div className="flex items-center gap-1">
+        <span className="text-white/60 text-xs mr-2">Ratio:</span>
+        {ASPECT_RATIOS.map(({ value, label }) => (
           <button
-            key={ratio.id}
-            onClick={() => onAspectRatioChange(ratio.id)}
-            className={`px-3 py-1 text-sm rounded-lg font-medium transition-all duration-200 ${
-              aspectRatio === ratio.id
-                ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/30'
-                : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/5'
+            key={value}
+            onClick={() => onAspectRatioChange(value)}
+            className={`px-2 py-1 text-xs rounded transition-colors ${
+              aspectRatio === value
+                ? 'bg-blue-500 text-white'
+                : 'bg-white/10 text-white/80 hover:bg-white/20'
             }`}
           >
-            {ratio.label}
+            {label}
           </button>
         ))}
       </div>
 
-      <div className="flex-1" />
+      {/* Divider */}
+      <div className="w-px h-6 bg-white/20 mx-2" />
 
-      <button
-        onClick={onCancelCrop}
-        className="px-4 py-1.5 text-sm rounded-lg font-medium transition-all duration-200
-                   bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20
-                   text-slate-300 hover:text-white"
-      >
-        Cancel
-      </button>
+      {/* Action Buttons */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onReset}
+          disabled={!canReset}
+          className={`px-3 py-1 text-xs rounded transition-colors ${
+            canReset
+              ? 'bg-red-500/80 text-white hover:bg-red-600'
+              : 'bg-white/5 text-white/30 cursor-not-allowed'
+          }`}
+        >
+          Reset
+        </button>
+        <button
+          onClick={onCancel}
+          className="px-3 py-1 text-xs bg-white/10 text-white/80 rounded hover:bg-white/20 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={onApply}
+          disabled={!canApply}
+          className={`px-3 py-1 text-xs rounded transition-colors ${
+            canApply
+              ? 'bg-green-500 text-white hover:bg-green-600'
+              : 'bg-white/5 text-white/30 cursor-not-allowed'
+          }`}
+        >
+          Apply
+        </button>
+      </div>
 
-      <button
-        onClick={onApplyCrop}
-        className="px-4 py-1.5 text-sm rounded-lg font-medium transition-all duration-200
-                   bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                   text-white shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40
-                   hover:-translate-y-0.5 active:translate-y-0"
-      >
-        Apply Crop
-      </button>
+      {/* Hint */}
+      <span className="text-white/40 text-xs ml-2">Press Esc to cancel</span>
     </div>
   );
 }
+
+export default CropToolbar;
