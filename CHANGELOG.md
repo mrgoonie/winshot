@@ -1,3 +1,18 @@
+# [1.1.0-beta.3](https://github.com/mrgoonie/winshot/compare/v1.1.0-beta.2...v1.1.0-beta.3) (2025-12-10)
+
+
+### Bug Fixes
+
+* **quick-save:** use configured folder instead of hardcoding save directory ([d868093](https://github.com/mrgoonie/winshot/commit/d868093ae7173e8647ccaba8c38751e50fca6879))
+* resolve 3 bugs from issue [#21](https://github.com/mrgoonie/winshot/issues/21) ([9652b5b](https://github.com/mrgoonie/winshot/commit/9652b5b12697b7d2cee74622d68acdcf5eafb62d))
+* **startup:** minimize app window on startup when configured ([3f5f4d1](https://github.com/mrgoonie/winshot/commit/3f5f4d1a7b87e12209e18ba5a0f125bfa0511290)), closes [#31](https://github.com/mrgoonie/winshot/issues/31)
+* **tray:** resolve quit button not working in tray context menu ([a459568](https://github.com/mrgoonie/winshot/commit/a45956844472465b18c8893d6c9ac3f6b8e4da03))
+
+
+### Features
+
+* **editor:** copy rendered canvas with applied settings to clipboard ([dbe91dd](https://github.com/mrgoonie/winshot/commit/dbe91dd824be72d14812bde88b06d7c90d305f1e))
+
 # [1.1.0](https://github.com/mrgoonie/winshot/compare/v1.0.0...v1.1.0) (2025-12-06)
 
 
