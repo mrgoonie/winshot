@@ -25,7 +25,7 @@ import {
   GetConfig,
   OpenImage,
 } from '../wailsjs/go/main/App';
-import { EventsOn, EventsOff, WindowGetSize } from '../wailsjs/runtime/runtime';
+import { EventsOn, EventsOff, WindowGetSize, Quit } from '../wailsjs/runtime/runtime';
 
 // Storage key for persistent editor settings
 const EDITOR_SETTINGS_KEY = 'winshot-editor-settings';
@@ -564,11 +564,13 @@ function App() {
     EventsOn('hotkey:fullscreen', handleFullscreen);
     EventsOn('hotkey:region', handleRegion);
     EventsOn('hotkey:window', handleWindow);
+    EventsOn('app:quit', Quit);
 
     return () => {
       EventsOff('hotkey:fullscreen');
       EventsOff('hotkey:region');
       EventsOff('hotkey:window');
+      EventsOff('app:quit');
     };
   }, [handleCapture]);
 

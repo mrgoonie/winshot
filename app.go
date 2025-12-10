@@ -125,7 +125,16 @@ func (a *App) onTrayMenu(menuID int) {
 	case tray.MenuWindow:
 		runtime.EventsEmit(a.ctx, "hotkey:window")
 	case tray.MenuQuit:
-		runtime.Quit(a.ctx)
+		// Quit the application - use goroutine to avoid blocking tray menu
+		go func() {
+			// First try graceful shutdown via runtime.Quit
+			// This may not work reliably on Windows from a goroutine
+			runtime.Quit(a.ctx)
+
+			// Fallback: force exit after a short delay if Quit didn't work
+			time.Sleep(500 * time.Millisecond)
+			os.Exit(0)
+		}()
 	}
 }
 

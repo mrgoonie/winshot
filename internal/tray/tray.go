@@ -1,33 +1,38 @@
 package tray
 
 import (
+	"os"
 	"syscall"
 	"unsafe"
 )
 
 var (
-	shell32                = syscall.NewLazyDLL("shell32.dll")
-	user32                 = syscall.NewLazyDLL("user32.dll")
-	kernel32               = syscall.NewLazyDLL("kernel32.dll")
-	procShell_NotifyIconW  = shell32.NewProc("Shell_NotifyIconW")
-	procCreatePopupMenu    = user32.NewProc("CreatePopupMenu")
-	procAppendMenuW        = user32.NewProc("AppendMenuW")
-	procTrackPopupMenu     = user32.NewProc("TrackPopupMenu")
-	procDestroyMenu        = user32.NewProc("DestroyMenu")
-	procGetCursorPos       = user32.NewProc("GetCursorPos")
+	shell32                 = syscall.NewLazyDLL("shell32.dll")
+	user32                  = syscall.NewLazyDLL("user32.dll")
+	kernel32                = syscall.NewLazyDLL("kernel32.dll")
+	procShell_NotifyIconW   = shell32.NewProc("Shell_NotifyIconW")
+	procExtractIconW        = shell32.NewProc("ExtractIconW")
+	procCreatePopupMenu     = user32.NewProc("CreatePopupMenu")
+	procAppendMenuW         = user32.NewProc("AppendMenuW")
+	procTrackPopupMenu      = user32.NewProc("TrackPopupMenu")
+	procDestroyMenu         = user32.NewProc("DestroyMenu")
+	procGetCursorPos        = user32.NewProc("GetCursorPos")
 	procSetForegroundWindow = user32.NewProc("SetForegroundWindow")
-	procPostMessageW       = user32.NewProc("PostMessageW")
-	procCreateWindowExW    = user32.NewProc("CreateWindowExW")
-	procDefWindowProcW     = user32.NewProc("DefWindowProcW")
-	procRegisterClassExW   = user32.NewProc("RegisterClassExW")
-	procGetModuleHandleW   = kernel32.NewProc("GetModuleHandleW")
-	procLoadIconW          = user32.NewProc("LoadIconW")
-	procGetMessageW        = user32.NewProc("GetMessageW")
-	procTranslateMessage   = user32.NewProc("TranslateMessage")
-	procDispatchMessageW   = user32.NewProc("DispatchMessageW")
+	procPostMessageW        = user32.NewProc("PostMessageW")
+	procCreateWindowExW     = user32.NewProc("CreateWindowExW")
+	procDefWindowProcW      = user32.NewProc("DefWindowProcW")
+	procRegisterClassExW    = user32.NewProc("RegisterClassExW")
+	procGetModuleHandleW    = kernel32.NewProc("GetModuleHandleW")
+	procLoadIconW           = user32.NewProc("LoadIconW")
+	procLoadImageW          = user32.NewProc("LoadImageW")
+	procGetMessageW         = user32.NewProc("GetMessageW")
+	procPeekMessageW        = user32.NewProc("PeekMessageW")
+	procTranslateMessage    = user32.NewProc("TranslateMessage")
+	procDispatchMessageW    = user32.NewProc("DispatchMessageW")
+	procDestroyIcon         = user32.NewProc("DestroyIcon")
 )
 
-// Notify icon message
+// Notify icon constants
 const (
 	NIM_ADD    = 0x00000000
 	NIM_MODIFY = 0x00000001
@@ -38,12 +43,13 @@ const (
 	NIF_TIP     = 0x00000004
 	NIF_INFO    = 0x00000010
 
-	WM_USER         = 0x0400
-	WM_TRAYICON     = WM_USER + 1
-	WM_LBUTTONUP    = 0x0202
-	WM_RBUTTONUP    = 0x0205
+	WM_USER          = 0x0400
+	WM_TRAYICON      = WM_USER + 1
+	WM_LBUTTONUP     = 0x0202
+	WM_RBUTTONUP     = 0x0205
 	WM_LBUTTONDBLCLK = 0x0203
-	WM_COMMAND      = 0x0111
+	WM_COMMAND       = 0x0111
+	WM_QUIT          = 0x0012
 
 	MF_STRING    = 0x00000000
 	MF_SEPARATOR = 0x00000800
@@ -57,6 +63,12 @@ const (
 	TPM_NONOTIFY    = 0x0080
 
 	IDI_APPLICATION = 32512
+
+	IMAGE_ICON      = 1
+	LR_LOADFROMFILE = 0x00000010
+	LR_DEFAULTSIZE  = 0x00000040
+
+	PM_REMOVE = 0x0001
 )
 
 // Menu item IDs
@@ -124,14 +136,15 @@ type TrayMenuCallback func(menuID int)
 
 // TrayIcon represents the system tray icon
 type TrayIcon struct {
-	hwnd      uintptr
-	nid       NOTIFYICONDATAW
-	tooltip   string
-	visible   bool
-	callback  TrayMenuCallback
-	onShow    func()
-	running   bool
-	stopCh    chan struct{}
+	hwnd     uintptr
+	nid      NOTIFYICONDATAW
+	hIcon    uintptr
+	tooltip  string
+	visible  bool
+	callback TrayMenuCallback
+	onShow   func()
+	running  bool
+	stopCh   chan struct{}
 }
 
 // Global tray instance for window proc callback
@@ -164,12 +177,34 @@ func (t *TrayIcon) Start() error {
 	return nil
 }
 
+// loadIcon tries to load the application icon from the executable
+func loadIcon(hInstance uintptr) uintptr {
+	// Try to get executable path and extract icon from it
+	exePath, err := os.Executable()
+	if err == nil {
+		exePathPtr, _ := syscall.UTF16PtrFromString(exePath)
+		// ExtractIconW returns the icon handle, 0 index for first icon
+		hIcon, _, _ := procExtractIconW.Call(
+			hInstance,
+			uintptr(unsafe.Pointer(exePathPtr)),
+			0,
+		)
+		if hIcon > 1 { // Returns >1 on success, 0 or 1 means failure
+			return hIcon
+		}
+	}
+
+	// Fallback to default application icon
+	hIcon, _, _ := procLoadIconW.Call(0, uintptr(IDI_APPLICATION))
+	return hIcon
+}
+
 func (t *TrayIcon) run() {
 	// Get module handle
 	hInstance, _, _ := procGetModuleHandleW.Call(0)
 
-	// Load default application icon
-	hIcon, _, _ := procLoadIconW.Call(0, uintptr(IDI_APPLICATION))
+	// Load icon (try exe icon first, fallback to default)
+	t.hIcon = loadIcon(hInstance)
 
 	// Register window class
 	className := syscall.StringToUTF16Ptr("WinShotTrayClass")
@@ -185,13 +220,17 @@ func (t *TrayIcon) run() {
 	t.hwnd, _, _ = procCreateWindowExW.Call(
 		0,
 		uintptr(unsafe.Pointer(className)),
-		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr("WinShot"))),
+		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr("WinShotTray"))),
 		0,
 		0, 0, 0, 0,
 		0, 0,
 		hInstance,
 		0,
 	)
+
+	if t.hwnd == 0 {
+		return
+	}
 
 	// Initialize NOTIFYICONDATAW
 	t.nid = NOTIFYICONDATAW{
@@ -200,7 +239,7 @@ func (t *TrayIcon) run() {
 		UID:              1,
 		UFlags:           NIF_MESSAGE | NIF_ICON | NIF_TIP,
 		UCallbackMessage: WM_TRAYICON,
-		HIcon:            hIcon,
+		HIcon:            t.hIcon,
 	}
 
 	// Set tooltip
@@ -210,27 +249,38 @@ func (t *TrayIcon) run() {
 	}
 
 	// Add tray icon
-	procShell_NotifyIconW.Call(NIM_ADD, uintptr(unsafe.Pointer(&t.nid)))
+	ret, _, _ := procShell_NotifyIconW.Call(NIM_ADD, uintptr(unsafe.Pointer(&t.nid)))
+	if ret == 0 {
+		return
+	}
 	t.visible = true
 	t.running = true
 
-	// Message loop
+	// Message loop - simple blocking loop without select
 	var msg MSG
-	for {
+	for t.running {
+		// Use PeekMessage with timeout behavior via GetMessage
+		// GetMessage blocks until a message is available
+		ret, _, _ := procGetMessageW.Call(
+			uintptr(unsafe.Pointer(&msg)),
+			0, 0, 0,
+		)
+
+		// ret == 0 means WM_QUIT, ret == -1 means error
+		if ret == 0 || int32(ret) == -1 {
+			break
+		}
+
+		// Check if we should stop
 		select {
 		case <-t.stopCh:
+			t.running = false
 			return
 		default:
-			ret, _, _ := procGetMessageW.Call(
-				uintptr(unsafe.Pointer(&msg)),
-				0, 0, 0,
-			)
-			if ret == 0 {
-				return
-			}
-			procTranslateMessage.Call(uintptr(unsafe.Pointer(&msg)))
-			procDispatchMessageW.Call(uintptr(unsafe.Pointer(&msg)))
 		}
+
+		procTranslateMessage.Call(uintptr(unsafe.Pointer(&msg)))
+		procDispatchMessageW.Call(uintptr(unsafe.Pointer(&msg)))
 	}
 }
 
@@ -259,6 +309,9 @@ func trayWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 func (t *TrayIcon) showMenu() {
 	// Create popup menu
 	hMenu, _, _ := procCreatePopupMenu.Call()
+	if hMenu == 0 {
+		return
+	}
 
 	// Add menu items
 	appendMenu(hMenu, MF_STRING, MenuShow, "Show WinShot")
@@ -351,7 +404,15 @@ func (t *TrayIcon) Stop() error {
 	if t.running {
 		t.Hide()
 		t.running = false
-		close(t.stopCh)
+		// Signal stop - non-blocking send
+		select {
+		case t.stopCh <- struct{}{}:
+		default:
+		}
+		// Post quit message to exit the message loop
+		if t.hwnd != 0 {
+			procPostMessageW.Call(t.hwnd, WM_QUIT, 0, 0)
+		}
 	}
 	return nil
 }
