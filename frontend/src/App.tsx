@@ -134,50 +134,6 @@ function constrainToAspectRatio(area: CropArea, ratio: CropAspectRatio): CropAre
   }
 }
 
-// Helper to copy screenshot to clipboard with format from config
-async function copyScreenshotToClipboard(screenshotData: string, format: 'png' | 'jpeg', jpegQuality: number): Promise<boolean> {
-  try {
-    // Create an image from the base64 data
-    const img = new Image();
-    await new Promise<void>((resolve, reject) => {
-      img.onload = () => resolve();
-      img.onerror = reject;
-      img.src = `data:image/png;base64,${screenshotData}`;
-    });
-
-    // Create canvas and draw image
-    const canvas = document.createElement('canvas');
-    canvas.width = img.width;
-    canvas.height = img.height;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return false;
-    ctx.drawImage(img, 0, 0);
-
-    // Convert to blob with appropriate format
-    const mimeType = format === 'jpeg' ? 'image/jpeg' : 'image/png';
-    const quality = format === 'jpeg' ? jpegQuality / 100 : undefined;
-
-    const blob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob(resolve, mimeType, quality);
-    });
-
-    if (!blob) return false;
-
-    // Copy to clipboard - always use PNG for clipboard compatibility
-    await navigator.clipboard.write([
-      new ClipboardItem({
-        'image/png': format === 'png' ? blob : await new Promise<Blob>((resolve) => {
-          canvas.toBlob((b) => resolve(b!), 'image/png');
-        }),
-      }),
-    ]);
-    return true;
-  } catch (error) {
-    console.error('Failed to copy screenshot to clipboard:', error);
-    return false;
-  }
-}
-
 function App() {
   const stageRef = useRef<Konva.Stage>(null);
   const [screenshot, setScreenshot] = useState<CaptureResult | null>(null);
@@ -221,6 +177,9 @@ function App() {
 
   // Export state
   const [isExporting, setIsExporting] = useState(false);
+
+  // Auto-copy state: tracks when a fresh capture needs auto-copy after canvas renders
+  const [pendingAutoCopy, setPendingAutoCopy] = useState(false);
 
   // Settings modal state
   const [showSettings, setShowSettings] = useState(false);
@@ -300,23 +259,8 @@ function App() {
       setActiveTool('select');
       setStatusMessage(undefined);
 
-      // Auto-copy to clipboard if enabled (delay to ensure window is visible)
-      setTimeout(async () => {
-        try {
-          const cfg = await GetConfig();
-          if (cfg.export?.autoCopyToClipboard) {
-            const format = (cfg.export?.defaultFormat || 'png') as 'png' | 'jpeg';
-            const quality = cfg.export?.jpegQuality || 95;
-            const success = await copyScreenshotToClipboard(result.data, format, quality);
-            if (success) {
-              setStatusMessage('Copied to clipboard!');
-              setTimeout(() => setStatusMessage(undefined), 2000);
-            }
-          }
-        } catch (err) {
-          console.error('Auto-copy failed:', err);
-        }
-      }, 100);
+      // Trigger auto-copy of styled canvas (handled by useEffect)
+      setPendingAutoCopy(true);
     } catch (error) {
       console.error('Capture failed:', error);
       setStatusMessage('Capture failed');
@@ -340,23 +284,8 @@ function App() {
       setActiveTool('select');
       setStatusMessage(undefined);
 
-      // Auto-copy to clipboard if enabled (delay to ensure window is visible)
-      setTimeout(async () => {
-        try {
-          const cfg = await GetConfig();
-          if (cfg.export?.autoCopyToClipboard) {
-            const format = (cfg.export?.defaultFormat || 'png') as 'png' | 'jpeg';
-            const quality = cfg.export?.jpegQuality || 95;
-            const success = await copyScreenshotToClipboard(result.data, format, quality);
-            if (success) {
-              setStatusMessage('Copied to clipboard!');
-              setTimeout(() => setStatusMessage(undefined), 2000);
-            }
-          }
-        } catch (err) {
-          console.error('Auto-copy failed:', err);
-        }
-      }, 100);
+      // Trigger auto-copy of styled canvas (handled by useEffect)
+      setPendingAutoCopy(true);
     } catch (error) {
       console.error('Window capture failed:', error);
       setStatusMessage('Capture failed');
@@ -419,23 +348,8 @@ function App() {
         setRegionScreenshot(undefined);
         setRegionScaleRatio(1);
 
-        // Auto-copy to clipboard if enabled (delay to ensure window is visible)
-        setTimeout(async () => {
-          try {
-            const cfg = await GetConfig();
-            if (cfg.export?.autoCopyToClipboard) {
-              const format = (cfg.export?.defaultFormat || 'png') as 'png' | 'jpeg';
-              const quality = cfg.export?.jpegQuality || 95;
-              const success = await copyScreenshotToClipboard(croppedData, format, quality);
-              if (success) {
-                setStatusMessage('Copied to clipboard!');
-                setTimeout(() => setStatusMessage(undefined), 2000);
-              }
-            }
-          } catch (err) {
-            console.error('Auto-copy failed:', err);
-          }
-        }, 100);
+        // Trigger auto-copy of styled canvas (handled by useEffect)
+        setPendingAutoCopy(true);
       };
       img.onerror = () => {
         setStatusMessage('Failed to load screenshot');
@@ -1012,15 +926,10 @@ function App() {
     setTimeout(() => setStatusMessage(undefined), 3000);
   }, [getCanvasDataUrl]);
 
-  const handleCopyToClipboard = useCallback(async () => {
+  // Helper to copy styled canvas to clipboard (used by auto-copy and manual copy)
+  const copyStyledCanvasToClipboard = useCallback(async (): Promise<boolean> => {
     const stage = stageRef.current;
-    if (!stage || !screenshot) {
-      setStatusMessage('Copy failed: No canvas available');
-      return;
-    }
-
-    setIsExporting(true);
-    setStatusMessage('Copying to clipboard...');
+    if (!stage || !screenshot) return false;
 
     try {
       // Calculate the actual output dimensions
@@ -1062,25 +971,83 @@ function App() {
         canvas.toBlob(resolve, 'image/png');
       });
 
-      if (!blob) {
-        throw new Error('Failed to create image blob');
-      }
+      if (!blob) return false;
 
       await navigator.clipboard.write([
-        new ClipboardItem({
-          'image/png': blob,
-        }),
+        new ClipboardItem({ 'image/png': blob }),
       ]);
-
-      setStatusMessage('Copied to clipboard!');
+      return true;
     } catch (error) {
-      console.error('Copy to clipboard failed:', error);
+      console.error('Failed to copy styled canvas:', error);
+      return false;
+    }
+  }, [screenshot, padding, outputRatio]);
+
+  // Manual copy to clipboard handler (uses helper)
+  const handleCopyToClipboard = useCallback(async () => {
+    if (!stageRef.current || !screenshot) {
+      setStatusMessage('Copy failed: No canvas available');
+      return;
+    }
+
+    setIsExporting(true);
+    setStatusMessage('Copying to clipboard...');
+
+    const success = await copyStyledCanvasToClipboard();
+
+    if (success) {
+      setStatusMessage('Copied to clipboard!');
+    } else {
       setStatusMessage('Copy to clipboard failed');
     }
 
     setIsExporting(false);
     setTimeout(() => setStatusMessage(undefined), 2000);
-  }, [screenshot, padding, outputRatio]);
+  }, [screenshot, copyStyledCanvasToClipboard]);
+
+  // Auto-copy styled canvas to clipboard after capture completes
+  useEffect(() => {
+    if (!pendingAutoCopy || !screenshot) return;
+
+    let cancelled = false;
+
+    const performAutoCopy = async () => {
+      try {
+        const cfg = await GetConfig();
+        if (cancelled) return;
+
+        if (!cfg.export?.autoCopyToClipboard) {
+          setPendingAutoCopy(false);
+          return;
+        }
+
+        // Wait for canvas to render with new screenshot
+        // 300ms accounts for: React re-render + Konva image load
+        await new Promise(resolve => setTimeout(resolve, 300));
+        if (cancelled) return;
+
+        const success = await copyStyledCanvasToClipboard();
+        if (cancelled) return;
+
+        if (success) {
+          setStatusMessage('Copied to clipboard!');
+          setTimeout(() => setStatusMessage(undefined), 2000);
+        }
+      } catch (err) {
+        console.error('Auto-copy failed:', err);
+      }
+
+      if (!cancelled) {
+        setPendingAutoCopy(false);
+      }
+    };
+
+    performAutoCopy();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pendingAutoCopy, screenshot, copyStyledCanvasToClipboard]);
 
   // Keyboard shortcuts for export and import
   useEffect(() => {

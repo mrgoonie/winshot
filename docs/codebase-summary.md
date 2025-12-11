@@ -257,6 +257,7 @@ Central state management and orchestration.
    - `screenshot` - CaptureResult (width, height, base64 data)
    - `isCapturing` - Boolean flag
    - `captureMode` - 'fullscreen' | 'region' | 'window'
+   - `pendingAutoCopy` - Boolean flag to trigger styled canvas auto-copy after capture
 
 2. **Editor Settings (localStorage-persisted)**
    - `padding`, `cornerRadius`, `shadowSize`
@@ -291,11 +292,17 @@ Central state management and orchestration.
    - `statusMessage` - Toast/notification
    - `displayBounds` - Screen dimensions
 
+**Auto-Copy to Clipboard:**
+   - `copyStyledCanvasToClipboard()` - Helper that exports the styled canvas (with background, padding, effects) to clipboard PNG
+   - `handleCopyToClipboard()` - Manual copy trigger used by UI buttons
+   - Auto-copy flow: Sets `pendingAutoCopy` on capture → useEffect detects pending flag → Waits for canvas render → Calls `copyStyledCanvasToClipboard()` if `autoCopyToClipboard` config enabled
+
 **Key Features:**
 - localStorage persistence for editor settings
 - Hotkey event listeners (via Wails EventsOn)
 - Wails method bindings for backend calls
 - Canvas stage ref management with Konva
+- Styled canvas auto-copy to clipboard on capture completion (if enabled in config)
 
 ### Components (14 total)
 
