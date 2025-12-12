@@ -1,3 +1,25 @@
+# [1.2.0-beta.1](https://github.com/mrgoonie/winshot/compare/v1.1.0...v1.2.0-beta.1) (2025-12-12)
+
+
+### Bug Fixes
+
+* **app:** restore window position after region capture ([38e1191](https://github.com/mrgoonie/winshot/commit/38e119109376f84e451322ba84a1d8edd0583d34))
+* **hotkeys:** resolve goroutine thread affinity causing hotkey registration failure ([1d683cc](https://github.com/mrgoonie/winshot/commit/1d683ccaffa9043b235fdaf8e3e88bd89ca295e0))
+* **quick-save:** use configured folder instead of hardcoding save directory ([d868093](https://github.com/mrgoonie/winshot/commit/d868093ae7173e8647ccaba8c38751e50fca6879))
+* resolve 3 bugs from issue [#21](https://github.com/mrgoonie/winshot/issues/21) ([9652b5b](https://github.com/mrgoonie/winshot/commit/9652b5b12697b7d2cee74622d68acdcf5eafb62d))
+* resolve merge conflicts from Vivusk/winshot PR [#36](https://github.com/mrgoonie/winshot/issues/36) ([2515593](https://github.com/mrgoonie/winshot/commit/25155933a02dc995eb9d84f11665acbefacfe878))
+* **startup:** minimize app window on startup when configured ([3f5f4d1](https://github.com/mrgoonie/winshot/commit/3f5f4d1a7b87e12209e18ba5a0f125bfa0511290)), closes [#31](https://github.com/mrgoonie/winshot/issues/31)
+* **tray:** resolve quit button not working in tray context menu ([a459568](https://github.com/mrgoonie/winshot/commit/a45956844472465b18c8893d6c9ac3f6b8e4da03))
+
+
+### Features
+
+* **capture:** add clipboard image paste support ([03cf0fd](https://github.com/mrgoonie/winshot/commit/03cf0fd0698e5f199965fa3c923eec469a2c341e))
+* **capture:** add multi-monitor region capture support ([0f1a8d1](https://github.com/mrgoonie/winshot/commit/0f1a8d123162d701baa35f4b121b505fd069a5d3))
+* **clipboard:** auto-copy styled canvas instead of raw screenshot ([20ad92b](https://github.com/mrgoonie/winshot/commit/20ad92b2ef56359aff04cdd299f49146d4820474))
+* **editor:** copy rendered canvas with applied settings to clipboard ([dbe91dd](https://github.com/mrgoonie/winshot/commit/dbe91dd824be72d14812bde88b06d7c90d305f1e))
+* **overlay:** implement native Win32 region selection overlay ([22da2ac](https://github.com/mrgoonie/winshot/commit/22da2acdc2ba59b15fbc70098d97729336ef2b0f))
+
 # [1.1.0-beta.3](https://github.com/mrgoonie/winshot/compare/v1.1.0-beta.2...v1.1.0-beta.3) (2025-12-10)
 
 
