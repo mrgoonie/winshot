@@ -35,6 +35,7 @@ interface EditorSettings {
   shadowSize: number;
   backgroundColor: string;
   outputRatio: OutputRatio;
+  showBackground: boolean;
 }
 
 const DEFAULT_EDITOR_SETTINGS: EditorSettings = {
@@ -43,6 +44,7 @@ const DEFAULT_EDITOR_SETTINGS: EditorSettings = {
   shadowSize: 20,
   backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
   outputRatio: 'auto',
+  showBackground: true,
 };
 
 // Load settings from localStorage
@@ -145,6 +147,13 @@ function App() {
   const [shadowSize, setShadowSize] = useState(() => loadEditorSettings().shadowSize);
   const [backgroundColor, setBackgroundColor] = useState(() => loadEditorSettings().backgroundColor);
   const [outputRatio, setOutputRatio] = useState<OutputRatio>(() => loadEditorSettings().outputRatio);
+  const [showBackground, setShowBackground] = useState(() => loadEditorSettings().showBackground);
+  // Stores settings when background is hidden, so they can be restored
+  const [savedBackgroundSettings, setSavedBackgroundSettings] = useState<{
+    padding: number;
+    cornerRadius: number;
+    outputRatio: OutputRatio;
+  } | null>(null);
 
   // Annotation state
   const [activeTool, setActiveTool] = useState<EditorTool>('select');
@@ -180,8 +189,28 @@ function App() {
 
   // Persist editor settings to localStorage when they change
   useEffect(() => {
-    saveEditorSettings({ padding, cornerRadius, shadowSize, backgroundColor, outputRatio });
-  }, [padding, cornerRadius, shadowSize, backgroundColor, outputRatio]);
+    saveEditorSettings({ padding, cornerRadius, shadowSize, backgroundColor, outputRatio, showBackground });
+  }, [padding, cornerRadius, shadowSize, backgroundColor, outputRatio, showBackground]);
+
+  // Handle background visibility toggle
+  const handleShowBackgroundChange = useCallback((show: boolean) => {
+    if (show) {
+      // Restore previous settings when showing background
+      if (savedBackgroundSettings !== null) {
+        setPadding(savedBackgroundSettings.padding);
+        setCornerRadius(savedBackgroundSettings.cornerRadius);
+        setOutputRatio(savedBackgroundSettings.outputRatio);
+        setSavedBackgroundSettings(null);
+      }
+    } else {
+      // Save current settings and reset when hiding background
+      setSavedBackgroundSettings({ padding, cornerRadius, outputRatio });
+      setPadding(0);
+      setCornerRadius(0);
+      setOutputRatio('auto');
+    }
+    setShowBackground(show);
+  }, [padding, cornerRadius, outputRatio, savedBackgroundSettings]);
 
   // Track window size for persistence on close
   // Use Wails WindowGetSize API for accurate DPI-aware dimensions
@@ -1099,6 +1128,7 @@ function App() {
             shadowSize={shadowSize}
             backgroundColor={backgroundColor}
             outputRatio={outputRatio}
+            showBackground={showBackground}
             imageWidth={screenshot.width}
             imageHeight={screenshot.height}
             onPaddingChange={setPadding}
@@ -1106,6 +1136,7 @@ function App() {
             onShadowSizeChange={setShadowSize}
             onBackgroundChange={setBackgroundColor}
             onOutputRatioChange={setOutputRatio}
+            onShowBackgroundChange={handleShowBackgroundChange}
           />
         )}
       </div>

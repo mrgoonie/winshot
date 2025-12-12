@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { OutputRatio } from '../types';
 import { GetBackgroundImages, SaveBackgroundImages } from '../../wailsjs/go/main/App';
-import { X, ImagePlus } from 'lucide-react';
+import { X, ImagePlus, Eye, EyeOff } from 'lucide-react';
 
 const MAX_BACKGROUND_IMAGES = 8;
 const MAX_BG_IMAGE_SIZE = 2048;  // Max dimension
@@ -62,6 +62,7 @@ interface SettingsPanelProps {
   shadowSize: number;
   backgroundColor: string;
   outputRatio: OutputRatio;
+  showBackground: boolean;
   imageWidth: number;
   imageHeight: number;
   onPaddingChange: (value: number) => void;
@@ -69,6 +70,7 @@ interface SettingsPanelProps {
   onShadowSizeChange: (value: number) => void;
   onBackgroundChange: (value: string) => void;
   onOutputRatioChange: (value: OutputRatio) => void;
+  onShowBackgroundChange: (value: boolean) => void;
 }
 
 const GRADIENT_PRESETS = [
@@ -110,6 +112,7 @@ export function SettingsPanel({
   shadowSize,
   backgroundColor,
   outputRatio,
+  showBackground,
   imageWidth,
   imageHeight,
   onPaddingChange,
@@ -117,6 +120,7 @@ export function SettingsPanel({
   onShadowSizeChange,
   onBackgroundChange,
   onOutputRatioChange,
+  onShowBackgroundChange,
 }: SettingsPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
@@ -194,7 +198,7 @@ export function SettingsPanel({
       </div>
 
       {/* Corner Radius */}
-      <div className="mb-6">
+      <div className={`mb-6 transition-opacity duration-200 ${!showBackground ? 'opacity-50 pointer-events-none' : ''}`}>
         <div className="flex justify-between items-center mb-2">
           <label className="text-sm text-slate-300 font-medium">Corner Radius</label>
           <span className="text-xs text-cyan-400 font-semibold bg-cyan-500/10 px-2 py-0.5 rounded-full">{cornerRadius}px</span>
@@ -226,7 +230,7 @@ export function SettingsPanel({
       </div>
 
       {/* Output Ratio */}
-      <div className="mb-6">
+      <div className={`mb-6 transition-opacity duration-200 ${!showBackground ? 'opacity-50 pointer-events-none' : ''}`}>
         <label className="block text-sm text-slate-300 font-medium mb-3">
           Output Ratio
         </label>
@@ -247,10 +251,38 @@ export function SettingsPanel({
         </div>
       </div>
 
-      {/* Background Gradients */}
+      {/* Background Toggle */}
       <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <label className="text-sm text-slate-300 font-medium">Background</label>
+          <button
+            onClick={() => onShowBackgroundChange(!showBackground)}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-200
+              ${showBackground
+                ? 'bg-violet-500/20 text-violet-300 hover:bg-violet-500/30'
+                : 'bg-slate-500/20 text-slate-400 hover:bg-slate-500/30'
+              }`}
+            title={showBackground ? 'Hide background' : 'Show background'}
+          >
+            {showBackground ? (
+              <>
+                <Eye className="w-3.5 h-3.5" />
+                <span>Visible</span>
+              </>
+            ) : (
+              <>
+                <EyeOff className="w-3.5 h-3.5" />
+                <span>Hidden</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Background Gradients */}
+      <div className={`mb-6 transition-opacity duration-200 ${!showBackground ? 'opacity-50 pointer-events-none' : ''}`}>
         <label className="block text-sm text-slate-300 font-medium mb-3">
-          Background
+          Gradient Presets
         </label>
         <div className="grid grid-cols-4 gap-2">
           {GRADIENT_PRESETS.map((gradient) => (
@@ -270,7 +302,7 @@ export function SettingsPanel({
       </div>
 
       {/* Custom Color */}
-      <div className="mb-6">
+      <div className={`mb-6 transition-opacity duration-200 ${!showBackground ? 'opacity-50 pointer-events-none' : ''}`}>
         <label className="block text-sm text-slate-300 font-medium mb-3">
           Custom Color
         </label>
@@ -285,7 +317,7 @@ export function SettingsPanel({
       </div>
 
       {/* Image Background */}
-      <div className="mb-6">
+      <div className={`mb-6 transition-opacity duration-200 ${!showBackground ? 'opacity-50 pointer-events-none' : ''}`}>
         <label className="block text-sm text-slate-300 font-medium mb-3">
           Image Background
           <span className="ml-2 text-xs text-slate-500">({uploadedImages.length}/{MAX_BACKGROUND_IMAGES})</span>

@@ -33,6 +33,8 @@ var (
 	procGetModuleHandleW     = kernel32.NewProc("GetModuleHandleW")
 	procSetCapture           = user32.NewProc("SetCapture")
 	procReleaseCapture       = user32.NewProc("ReleaseCapture")
+	procSetForegroundWindow  = user32.NewProc("SetForegroundWindow")
+	procSetFocus             = user32.NewProc("SetFocus")
 )
 
 // Command types for channel communication
@@ -270,6 +272,10 @@ func (m *Manager) handleShow(cmd overlayCmd) {
 
 	// NOW show window with fresh content
 	procShowWindow.Call(m.hwnd, SW_SHOW)
+
+	// Set focus to receive keyboard input (Esc key)
+	procSetForegroundWindow.Call(m.hwnd)
+	procSetFocus.Call(m.hwnd)
 }
 
 func (m *Manager) handleHide() {
