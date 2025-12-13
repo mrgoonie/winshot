@@ -12,6 +12,8 @@ import {
   Spline,
   Lightbulb,
   Crop,
+  Undo2,
+  Redo2,
 } from 'lucide-react';
 
 interface AnnotationToolbarProps {
@@ -29,6 +31,11 @@ interface AnnotationToolbarProps {
   onDeleteSelected: () => void;
   hasSelection: boolean;
   selectedAnnotation?: Annotation;
+  // Undo/Redo props
+  canUndo: boolean;
+  canRedo: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
 }
 
 const COLORS = [
@@ -56,6 +63,10 @@ export function AnnotationToolbar({
   onDeleteSelected,
   hasSelection,
   selectedAnnotation,
+  canUndo,
+  canRedo,
+  onUndo,
+  onRedo,
 }: AnnotationToolbarProps) {
   // Show text controls when text tool is active or a text annotation is selected
   const showTextControls = activeTool === 'text' || selectedAnnotation?.type === 'text';
@@ -274,6 +285,34 @@ export function AnnotationToolbar({
           </button>
         </div>
       )}
+
+      {/* Undo/Redo Buttons */}
+      <div className="flex items-center gap-1 px-3 border-r border-white/10">
+        <button
+          onClick={onUndo}
+          disabled={!canUndo}
+          className={`p-2 rounded-lg transition-all duration-200 ${
+            canUndo
+              ? 'text-slate-400 hover:text-white hover:bg-white/10'
+              : 'text-slate-600 cursor-not-allowed opacity-50'
+          }`}
+          title="Undo (Ctrl+Z)"
+        >
+          <Undo2 className="w-5 h-5" />
+        </button>
+        <button
+          onClick={onRedo}
+          disabled={!canRedo}
+          className={`p-2 rounded-lg transition-all duration-200 ${
+            canRedo
+              ? 'text-slate-400 hover:text-white hover:bg-white/10'
+              : 'text-slate-600 cursor-not-allowed opacity-50'
+          }`}
+          title="Redo (Ctrl+Shift+Z)"
+        >
+          <Redo2 className="w-5 h-5" />
+        </button>
+      </div>
 
       {/* Delete Button */}
       <button
