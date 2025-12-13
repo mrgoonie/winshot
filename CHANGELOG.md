@@ -1,3 +1,10 @@
+# [1.2.0-beta.3](https://github.com/mrgoonie/winshot/compare/v1.2.0-beta.2...v1.2.0-beta.3) (2025-12-13)
+
+
+### Bug Fixes
+
+* **output:** include padding in auto mode dimensions calculation ([8f07694](https://github.com/mrgoonie/winshot/commit/8f07694f9e74f6d6877781b60220c47b4bbdd5ac))
+
 # [1.2.0-beta.2](https://github.com/mrgoonie/winshot/compare/v1.2.0-beta.1...v1.2.0-beta.2) (2025-12-12)
 
 
