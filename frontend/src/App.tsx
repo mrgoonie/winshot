@@ -83,7 +83,13 @@ function calculateOutputDimensions(
   const targetRatio = parseRatio(outputRatio);
 
   if (targetRatio === null) {
-    // Auto mode: output size same as screenshot dimensions
+    // Auto mode: include padding if set, otherwise raw screenshot size
+    if (padding > 0) {
+      return {
+        totalWidth: screenshotWidth + padding * 2,
+        totalHeight: screenshotHeight + padding * 2
+      };
+    }
     return { totalWidth: screenshotWidth, totalHeight: screenshotHeight };
   }
 
