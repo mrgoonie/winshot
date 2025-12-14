@@ -1,3 +1,10 @@
+# [1.2.0-beta.6](https://github.com/mrgoonie/winshot/compare/v1.2.0-beta.5...v1.2.0-beta.6) (2025-12-14)
+
+
+### Bug Fixes
+
+* **ci:** detect merge commits as releasable for PR-based workflow ([c22be25](https://github.com/mrgoonie/winshot/commit/c22be252d78c5f0b33f9965bac331bf6c1d61861))
+
 # [1.2.0-beta.5](https://github.com/mrgoonie/winshot/compare/v1.2.0-beta.4...v1.2.0-beta.5) (2025-12-14)
 
 
