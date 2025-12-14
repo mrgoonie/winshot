@@ -1,3 +1,16 @@
+# [1.2.0-beta.4](https://github.com/mrgoonie/winshot/compare/v1.2.0-beta.3...v1.2.0-beta.4) (2025-12-14)
+
+
+### Bug Fixes
+
+* **settings:** migrate background images from localStorage to backend config ([bfa2744](https://github.com/mrgoonie/winshot/commit/bfa27442f2ac80791a45443458064864692bdab0))
+
+
+### Features
+
+* **annotations:** implement undo/redo with keyboard shortcuts ([94ed01c](https://github.com/mrgoonie/winshot/commit/94ed01c486628da51398e587edb1fb497f669bf5))
+* **update:** implement auto-update feature for GitHub Releases ([96194ef](https://github.com/mrgoonie/winshot/commit/96194ef13e13b909f3fb16cf0b025a56005041c0))
+
 # [1.2.0-beta.3](https://github.com/mrgoonie/winshot/compare/v1.2.0-beta.2...v1.2.0-beta.3) (2025-12-13)
 
 
