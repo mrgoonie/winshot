@@ -9,7 +9,7 @@ interface SettingsModalProps {
   onClose: () => void;
 }
 
-type SettingsTab = 'hotkeys' | 'startup' | 'quicksave' | 'export';
+type SettingsTab = 'hotkeys' | 'startup' | 'quicksave' | 'export' | 'updates';
 
 // Local interface for easier state management
 interface LocalConfig {
@@ -34,6 +34,9 @@ interface LocalConfig {
     includeBackground: boolean;
     autoCopyToClipboard: boolean;
   };
+  update: {
+    checkOnStartup: boolean;
+  };
 }
 
 const defaultConfig: LocalConfig = {
@@ -57,6 +60,9 @@ const defaultConfig: LocalConfig = {
     jpegQuality: 95,
     includeBackground: true,
     autoCopyToClipboard: true,
+  },
+  update: {
+    checkOnStartup: true,
   },
 };
 
@@ -99,6 +105,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           includeBackground: cfg.export?.includeBackground ?? true,
           autoCopyToClipboard: cfg.export?.autoCopyToClipboard ?? true,
         },
+        update: {
+          checkOnStartup: cfg.update?.checkOnStartup ?? true,
+        },
       };
       setLocalConfig(local);
       setOriginalConfig(local);
@@ -120,6 +129,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         startup: new config.StartupConfig(localConfig.startup),
         quickSave: new config.QuickSaveConfig(localConfig.quickSave),
         export: new config.ExportConfig(localConfig.export),
+        update: new config.UpdateConfig(localConfig.update),
       });
       await SaveConfig(cfg);
       setOriginalConfig(localConfig);
@@ -159,6 +169,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     { id: 'startup', label: 'Startup' },
     { id: 'quicksave', label: 'Quick Save' },
     { id: 'export', label: 'Export' },
+    { id: 'updates', label: 'Updates' },
   ];
 
   return (
@@ -441,6 +452,33 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <p className="text-xs text-slate-400 mt-0.5">Uses your default export format (PNG/JPEG)</p>
                 </div>
               </label>
+            </div>
+          )}
+
+          {activeTab === 'updates' && (
+            <div className="space-y-4">
+              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg bg-white/5 hover:bg-white/8 border border-white/5 transition-all duration-200">
+                <input
+                  type="checkbox"
+                  checked={localConfig.update.checkOnStartup}
+                  onChange={(e) =>
+                    setLocalConfig((prev) => ({
+                      ...prev,
+                      update: { ...prev.update, checkOnStartup: e.target.checked },
+                    }))
+                  }
+                />
+                <div>
+                  <span className="text-slate-200">Check for updates on startup</span>
+                  <p className="text-xs text-slate-400 mt-0.5">Automatically check for new versions when the app starts</p>
+                </div>
+              </label>
+
+              <div className="p-3 rounded-lg bg-white/5 border border-white/5">
+                <p className="text-sm text-slate-400">
+                  WinShot will notify you when a new version is available. Updates are downloaded from GitHub Releases as portable executables.
+                </p>
+              </div>
             </div>
           )}
 

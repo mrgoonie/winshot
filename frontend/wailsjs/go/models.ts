@@ -1,5 +1,19 @@
 export namespace config {
 	
+	export class UpdateConfig {
+	    checkOnStartup: boolean;
+	    skippedVersion?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateConfig(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.checkOnStartup = source["checkOnStartup"];
+	        this.skippedVersion = source["skippedVersion"];
+	    }
+	}
 	export class WindowConfig {
 	    width: number;
 	    height: number;
@@ -86,6 +100,7 @@ export namespace config {
 	    quickSave: QuickSaveConfig;
 	    export: ExportConfig;
 	    window: WindowConfig;
+	    update: UpdateConfig;
 	    backgroundImages?: string[];
 	
 	    static createFrom(source: any = {}) {
@@ -99,6 +114,7 @@ export namespace config {
 	        this.quickSave = this.convertValues(source["quickSave"], QuickSaveConfig);
 	        this.export = this.convertValues(source["export"], ExportConfig);
 	        this.window = this.convertValues(source["window"], WindowConfig);
+	        this.update = this.convertValues(source["update"], UpdateConfig);
 	        this.backgroundImages = source["backgroundImages"];
 	    }
 	
@@ -120,6 +136,7 @@ export namespace config {
 		    return a;
 		}
 	}
+	
 	
 	
 	
@@ -262,6 +279,35 @@ export namespace screenshot {
 	        this.width = source["width"];
 	        this.height = source["height"];
 	        this.data = source["data"];
+	    }
+	}
+
+}
+
+export namespace updater {
+	
+	export class UpdateInfo {
+	    available: boolean;
+	    currentVersion: string;
+	    latestVersion: string;
+	    releaseUrl: string;
+	    downloadUrl: string;
+	    releaseNotes: string;
+	    publishedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.available = source["available"];
+	        this.currentVersion = source["currentVersion"];
+	        this.latestVersion = source["latestVersion"];
+	        this.releaseUrl = source["releaseUrl"];
+	        this.downloadUrl = source["downloadUrl"];
+	        this.releaseNotes = source["releaseNotes"];
+	        this.publishedAt = source["publishedAt"];
 	    }
 	}
 

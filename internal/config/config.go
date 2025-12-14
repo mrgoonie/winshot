@@ -21,6 +21,12 @@ type StartupConfig struct {
 	CloseToTray      bool `json:"closeToTray"`
 }
 
+// UpdateConfig holds update-related settings
+type UpdateConfig struct {
+	CheckOnStartup bool   `json:"checkOnStartup"`
+	SkippedVersion string `json:"skippedVersion,omitempty"`
+}
+
 // QuickSaveConfig holds quick save settings
 type QuickSaveConfig struct {
 	Folder  string `json:"folder"`
@@ -48,6 +54,7 @@ type Config struct {
 	QuickSave        QuickSaveConfig `json:"quickSave"`
 	Export           ExportConfig    `json:"export"`
 	Window           WindowConfig    `json:"window"`
+	Update           UpdateConfig    `json:"update"`
 	BackgroundImages []string        `json:"backgroundImages,omitempty"`
 }
 
@@ -81,6 +88,10 @@ func Default() *Config {
 		Window: WindowConfig{
 			Width:  1200,
 			Height: 800,
+		},
+		Update: UpdateConfig{
+			CheckOnStartup: true,
+			SkippedVersion: "",
 		},
 	}
 }

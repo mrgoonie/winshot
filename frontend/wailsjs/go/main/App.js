@@ -18,6 +18,10 @@ export function CaptureWindow(arg1) {
   return window['go']['main']['App']['CaptureWindow'](arg1);
 }
 
+export function CheckForUpdate(arg1) {
+  return window['go']['main']['App']['CheckForUpdate'](arg1);
+}
+
 export function FinishRegionCapture() {
   return window['go']['main']['App']['FinishRegionCapture']();
 }
@@ -50,6 +54,10 @@ export function GetHotkeyConfig() {
   return window['go']['main']['App']['GetHotkeyConfig']();
 }
 
+export function GetSkippedVersion() {
+  return window['go']['main']['App']['GetSkippedVersion']();
+}
+
 export function GetVirtualScreenBounds() {
   return window['go']['main']['App']['GetVirtualScreenBounds']();
 }
@@ -74,6 +82,10 @@ export function OpenImage() {
   return window['go']['main']['App']['OpenImage']();
 }
 
+export function OpenURL(arg1) {
+  return window['go']['main']['App']['OpenURL'](arg1);
+}
+
 export function PrepareRegionCapture() {
   return window['go']['main']['App']['PrepareRegionCapture']();
 }
@@ -96,6 +108,10 @@ export function SaveImage(arg1, arg2) {
 
 export function SelectFolder() {
   return window['go']['main']['App']['SelectFolder']();
+}
+
+export function SetSkippedVersion(arg1) {
+  return window['go']['main']['App']['SetSkippedVersion'](arg1);
 }
 
 export function ShowWindow() {

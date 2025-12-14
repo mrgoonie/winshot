@@ -6,6 +6,7 @@ import { X, ImagePlus, Eye, EyeOff } from 'lucide-react';
 const MAX_BACKGROUND_IMAGES = 8;
 const MAX_BG_IMAGE_SIZE = 2048;  // Max dimension
 const BG_IMAGE_QUALITY = 0.85;   // JPEG quality
+const LEGACY_STORAGE_KEY = 'winshot-background-images';  // Old localStorage key for migration
 
 async function compressImage(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -125,14 +126,47 @@ export function SettingsPanel({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
 
-  // Load images from Go backend on mount
+  // Load images from Go backend on mount, with migration from legacy localStorage
   useEffect(() => {
     GetBackgroundImages().then((images) => {
-      if (Array.isArray(images)) {
-        setUploadedImages(images.slice(0, MAX_BACKGROUND_IMAGES));
+      const backendImages = Array.isArray(images) ? images : [];
+
+      // Check for legacy localStorage images to migrate
+      if (backendImages.length === 0) {
+        try {
+          const legacyData = localStorage.getItem(LEGACY_STORAGE_KEY);
+          if (legacyData) {
+            const legacyImages = JSON.parse(legacyData);
+            if (Array.isArray(legacyImages) && legacyImages.length > 0) {
+              // Migrate legacy images to backend
+              const migratedImages = legacyImages.slice(0, MAX_BACKGROUND_IMAGES);
+              setUploadedImages(migratedImages);
+              SaveBackgroundImages(migratedImages).then(() => {
+                // Clear legacy storage after successful migration
+                localStorage.removeItem(LEGACY_STORAGE_KEY);
+              }).catch(() => {});
+              return;
+            }
+          }
+        } catch {
+          // Invalid legacy data, ignore
+        }
       }
+
+      setUploadedImages(backendImages.slice(0, MAX_BACKGROUND_IMAGES));
     }).catch(() => {
-      // Failed to load, start with empty
+      // Failed to load from backend, try legacy localStorage as fallback
+      try {
+        const legacyData = localStorage.getItem(LEGACY_STORAGE_KEY);
+        if (legacyData) {
+          const legacyImages = JSON.parse(legacyData);
+          if (Array.isArray(legacyImages)) {
+            setUploadedImages(legacyImages.slice(0, MAX_BACKGROUND_IMAGES));
+          }
+        }
+      } catch {
+        // Start with empty
+      }
     });
   }, []);
 

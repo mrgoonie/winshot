@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useUndoRedo } from './hooks/use-undo-redo';
 import Konva from 'konva';
 import { TitleBar } from './components/title-bar';
 import { CaptureToolbar } from './components/capture-toolbar';
@@ -6,6 +7,7 @@ import { WindowPicker } from './components/window-picker';
 import { EditorCanvas } from './components/editor-canvas';
 import { SettingsPanel } from './components/settings-panel';
 import { SettingsModal } from './components/settings-modal';
+import { UpdateModal } from './components/update-modal';
 import { StatusBar } from './components/status-bar';
 import { AnnotationToolbar } from './components/annotation-toolbar';
 import { ExportToolbar } from './components/export-toolbar';
@@ -23,7 +25,10 @@ import {
   GetConfig,
   OpenImage,
   GetClipboardImage,
+  CheckForUpdate,
+  GetSkippedVersion,
 } from '../wailsjs/go/main/App';
+import { updater } from '../wailsjs/go/models';
 import { EventsOn, EventsOff, WindowGetSize } from '../wailsjs/runtime/runtime';
 
 // Storage key for persistent editor settings
@@ -161,9 +166,17 @@ function App() {
     outputRatio: OutputRatio;
   } | null>(null);
 
-  // Annotation state
+  // Annotation state with undo/redo support
   const [activeTool, setActiveTool] = useState<EditorTool>('select');
-  const [annotations, setAnnotations] = useState<Annotation[]>([]);
+  const {
+    state: annotations,
+    set: setAnnotations,
+    undo: undoAnnotations,
+    redo: redoAnnotations,
+    reset: resetAnnotations,
+    canUndo,
+    canRedo,
+  } = useUndoRedo<Annotation[]>([]);
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
   const [strokeColor, setStrokeColor] = useState('#ef4444');
   const [strokeWidth, setStrokeWidth] = useState(4);
@@ -193,10 +206,42 @@ function App() {
   // Settings modal state
   const [showSettings, setShowSettings] = useState(false);
 
+  // Update modal state
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState<updater.UpdateInfo | null>(null);
+
   // Persist editor settings to localStorage when they change
   useEffect(() => {
     saveEditorSettings({ padding, cornerRadius, shadowSize, backgroundColor, outputRatio, showBackground });
   }, [padding, cornerRadius, shadowSize, backgroundColor, outputRatio, showBackground]);
+
+  // Check for updates on startup
+  useEffect(() => {
+    const checkForUpdates = async () => {
+      try {
+        const cfg = await GetConfig();
+        if (!cfg.update?.checkOnStartup) return;
+
+        const currentVersion = __APP_VERSION__;
+        const info = await CheckForUpdate(currentVersion);
+
+        if (info && info.available) {
+          // Check if user skipped this version
+          const skippedVersion = await GetSkippedVersion();
+          if (skippedVersion === info.latestVersion) return;
+
+          setUpdateInfo(info);
+          setShowUpdateModal(true);
+        }
+      } catch (err) {
+        console.error('Failed to check for updates:', err);
+      }
+    };
+
+    // Delay check to not slow down app startup
+    const timer = setTimeout(checkForUpdates, 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Handle background visibility toggle
   const handleShowBackgroundChange = useCallback((show: boolean) => {
@@ -276,8 +321,8 @@ function App() {
       }
 
       setScreenshot(result);
-      // Reset annotations for new capture
-      setAnnotations([]);
+      // Reset annotations for new capture (clears history)
+      resetAnnotations([]);
       setSelectedAnnotationId(null);
       setActiveTool('select');
       setStatusMessage(undefined);
@@ -291,7 +336,7 @@ function App() {
     }
 
     setIsCapturing(false);
-  }, []);
+  }, [resetAnnotations]);
 
   const handleWindowSelect = async (window: WindowInfo) => {
     setShowWindowPicker(false);
@@ -301,8 +346,8 @@ function App() {
     try {
       const result = await CaptureWindow(window.handle) as CaptureResult;
       setScreenshot(result);
-      // Reset annotations for new capture
-      setAnnotations([]);
+      // Reset annotations for new capture (clears history)
+      resetAnnotations([]);
       setSelectedAnnotationId(null);
       setActiveTool('select');
       setStatusMessage(undefined);
@@ -323,8 +368,8 @@ function App() {
     // Set screenshot directly - already cropped by Go backend
     setScreenshot({ width, height, data: screenshotData });
 
-    // Reset annotations for new capture
-    setAnnotations([]);
+    // Reset annotations for new capture (clears history)
+    resetAnnotations([]);
     setSelectedAnnotationId(null);
     setActiveTool('select');
     setStatusMessage(undefined);
@@ -334,11 +379,11 @@ function App() {
 
     // Trigger auto-copy of styled canvas (handled by useEffect)
     setPendingAutoCopy(true);
-  }, []);
+  }, [resetAnnotations]);
 
-  const handleClear = () => {
+  const handleClear = useCallback(() => {
     setScreenshot(null);
-    setAnnotations([]);
+    resetAnnotations([]);
     setSelectedAnnotationId(null);
     setStatusMessage(undefined);
     // Reset crop state
@@ -351,7 +396,7 @@ function App() {
     });
     setCropArea(null);
     setCropMode(false);
-  };
+  }, [resetAnnotations]);
 
   const handleImportImage = useCallback(async () => {
     setStatusMessage('Opening file dialog...');
@@ -366,8 +411,8 @@ function App() {
       }
 
       setScreenshot(result as CaptureResult);
-      // Reset annotations and crop state for imported image
-      setAnnotations([]);
+      // Reset annotations and crop state for imported image (clears history)
+      resetAnnotations([]);
       setSelectedAnnotationId(null);
       setActiveTool('select');
       setCropState({
@@ -386,7 +431,7 @@ function App() {
       setStatusMessage('Failed to import image');
       setTimeout(() => setStatusMessage(undefined), 3000);
     }
-  }, []);
+  }, [resetAnnotations]);
 
   const handleClipboardCapture = useCallback(async () => {
     try {
@@ -399,8 +444,8 @@ function App() {
       }
 
       setScreenshot(result as CaptureResult);
-      // Reset annotations and crop state for clipboard image
-      setAnnotations([]);
+      // Reset annotations and crop state for clipboard image (clears history)
+      resetAnnotations([]);
       setSelectedAnnotationId(null);
       setActiveTool('select');
       setCropState({
@@ -419,7 +464,7 @@ function App() {
       setStatusMessage('No image in clipboard');
       setTimeout(() => setStatusMessage(undefined), 3000);
     }
-  }, []);
+  }, [resetAnnotations]);
 
   // Listen for global hotkey events and native overlay events from backend
   useEffect(() => {
@@ -659,13 +704,14 @@ function App() {
 
     // Set cropped image as current screenshot
     setScreenshot(croppedImage);
-    setAnnotations(adjustedAnnotations);
+    // Reset annotations with new positions (clears undo history since canvas context changed)
+    resetAnnotations(adjustedAnnotations);
 
     // Exit crop mode
     setCropMode(false);
     setCropArea(null);
     setActiveTool('select');
-  }, [cropArea, screenshot, annotations, cropState, stageRef]);
+  }, [cropArea, screenshot, annotations, cropState, stageRef, resetAnnotations]);
 
   const handleCropCancel = useCallback(() => {
     // If crop was applied, restore the cropped view
@@ -707,7 +753,8 @@ function App() {
   const handleCropReset = useCallback(() => {
     if (cropState.originalImage) {
       setScreenshot(cropState.originalImage);
-      setAnnotations(cropState.originalAnnotations);
+      // Reset annotations to original (clears undo history since canvas context changed)
+      resetAnnotations(cropState.originalAnnotations);
     }
     setCropState({
       originalImage: null,
@@ -719,7 +766,7 @@ function App() {
     setCropArea(null);
     setCropMode(false);
     setActiveTool('select');
-  }, [cropState]);
+  }, [cropState, resetAnnotations]);
 
   // Tool change handler
   const handleToolChange = useCallback((tool: EditorTool) => {
@@ -742,6 +789,24 @@ function App() {
       // Skip if typing in an input field
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
+      }
+
+      // Undo/Redo shortcuts (Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y)
+      if (e.ctrlKey && !e.altKey && !e.metaKey) {
+        if (e.key === 'z' || e.key === 'Z') {
+          e.preventDefault();
+          if (e.shiftKey) {
+            redoAnnotations();
+          } else {
+            undoAnnotations();
+          }
+          return;
+        }
+        if (e.key === 'y' || e.key === 'Y') {
+          e.preventDefault();
+          redoAnnotations();
+          return;
+        }
       }
 
       if (e.key === 'Delete' || e.key === 'Backspace') {
@@ -787,7 +852,7 @@ function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedAnnotationId, handleDeleteSelected, handleToolChange, cropMode, handleCropCancel, handleCropToolSelect]);
+  }, [selectedAnnotationId, handleDeleteSelected, handleToolChange, cropMode, handleCropCancel, handleCropToolSelect, undoAnnotations, redoAnnotations]);
 
   // Export helpers - simplified since cropped image is now the current screenshot
   const getCanvasDataUrl = useCallback((format: 'png' | 'jpeg'): string | null => {
@@ -1079,6 +1144,10 @@ function App() {
             onDeleteSelected={handleDeleteSelected}
             hasSelection={!!selectedAnnotationId}
             selectedAnnotation={selectedAnnotationId ? annotations.find(a => a.id === selectedAnnotationId) : undefined}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            onUndo={undoAnnotations}
+            onRedo={redoAnnotations}
           />
         </>
       )}
@@ -1167,6 +1236,12 @@ function App() {
       <SettingsModal
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
+      />
+
+      <UpdateModal
+        isOpen={showUpdateModal}
+        onClose={() => setShowUpdateModal(false)}
+        updateInfo={updateInfo}
       />
     </div>
   );

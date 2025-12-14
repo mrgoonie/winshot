@@ -22,6 +22,7 @@ import (
 	"winshot/internal/overlay"
 	"winshot/internal/screenshot"
 	"winshot/internal/tray"
+	"winshot/internal/updater"
 	winEnum "winshot/internal/windows"
 )
 
@@ -727,4 +728,25 @@ func (a *App) OpenImage() (*screenshot.CaptureResult, error) {
 // GetClipboardImage reads an image from the Windows clipboard
 func (a *App) GetClipboardImage() (*screenshot.CaptureResult, error) {
 	return screenshot.GetClipboardImage()
+}
+
+// CheckForUpdate checks GitHub for a newer version
+func (a *App) CheckForUpdate(currentVersion string) (*updater.UpdateInfo, error) {
+	return updater.CheckForUpdate(currentVersion)
+}
+
+// OpenURL opens a URL in the default browser
+func (a *App) OpenURL(url string) {
+	runtime.BrowserOpenURL(a.ctx, url)
+}
+
+// SetSkippedVersion sets a version to skip for update notifications
+func (a *App) SetSkippedVersion(version string) error {
+	a.config.Update.SkippedVersion = version
+	return a.config.Save()
+}
+
+// GetSkippedVersion returns the version that user chose to skip
+func (a *App) GetSkippedVersion() string {
+	return a.config.Update.SkippedVersion
 }
