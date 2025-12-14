@@ -1,9 +1,9 @@
-name: Production Release
+name: Beta Release
 
 on:
   push:
     branches:
-      - main
+      - dev
 
 permissions:
   contents: write
@@ -81,7 +81,7 @@ jobs:
         if: steps.check.outputs.should_release == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: winshot-windows
+          name: winshot-windows-beta
           path: |
             build/bin/winshot.exe
             build/bin/winshot-amd64-installer.exe
@@ -108,7 +108,7 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: winshot-windows
+          name: winshot-windows-beta
           path: build/bin
 
       - name: Semantic Release
