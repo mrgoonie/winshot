@@ -26,15 +26,22 @@ jobs:
         run: |
           $lastTag = git describe --tags --abbrev=0 2>$null
           if ($LASTEXITCODE -ne 0) {
-            # No tags yet, check all commits
-            $commits = git log --oneline --no-merges
+            Write-Host "No tags found, checking all commits"
+            # No tags yet, check all commits (include first-parent to see PR merges)
+            $commits = git log --oneline --first-parent
           } else {
-            # Check commits since last tag, excluding merge commits
-            $commits = git log "$lastTag..HEAD" --oneline --no-merges
+            Write-Host "Last tag: $lastTag"
+            # Check commits since last tag (first-parent follows main branch history)
+            $commits = git log "$lastTag..HEAD" --oneline --first-parent
           }
           Write-Host "Commits to check:"
           $commits | ForEach-Object { Write-Host "  $_" }
-          $hasReleasable = $commits | Where-Object { $_ -match "^[a-f0-9]+ (feat|fix|perf|refactor)(\(.+\))?:" }
+          # Match conventional commits OR merge commits that mention feat/fix PRs
+          $hasReleasable = $commits | Where-Object {
+            $_ -match "^[a-f0-9]+ (feat|fix|perf|refactor)(\(.+\))?:" -or
+            $_ -match "Merge pull request.*from.*" -or
+            $_ -match "^[a-f0-9]+ Merge branch"
+          }
           if ($hasReleasable) {
             Write-Host "Found releasable commits:"
             $hasReleasable | ForEach-Object { Write-Host "  $_" }
