@@ -27,14 +27,21 @@ jobs:
         run: |
           $lastTag = git describe --tags --abbrev=0 2>$null
           if ($LASTEXITCODE -ne 0) {
-            $commits = git log --oneline
+            # No tags yet, check all commits
+            $commits = git log --oneline --no-merges
           } else {
-            $commits = git log "$lastTag..HEAD" --oneline
+            # Check commits since last tag, excluding merge commits
+            $commits = git log "$lastTag..HEAD" --oneline --no-merges
           }
+          Write-Host "Commits to check:"
+          $commits | ForEach-Object { Write-Host "  $_" }
           $hasReleasable = $commits | Where-Object { $_ -match "^[a-f0-9]+ (feat|fix|perf|refactor)(\(.+\))?:" }
           if ($hasReleasable) {
+            Write-Host "Found releasable commits:"
+            $hasReleasable | ForEach-Object { Write-Host "  $_" }
             echo "should_release=true" >> $env:GITHUB_OUTPUT
           } else {
+            Write-Host "No releasable commits found"
             echo "should_release=false" >> $env:GITHUB_OUTPUT
           }
         shell: pwsh
