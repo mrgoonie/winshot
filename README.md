@@ -20,6 +20,8 @@ A lightweight, feature-rich screenshot application built with Wails (Go + React)
 - **Shapes** - Rectangle, ellipse (with fill/stroke control)
 - **Arrows & Lines** - Directional callouts and custom lines
 - **Text** - Add text with customizable font, size, color, alignment
+- **Numbers** - Auto-incrementing numbered markers for step-by-step callouts
+- **Spotlight** - Highlight areas by dimming surroundings
 - **Transforms** - Move, resize, rotate all elements
 - **Non-destructive** - Edit or delete annotations anytime
 
@@ -114,6 +116,8 @@ Coming soon. See GitHub releases for previews.
 | `A` | Arrow annotation |
 | `L` | Line annotation |
 | `T` | Text annotation |
+| `N` | Number annotation |
+| `S` | Spotlight annotation |
 | `C` | Crop tool |
 | `Ctrl+Z` | Undo annotation |
 | `Ctrl+Shift+Z` or `Ctrl+Y` | Redo annotation |

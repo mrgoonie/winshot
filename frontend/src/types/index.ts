@@ -27,7 +27,7 @@ export interface EditorState {
 }
 
 // Annotation types
-export type AnnotationType = 'rectangle' | 'ellipse' | 'arrow' | 'line' | 'text' | 'spotlight';
+export type AnnotationType = 'rectangle' | 'ellipse' | 'arrow' | 'line' | 'text' | 'spotlight' | 'number';
 
 // Crop types
 export interface CropArea {
@@ -63,6 +63,8 @@ export interface Annotation {
   textAlign?: 'left' | 'center' | 'right';
   // For spotlight annotations
   dimOpacity?: number; // Opacity of the dimmed area (0-1, default 0.7)
+  // For number annotations
+  number?: number; // The numeric value displayed in the circle
 }
 
 export type EditorTool = 'select' | 'crop' | AnnotationType;
