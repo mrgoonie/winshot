@@ -89,13 +89,9 @@ func (a *App) startup(ctx context.Context) {
 	a.lastWidth = cfg.Window.Width
 	a.lastHeight = cfg.Window.Height
 
-	// Handle "start minimized to tray" setting
+	// Track hidden state if app started minimized to tray (set via Wails StartHidden option)
 	if cfg.Startup.MinimizeToTray {
-		// Use goroutine with delay to let window fully initialize first
-		go func() {
-			time.Sleep(100 * time.Millisecond)
-			runtime.WindowHide(a.ctx)
-		}()
+		a.isWindowHidden = true
 	}
 }
 
@@ -749,4 +745,18 @@ func (a *App) SetSkippedVersion(version string) error {
 // GetSkippedVersion returns the version that user chose to skip
 func (a *App) GetSkippedVersion() string {
 	return a.config.Update.SkippedVersion
+}
+
+// GetEditorConfig returns the current editor panel settings
+func (a *App) GetEditorConfig() *config.EditorConfig {
+	return &a.config.Editor
+}
+
+// SaveEditorConfig saves editor panel settings to persistent config
+func (a *App) SaveEditorConfig(editor *config.EditorConfig) error {
+	if editor == nil {
+		return nil
+	}
+	a.config.Editor = *editor
+	return a.config.Save()
 }

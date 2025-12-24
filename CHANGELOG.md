@@ -1,3 +1,17 @@
+# [1.2.0-beta.7](https://github.com/mrgoonie/winshot/compare/v1.2.0-beta.6...v1.2.0-beta.7) (2025-12-24)
+
+
+### Bug Fixes
+
+* **startup:** resolve minimize to tray and autostart issues ([#48](https://github.com/mrgoonie/winshot/issues/48)) ([1024bf0](https://github.com/mrgoonie/winshot/commit/1024bf07001111a7171cbaaf61f4be49876ec057))
+
+
+### Features
+
+* **clipboard:** add Ctrl+V paste and JPEG quality export ([#48](https://github.com/mrgoonie/winshot/issues/48)) ([fe09cce](https://github.com/mrgoonie/winshot/commit/fe09cce30ca37f92134e193ce3b235624e405558))
+* **clipboard:** add multi-format paste and drag-drop image import ([c9700b6](https://github.com/mrgoonie/winshot/commit/c9700b6dd155c2eaf91f3f43aa576c0beb1cc384))
+* **notifications:** add capture notifications and copy path button ([#48](https://github.com/mrgoonie/winshot/issues/48)) ([8b3e94a](https://github.com/mrgoonie/winshot/commit/8b3e94a4eb9d88909c612f9708cfcc28f464065c))
+
 # [1.2.0](https://github.com/mrgoonie/winshot/compare/v1.1.0...v1.2.0) (2025-12-14)
 
 

@@ -23,6 +23,8 @@ import {
   FinishRegionCapture,
   UpdateWindowSize,
   GetConfig,
+  GetEditorConfig,
+  SaveEditorConfig,
   OpenImage,
   GetClipboardImage,
   CheckForUpdate,
@@ -31,45 +33,15 @@ import {
 import { updater } from '../wailsjs/go/models';
 import { EventsOn, EventsOff, WindowGetSize } from '../wailsjs/runtime/runtime';
 
-// Storage key for persistent editor settings
-const EDITOR_SETTINGS_KEY = 'winshot-editor-settings';
-
-interface EditorSettings {
-  padding: number;
-  cornerRadius: number;
-  shadowSize: number;
-  backgroundColor: string;
-  outputRatio: OutputRatio;
-  showBackground: boolean;
-}
-
-const DEFAULT_EDITOR_SETTINGS: EditorSettings = {
+// Default editor settings (used before Go config loads)
+const DEFAULT_EDITOR_SETTINGS = {
   padding: 40,
   cornerRadius: 12,
   shadowSize: 20,
   backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-  outputRatio: 'auto',
+  outputRatio: 'auto' as OutputRatio,
   showBackground: true,
 };
-
-// Load settings from localStorage
-function loadEditorSettings(): EditorSettings {
-  try {
-    const stored = localStorage.getItem(EDITOR_SETTINGS_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      return { ...DEFAULT_EDITOR_SETTINGS, ...parsed };
-    }
-  } catch {
-    // Invalid stored data, use defaults
-  }
-  return DEFAULT_EDITOR_SETTINGS;
-}
-
-// Save settings to localStorage
-function saveEditorSettings(settings: EditorSettings): void {
-  localStorage.setItem(EDITOR_SETTINGS_KEY, JSON.stringify(settings));
-}
 
 // Helper to parse ratio string into numeric ratio
 function parseRatio(ratio: OutputRatio): number | null {
@@ -152,13 +124,14 @@ function App() {
   const [showWindowPicker, setShowWindowPicker] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | undefined>();
 
-  // Editor settings (loaded from localStorage with lazy initialization)
-  const [padding, setPadding] = useState(() => loadEditorSettings().padding);
-  const [cornerRadius, setCornerRadius] = useState(() => loadEditorSettings().cornerRadius);
-  const [shadowSize, setShadowSize] = useState(() => loadEditorSettings().shadowSize);
-  const [backgroundColor, setBackgroundColor] = useState(() => loadEditorSettings().backgroundColor);
-  const [outputRatio, setOutputRatio] = useState<OutputRatio>(() => loadEditorSettings().outputRatio);
-  const [showBackground, setShowBackground] = useState(() => loadEditorSettings().showBackground);
+  // Editor settings (loaded from Go config on startup)
+  const [padding, setPadding] = useState(DEFAULT_EDITOR_SETTINGS.padding);
+  const [cornerRadius, setCornerRadius] = useState(DEFAULT_EDITOR_SETTINGS.cornerRadius);
+  const [shadowSize, setShadowSize] = useState(DEFAULT_EDITOR_SETTINGS.shadowSize);
+  const [backgroundColor, setBackgroundColor] = useState(DEFAULT_EDITOR_SETTINGS.backgroundColor);
+  const [outputRatio, setOutputRatio] = useState<OutputRatio>(DEFAULT_EDITOR_SETTINGS.outputRatio);
+  const [showBackground, setShowBackground] = useState(DEFAULT_EDITOR_SETTINGS.showBackground);
+  const [editorSettingsLoaded, setEditorSettingsLoaded] = useState(false);
   // Stores settings when background is hidden, so they can be restored
   const [savedBackgroundSettings, setSavedBackgroundSettings] = useState<{
     padding: number;
@@ -199,6 +172,8 @@ function App() {
 
   // Export state
   const [isExporting, setIsExporting] = useState(false);
+  const [lastSavedPath, setLastSavedPath] = useState<string | null>(null);
+  const [jpegQuality, setJpegQuality] = useState(95);
 
   // Auto-copy state: tracks when a fresh capture needs auto-copy after canvas renders
   const [pendingAutoCopy, setPendingAutoCopy] = useState(false);
@@ -210,10 +185,49 @@ function App() {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<updater.UpdateInfo | null>(null);
 
-  // Persist editor settings to localStorage when they change
+  // Load editor settings from Go config on startup
   useEffect(() => {
-    saveEditorSettings({ padding, cornerRadius, shadowSize, backgroundColor, outputRatio, showBackground });
-  }, [padding, cornerRadius, shadowSize, backgroundColor, outputRatio, showBackground]);
+    const loadEditorSettings = async () => {
+      try {
+        const cfg = await GetEditorConfig();
+        if (cfg) {
+          if (cfg.padding !== undefined) setPadding(cfg.padding);
+          if (cfg.cornerRadius !== undefined) setCornerRadius(cfg.cornerRadius);
+          if (cfg.shadowSize !== undefined) setShadowSize(cfg.shadowSize);
+          if (cfg.backgroundColor) setBackgroundColor(cfg.backgroundColor);
+          if (cfg.outputRatio) setOutputRatio(cfg.outputRatio as OutputRatio);
+          if (cfg.showBackground !== undefined) setShowBackground(cfg.showBackground);
+        }
+      } catch (err) {
+        console.error('Failed to load editor settings:', err);
+      }
+      setEditorSettingsLoaded(true);
+    };
+    loadEditorSettings();
+  }, []);
+
+  // Persist editor settings to Go config when they change (after initial load)
+  useEffect(() => {
+    if (!editorSettingsLoaded) return;
+    SaveEditorConfig({ padding, cornerRadius, shadowSize, backgroundColor, outputRatio, showBackground }).catch(err => {
+      console.error('Failed to save editor settings:', err);
+    });
+  }, [padding, cornerRadius, shadowSize, backgroundColor, outputRatio, showBackground, editorSettingsLoaded]);
+
+  // Load export settings from config on startup
+  useEffect(() => {
+    const loadExportSettings = async () => {
+      try {
+        const cfg = await GetConfig();
+        if (cfg.export?.jpegQuality) {
+          setJpegQuality(cfg.export.jpegQuality);
+        }
+      } catch (err) {
+        console.error('Failed to load export settings:', err);
+      }
+    };
+    loadExportSettings();
+  }, []);
 
   // Check for updates on startup
   useEffect(() => {
@@ -325,7 +339,11 @@ function App() {
       resetAnnotations([]);
       setSelectedAnnotationId(null);
       setActiveTool('select');
-      setStatusMessage(undefined);
+      // Clear last saved path since this is a new capture
+      setLastSavedPath(null);
+      // Show capture success notification
+      setStatusMessage('Fullscreen captured');
+      setTimeout(() => setStatusMessage(undefined), 2000);
 
       // Trigger auto-copy of styled canvas (handled by useEffect)
       setPendingAutoCopy(true);
@@ -350,7 +368,11 @@ function App() {
       resetAnnotations([]);
       setSelectedAnnotationId(null);
       setActiveTool('select');
-      setStatusMessage(undefined);
+      // Clear last saved path since this is a new capture
+      setLastSavedPath(null);
+      // Show capture success notification
+      setStatusMessage('Window captured');
+      setTimeout(() => setStatusMessage(undefined), 2000);
 
       // Trigger auto-copy of styled canvas (handled by useEffect)
       setPendingAutoCopy(true);
@@ -372,7 +394,11 @@ function App() {
     resetAnnotations([]);
     setSelectedAnnotationId(null);
     setActiveTool('select');
-    setStatusMessage(undefined);
+    // Clear last saved path since this is a new capture
+    setLastSavedPath(null);
+    // Show capture success notification
+    setStatusMessage('Region captured');
+    setTimeout(() => setStatusMessage(undefined), 2000);
 
     // Restore window to normal state
     FinishRegionCapture();
@@ -386,6 +412,8 @@ function App() {
     resetAnnotations([]);
     setSelectedAnnotationId(null);
     setStatusMessage(undefined);
+    // Clear last saved path
+    setLastSavedPath(null);
     // Reset crop state
     setCropState({
       originalImage: null,
@@ -465,6 +493,87 @@ function App() {
       setTimeout(() => setStatusMessage(undefined), 3000);
     }
   }, [resetAnnotations]);
+
+  // Drag & drop state
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Handle drag & drop image import
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files.length === 0) return;
+
+    const file = files[0];
+    // Check if it's an image file
+    if (!file.type.startsWith('image/')) {
+      setStatusMessage('Only image files are supported');
+      setTimeout(() => setStatusMessage(undefined), 3000);
+      return;
+    }
+
+    // Read file as base64
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        // Extract base64 data without the data:image/xxx;base64, prefix
+        const base64Data = (reader.result as string).split(',')[1];
+        const result: CaptureResult = {
+          width: img.width,
+          height: img.height,
+          data: base64Data,
+        };
+        setScreenshot(result);
+        resetAnnotations([]);
+        setSelectedAnnotationId(null);
+        setActiveTool('select');
+        setCropState({
+          originalImage: null,
+          croppedImage: null,
+          originalAnnotations: [],
+          lastCropArea: null,
+          isCropApplied: false,
+        });
+        setCropArea(null);
+        setCropMode(false);
+        setStatusMessage(`Imported: ${file.name}`);
+        setTimeout(() => setStatusMessage(undefined), 2000);
+      };
+      img.onerror = () => {
+        setStatusMessage('Failed to load image');
+        setTimeout(() => setStatusMessage(undefined), 3000);
+      };
+      img.src = reader.result as string;
+    };
+    reader.onerror = () => {
+      setStatusMessage('Failed to read file');
+      setTimeout(() => setStatusMessage(undefined), 3000);
+    };
+    reader.readAsDataURL(file);
+  }, [resetAnnotations]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set dragging to false if leaving the main container
+    if (e.currentTarget === e.target) {
+      setIsDragging(false);
+    }
+  }, []);
 
   // Listen for global hotkey events and native overlay events from backend
   useEffect(() => {
@@ -860,6 +969,8 @@ function App() {
     if (!stage || !screenshot) return null;
 
     const mimeType = format === 'jpeg' ? 'image/jpeg' : 'image/png';
+    // Use configured quality for JPEG (0-100 from config, convert to 0-1 for canvas API)
+    const quality = format === 'jpeg' ? jpegQuality / 100 : 1;
 
     // Calculate the actual output dimensions
     const { totalWidth, totalHeight } = calculateOutputDimensions(
@@ -884,7 +995,7 @@ function App() {
     // Export only the canvas content area (not the full stage which may be larger)
     const dataUrl = stage.toDataURL({
       mimeType,
-      quality: 0.95,
+      quality,
       pixelRatio: 1,
       x: 0,
       y: 0,
@@ -899,7 +1010,7 @@ function App() {
     stage.y(oldY);
 
     return dataUrl;
-  }, [screenshot, padding, outputRatio]);
+  }, [screenshot, padding, outputRatio, jpegQuality]);
 
   const getBase64FromDataUrl = (dataUrl: string): string => {
     return dataUrl.split(',')[1];
@@ -949,7 +1060,15 @@ function App() {
       const result = await QuickSave(base64Data, format);
 
       if (result.success) {
-        setStatusMessage(`Saved to ${result.filePath}`);
+        setLastSavedPath(result.filePath);
+        // Auto-copy path to clipboard after QuickSave (per user validation)
+        try {
+          await navigator.clipboard.writeText(result.filePath);
+          setStatusMessage(`Saved & path copied: ${result.filePath}`);
+        } catch {
+          // Clipboard write may fail in some contexts, still show save success
+          setStatusMessage(`Saved to ${result.filePath}`);
+        }
       } else {
         setStatusMessage(result.error || 'Quick save failed');
       }
@@ -961,6 +1080,25 @@ function App() {
     setIsExporting(false);
     setTimeout(() => setStatusMessage(undefined), 3000);
   }, [getCanvasDataUrl]);
+
+  // Copy file path to clipboard
+  const handleCopyPath = useCallback(async () => {
+    if (!lastSavedPath) {
+      setStatusMessage('No saved file path to copy');
+      setTimeout(() => setStatusMessage(undefined), 2000);
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(lastSavedPath);
+      setStatusMessage('Path copied to clipboard');
+      setTimeout(() => setStatusMessage(undefined), 2000);
+    } catch (error) {
+      console.error('Copy path failed:', error);
+      setStatusMessage('Failed to copy path');
+      setTimeout(() => setStatusMessage(undefined), 2000);
+    }
+  }, [lastSavedPath]);
 
   // Helper to copy styled canvas to clipboard (used by auto-copy and manual copy)
   const copyStyledCanvasToClipboard = useCallback(async (): Promise<boolean> => {
@@ -1085,13 +1223,25 @@ function App() {
     };
   }, [pendingAutoCopy, screenshot, copyStyledCanvasToClipboard]);
 
-  // Keyboard shortcuts for export and import
+  // Keyboard shortcuts for export, import, and clipboard paste
   useEffect(() => {
     const handleExportKeyDown = (e: KeyboardEvent) => {
+      // Skip if typing in an input field
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
       // Ctrl+O for import (works anytime)
       if (e.ctrlKey && e.key === 'o') {
         e.preventDefault();
         handleImportImage();
+        return;
+      }
+
+      // Ctrl+V for clipboard paste (works anytime, replaces current image per validation)
+      if (e.ctrlKey && e.key === 'v') {
+        e.preventDefault();
+        handleClipboardCapture();
         return;
       }
 
@@ -1111,10 +1261,26 @@ function App() {
 
     window.addEventListener('keydown', handleExportKeyDown);
     return () => window.removeEventListener('keydown', handleExportKeyDown);
-  }, [screenshot, handleSave, handleQuickSave, handleCopyToClipboard, handleImportImage]);
+  }, [screenshot, handleSave, handleQuickSave, handleCopyToClipboard, handleImportImage, handleClipboardCapture]);
 
   return (
-    <div className="flex flex-col h-screen bg-transparent">
+    <div
+      className="flex flex-col h-screen bg-transparent relative"
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+    >
+      {/* Drag & drop overlay */}
+      {isDragging && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-violet-500/20 backdrop-blur-sm border-2 border-dashed border-violet-400 rounded-lg m-2 pointer-events-none">
+          <div className="text-center">
+            <div className="text-4xl mb-2">📷</div>
+            <div className="text-lg font-semibold text-violet-200">Drop image to import</div>
+            <div className="text-sm text-violet-300/70">PNG, JPEG, GIF, WebP supported</div>
+          </div>
+        </div>
+      )}
       <TitleBar onMinimize={handleMinimizeToTray} />
       <CaptureToolbar
         onCapture={handleCapture}
@@ -1221,6 +1387,8 @@ function App() {
           onSave={handleSave}
           onQuickSave={handleQuickSave}
           onCopyToClipboard={handleCopyToClipboard}
+          onCopyPath={handleCopyPath}
+          lastSavedPath={lastSavedPath}
           isExporting={isExporting}
         />
       )}

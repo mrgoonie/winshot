@@ -50,6 +50,10 @@ export function GetDisplayCount() {
   return window['go']['main']['App']['GetDisplayCount']();
 }
 
+export function GetEditorConfig() {
+  return window['go']['main']['App']['GetEditorConfig']();
+}
+
 export function GetHotkeyConfig() {
   return window['go']['main']['App']['GetHotkeyConfig']();
 }
@@ -100,6 +104,10 @@ export function SaveBackgroundImages(arg1) {
 
 export function SaveConfig(arg1) {
   return window['go']['main']['App']['SaveConfig'](arg1);
+}
+
+export function SaveEditorConfig(arg1) {
+  return window['go']['main']['App']['SaveEditorConfig'](arg1);
 }
 
 export function SaveImage(arg1, arg2) {

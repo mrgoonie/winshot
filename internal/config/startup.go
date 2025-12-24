@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -44,30 +45,48 @@ func enableStartup() error {
 	// Get executable path
 	exePath, err := os.Executable()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get executable path: %w", err)
 	}
 
 	// Resolve symlinks and get absolute path
 	exePath, err = filepath.Abs(exePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to resolve path: %w", err)
 	}
 
-	// Open registry key for writing
-	key, err := registry.OpenKey(registry.CURRENT_USER, startupKeyPath, registry.SET_VALUE)
+	// Open registry key for writing and reading (for verification)
+	key, err := registry.OpenKey(registry.CURRENT_USER, startupKeyPath, registry.SET_VALUE|registry.QUERY_VALUE)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open registry: %w", err)
 	}
 	defer key.Close()
 
 	// Set value with path in quotes (for paths with spaces)
-	return key.SetStringValue(appName, `"`+exePath+`"`)
+	quotedPath := fmt.Sprintf(`"%s"`, exePath)
+	if err := key.SetStringValue(appName, quotedPath); err != nil {
+		return fmt.Errorf("failed to set registry value: %w", err)
+	}
+
+	// Verify write by reading back the value
+	val, _, err := key.GetStringValue(appName)
+	if err != nil {
+		return fmt.Errorf("failed to verify registry write: %w", err)
+	}
+	if val != quotedPath {
+		return fmt.Errorf("registry verification failed: expected %s, got %s", quotedPath, val)
+	}
+
+	return nil
 }
 
 func disableStartup() error {
 	key, err := registry.OpenKey(registry.CURRENT_USER, startupKeyPath, registry.SET_VALUE)
 	if err != nil {
-		return err
+		// If key doesn't exist, autostart is already disabled
+		if err == registry.ErrNotExist {
+			return nil
+		}
+		return fmt.Errorf("failed to open registry: %w", err)
 	}
 	defer key.Close()
 
@@ -76,5 +95,8 @@ func disableStartup() error {
 	if err == registry.ErrNotExist {
 		return nil
 	}
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to delete registry value: %w", err)
+	}
+	return nil
 }

@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { ClipboardCopy, Download, Save } from 'lucide-react';
+import { ClipboardCopy, Download, Save, Link } from 'lucide-react';
 
 interface ExportToolbarProps {
   onSave: (format: 'png' | 'jpeg') => void;
   onQuickSave: (format: 'png' | 'jpeg') => void;
   onCopyToClipboard: () => void;
+  onCopyPath: () => void;
+  lastSavedPath: string | null;
   isExporting: boolean;
 }
 
@@ -12,6 +14,8 @@ export function ExportToolbar({
   onSave,
   onQuickSave,
   onCopyToClipboard,
+  onCopyPath,
+  lastSavedPath,
   isExporting,
 }: ExportToolbarProps) {
   const [format, setFormat] = useState<'png' | 'jpeg'>('png');
@@ -60,6 +64,22 @@ export function ExportToolbar({
           <ClipboardCopy className="w-4 h-4" />
           Copy
         </button>
+
+        {/* Copy Path - only show after save */}
+        {lastSavedPath && (
+          <button
+            onClick={onCopyPath}
+            disabled={isExporting}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg font-medium transition-all duration-200
+                       bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20
+                       text-slate-300 hover:text-white
+                       disabled:opacity-50 disabled:cursor-not-allowed"
+            title={lastSavedPath}
+          >
+            <Link className="w-4 h-4" />
+            Copy Path
+          </button>
+        )}
 
         {/* Quick Save */}
         <button

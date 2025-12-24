@@ -14,7 +14,7 @@ import (
 var assets embed.FS
 
 func main() {
-	// Load config to get saved window size
+	// Load config to get saved window size and startup settings
 	cfg, _ := config.Load()
 	width := cfg.Window.Width
 	height := cfg.Window.Height
@@ -25,6 +25,9 @@ func main() {
 		height = 600
 	}
 
+	// Check if app should start hidden (minimize to tray)
+	startHidden := cfg != nil && cfg.Startup.MinimizeToTray
+
 	app := NewApp()
 
 	err := wails.Run(&options.App{
@@ -34,6 +37,7 @@ func main() {
 		MinWidth:         800,
 		MinHeight:        600,
 		Frameless:        true,
+		StartHidden:      startHidden,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
