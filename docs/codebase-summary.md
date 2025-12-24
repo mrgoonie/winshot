@@ -1,6 +1,6 @@
 # WinShot - Codebase Summary
 
-**Date:** 2025-12-12 | **Version:** 1.1
+**Date:** 2025-12-24 | **Version:** 1.2
 
 ---
 
@@ -372,7 +372,7 @@ OnBeforeClose()         // Handle close-to-tray setting
 ## React Frontend (~3,000 LOC)
 
 ### File: `App.tsx`
-**Size:** 26KB (5,800+ tokens, Phase 2: +350 tokens)
+**Size:** 32KB (7,100+ tokens, Phase 3: +1,300 tokens)
 
 Central state management and orchestration.
 
@@ -412,9 +412,10 @@ Central state management and orchestration.
    - `handleCropReset()` - Clear applied crop completely
    - `constrainToAspectRatio()` - Helper to maintain aspect ratio during resize
 
-5. **Export State (Phase 02 New)**
+5. **Export State (Phase 02 New, Phase 3: Enhanced)**
    - `lastSavedPath` - String | null - Tracks most recent file save location
    - `isExporting` - Boolean flag for export operation in progress
+   - `jpegQuality` - Number (0-100, default: 95) - JPEG compression quality loaded from config
 
 6. **UI State**
    - `showWindowPicker`, `showRegionSelector`, `showSettings`
@@ -440,6 +441,8 @@ Central state management and orchestration.
 - Styled canvas auto-copy to clipboard on capture completion (if enabled in config)
 - Capture notifications with toast messages
 - File path clipboard integration for quick access to saved files
+- Keyboard shortcuts for all major operations (see Phase 3 section below)
+- JPEG quality configuration loaded from app config on startup
 
 ### Components (13 total)
 
@@ -626,19 +629,20 @@ wails build -nsis           # Installer EXE
 
 | Metric | Value |
 |--------|-------|
-| Total Tokens | ~60,000+ (Phase 1: Added tests) |
-| Total Characters | ~235,000+ |
-| Total Files | 49+ (Phase 1: +2 test files) |
-| Go Files | 10 (Phase 1: +2 test files) |
-| Test Files | 2 (Phase 1: New) |
+| Total Tokens | ~65,000+ (Phase 3: +5,000) |
+| Total Characters | ~250,000+ |
+| Total Files | 49+ |
+| Go Files | 10 |
+| Test Files | 2 |
 | TypeScript/React Files | 18 |
 | Configuration Files | 8 |
 | Binary Files | 1 (font) |
-| Top File | App.tsx (5,452 tokens) |
+| Top File | App.tsx (7,100+ tokens, Phase 3: +1,300) |
 
-**Phase 1 Additions:**
-- `app_test.go` - Test App struct and window visibility tracking
-- `internal/config/startup_test.go` - Test registry operations and path quoting
+**Phase 3 Additions (Dec 24, 2025):**
+- Ctrl+V keyboard shortcut for clipboard paste
+- JPEG quality state and config loading
+- Enhanced export configuration management
 
 ---
 
@@ -718,3 +722,77 @@ wails build -nsis           # Installer EXE
 - Conditional rendering: Copy Path button only visible when lastSavedPath is set
 - Full path accessible via button tooltip
 - Toast notifications updated to include operation confirmation
+
+---
+
+## Phase 3 - Clipboard Import & Compression (Dec 24, 2025)
+
+**Overview:** Added Ctrl+V clipboard paste support and configurable JPEG export quality for image compression control.
+
+**Changes:**
+1. **frontend/src/App.tsx** - Added Ctrl+V keyboard shortcut + jpegQuality state loading
+2. **frontend/src/App.tsx** - Load JPEG quality from config on app startup via GetConfig()
+3. **frontend/src/App.tsx** - Pass jpegQuality to canvas export methods
+
+**Keyboard Shortcuts (Phase 3 - Enhanced):**
+- **Tool Selection** (single keys, no modifiers):
+  - `V` - Select tool (pointer/move)
+  - `R` - Rectangle annotation
+  - `E` - Ellipse annotation
+  - `A` - Arrow annotation
+  - `L` - Line annotation
+  - `T` - Text annotation
+  - `C` - Crop tool
+
+- **Undo/Redo:**
+  - `Ctrl+Z` - Undo annotation
+  - `Ctrl+Shift+Z` or `Ctrl+Y` - Redo annotation
+  - `Delete` or `Backspace` - Delete selected annotation
+
+- **Capture & Import (Ctrl modifiers):**
+  - `Ctrl+O` - Open/import image file dialog
+  - `Ctrl+V` - Paste image from clipboard (Phase 3 - NEW)
+
+- **Export & Copy:**
+  - `Ctrl+S` - Quick save with default format
+  - `Ctrl+Shift+S` - Export with format dialog
+  - `Ctrl+C` - Copy styled canvas to clipboard
+
+- **Navigation:**
+  - `Escape` - Cancel crop mode, deselect annotation, or reset tool
+
+**Export Configuration (Phase 3 - NEW):**
+- **JPEG Quality** (0-100 scale):
+  - Loaded from config file: `config.export.jpegQuality`
+  - Default value: 95 (high quality)
+  - Applied during canvas export: `quality = jpegQuality / 100`
+  - Affects file size: 95 ≈ visually lossless, lower values = smaller files
+  - Configuration persists across app restarts
+
+**Clipboard Paste Flow (Phase 3 - NEW):**
+```
+User presses Ctrl+V
+  → handleClipboardCapture() triggered
+  → Calls GetClipboardImage() (Go backend)
+  → Reads DIB image from Windows clipboard
+  → Returns CaptureResult {width, height, base64 data}
+  → Replaces current screenshot
+  → Resets annotations and crop state
+  → Shows toast: "Image pasted from clipboard"
+```
+
+**New Features:**
+- Clipboard image import via Ctrl+V (works anytime)
+- Replaces current screenshot (same as file import)
+- Full reset of annotations and crop state on paste
+- Clipboard error handling: "No image in clipboard" message
+- JPEG quality configurable per user preference
+- Quality setting exposed in Settings → Export tab (backend config)
+
+**Technical Details:**
+- `handleClipboardCapture()` mirrors `handleImportImage()` flow
+- Resets `cropState`, `annotations`, and `selectedAnnotationId`
+- Clears `lastSavedPath` on new clipboard import
+- Quality conversion: Wails canvas API uses 0-1 scale, so `jpegQuality / 100`
+- Config loaded on component mount via `useEffect` in GetConfig()
+- No config UI in Phase 3 (handled in Settings → Export backend)

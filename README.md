@@ -95,15 +95,35 @@ Coming soon. See GitHub releases for previews.
 
 ### Keyboard Shortcuts
 
+**Global Hotkeys (Customizable):**
 | Shortcut | Action |
 |----------|--------|
 | `Ctrl+PrintScreen` | Region capture (default) |
 | `PrintScreen` | Fullscreen capture |
 | `Ctrl+Shift+PrintScreen` | Window capture |
-| `Ctrl+S` | Export screenshot |
-| `Escape` | Cancel current operation |
 
-*Note: Global hotkeys are customizable in Settings → Hotkeys*
+*Customizable in Settings → Hotkeys*
+
+**Editor Shortcuts (App Window):**
+
+| Shortcut | Action |
+|----------|--------|
+| `V` | Select tool (pointer/move) |
+| `R` | Rectangle annotation |
+| `E` | Ellipse annotation |
+| `A` | Arrow annotation |
+| `L` | Line annotation |
+| `T` | Text annotation |
+| `C` | Crop tool |
+| `Ctrl+Z` | Undo annotation |
+| `Ctrl+Shift+Z` or `Ctrl+Y` | Redo annotation |
+| `Delete` / `Backspace` | Delete selected annotation |
+| `Escape` | Deselect / cancel crop mode |
+| `Ctrl+O` | Import image file |
+| `Ctrl+V` | Paste image from clipboard |
+| `Ctrl+S` | Quick save |
+| `Ctrl+Shift+S` | Export with format dialog |
+| `Ctrl+C` | Copy to clipboard |
 
 ---
 
@@ -132,7 +152,10 @@ Access via Settings icon in title bar (⚙️).
 
 #### Export
 - **Default format** - PNG or JPEG
-- **JPEG quality** - 0-100 (default: 95)
+- **JPEG quality** - 0-100 slider (default: 95)
+  - 95+ = visually lossless
+  - 75-90 = balanced (recommended)
+  - 50-75 = compressed (smaller files)
 - **Include background** - Apply gradient to exported image
 
 ### Editor Settings
@@ -332,17 +355,16 @@ Contributions welcome! Please:
 - PNG export
 - Configuration dialog
 
-### v1.1 (In Progress)
-- Advanced annotations (arrow, line, text)
-- Non-destructive cropping
-- Gradient backgrounds
-- JPEG export
-- Output aspect ratios
+### v1.2 (Completed)
+- Undo/redo ✓
+- Keyboard shortcuts ✓
+- Clipboard import ✓
+- JPEG quality control ✓
 
-### v1.2 (Planned)
-- Undo/redo
-- Keyboard shortcuts reference
+### v1.3 (Planned)
 - Dark/light theme toggle
+- Batch export operations
+- Cloud sync for settings
 
 ### v2.0 (Future)
 - Screen recording
@@ -415,12 +437,22 @@ See [LICENSE](./LICENSE) file for details.
 
 ## Changelog
 
+### v1.2 (2025-12-24)
+- ✨ Clipboard image import via Ctrl+V
+- ✨ Configurable JPEG compression quality (0-100 scale)
+- ✨ Comprehensive keyboard shortcuts for all tools
+- ✨ Tool selection via single-key shortcuts (V, R, E, A, L, T, C)
+- ✨ Editor annotations with Undo/Redo shortcuts
+- 🚀 Performance improvements for clipboard operations
+- 📝 Enhanced documentation with keyboard reference
+
 ### v1.1 (2025-12-03)
 - ✨ Add arrow and line annotations
 - ✨ Add text annotation tool
 - ✨ Implement non-destructive cropping
 - ✨ Add 24 gradient background presets
 - ✨ Support multiple output aspect ratios
+- ✨ Copy file path button + auto-copy on quick save
 - 🚀 Performance improvements for large images
 - 📝 Complete documentation suite
 

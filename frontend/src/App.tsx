@@ -200,6 +200,7 @@ function App() {
   // Export state
   const [isExporting, setIsExporting] = useState(false);
   const [lastSavedPath, setLastSavedPath] = useState<string | null>(null);
+  const [jpegQuality, setJpegQuality] = useState(95);
 
   // Auto-copy state: tracks when a fresh capture needs auto-copy after canvas renders
   const [pendingAutoCopy, setPendingAutoCopy] = useState(false);
@@ -215,6 +216,21 @@ function App() {
   useEffect(() => {
     saveEditorSettings({ padding, cornerRadius, shadowSize, backgroundColor, outputRatio, showBackground });
   }, [padding, cornerRadius, shadowSize, backgroundColor, outputRatio, showBackground]);
+
+  // Load export settings from config on startup
+  useEffect(() => {
+    const loadExportSettings = async () => {
+      try {
+        const cfg = await GetConfig();
+        if (cfg.export?.jpegQuality) {
+          setJpegQuality(cfg.export.jpegQuality);
+        }
+      } catch (err) {
+        console.error('Failed to load export settings:', err);
+      }
+    };
+    loadExportSettings();
+  }, []);
 
   // Check for updates on startup
   useEffect(() => {
@@ -875,6 +891,8 @@ function App() {
     if (!stage || !screenshot) return null;
 
     const mimeType = format === 'jpeg' ? 'image/jpeg' : 'image/png';
+    // Use configured quality for JPEG (0-100 from config, convert to 0-1 for canvas API)
+    const quality = format === 'jpeg' ? jpegQuality / 100 : 1;
 
     // Calculate the actual output dimensions
     const { totalWidth, totalHeight } = calculateOutputDimensions(
@@ -899,7 +917,7 @@ function App() {
     // Export only the canvas content area (not the full stage which may be larger)
     const dataUrl = stage.toDataURL({
       mimeType,
-      quality: 0.95,
+      quality,
       pixelRatio: 1,
       x: 0,
       y: 0,
@@ -914,7 +932,7 @@ function App() {
     stage.y(oldY);
 
     return dataUrl;
-  }, [screenshot, padding, outputRatio]);
+  }, [screenshot, padding, outputRatio, jpegQuality]);
 
   const getBase64FromDataUrl = (dataUrl: string): string => {
     return dataUrl.split(',')[1];
@@ -1127,13 +1145,25 @@ function App() {
     };
   }, [pendingAutoCopy, screenshot, copyStyledCanvasToClipboard]);
 
-  // Keyboard shortcuts for export and import
+  // Keyboard shortcuts for export, import, and clipboard paste
   useEffect(() => {
     const handleExportKeyDown = (e: KeyboardEvent) => {
+      // Skip if typing in an input field
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
       // Ctrl+O for import (works anytime)
       if (e.ctrlKey && e.key === 'o') {
         e.preventDefault();
         handleImportImage();
+        return;
+      }
+
+      // Ctrl+V for clipboard paste (works anytime, replaces current image per validation)
+      if (e.ctrlKey && e.key === 'v') {
+        e.preventDefault();
+        handleClipboardCapture();
         return;
       }
 
@@ -1153,7 +1183,7 @@ function App() {
 
     window.addEventListener('keydown', handleExportKeyDown);
     return () => window.removeEventListener('keydown', handleExportKeyDown);
-  }, [screenshot, handleSave, handleQuickSave, handleCopyToClipboard, handleImportImage]);
+  }, [screenshot, handleSave, handleQuickSave, handleCopyToClipboard, handleImportImage, handleClipboardCapture]);
 
   return (
     <div className="flex flex-col h-screen bg-transparent">
