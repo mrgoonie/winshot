@@ -1,11 +1,189 @@
 import { useRef, useEffect, useState } from 'react';
-import { Rect, Ellipse, Arrow, Line, Transformer, Group, Text, Circle } from 'react-konva';
+import { Rect, Ellipse, Arrow, Line, Transformer, Group, Text, Circle, Shape } from 'react-konva';
 import Konva from 'konva';
 
 // Constants for better hit detection on thin shapes
 const HIT_STROKE_WIDTH = 28; // Larger clickable area for lines/arrows (increased for easier selection)
 const ENDPOINT_RADIUS = 6; // Radius of draggable endpoint handles
 const ENDPOINT_HOVER_RADIUS = 8; // Slightly larger on hover
+
+// Tapered arrow shape constants
+const ARROW_TAIL_FACTOR = 0.5;   // Tail width = strokeWidth * 0.5
+const ARROW_BODY_FACTOR = 2;     // Body-head junction = strokeWidth * 2
+const ARROW_HEAD_LENGTH = 4;     // Arrowhead length = strokeWidth * 4
+const ARROW_HEAD_WIDTH = 4;      // Arrowhead width = strokeWidth * 4
+
+// Geometry helper: Calculate unit vector from p1 to p2
+function unitVector(x1: number, y1: number, x2: number, y2: number) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const len = Math.sqrt(dx * dx + dy * dy) || 1;
+  return { x: dx / len, y: dy / len };
+}
+
+// Geometry helper: Perpendicular vector (90deg CCW rotation)
+function perpendicular(ux: number, uy: number) {
+  return { x: -uy, y: ux };
+}
+
+// Geometry helper: Quadratic Bezier point at parameter t
+function quadBezierPoint(
+  x0: number, y0: number, // start
+  cx: number, cy: number, // control
+  x1: number, y1: number, // end
+  t: number
+) {
+  const mt = 1 - t;
+  return {
+    x: mt * mt * x0 + 2 * mt * t * cx + t * t * x1,
+    y: mt * mt * y0 + 2 * mt * t * cy + t * t * y1,
+  };
+}
+
+// Geometry helper: Quadratic Bezier tangent (derivative) at parameter t
+function quadBezierTangent(
+  x0: number, y0: number,
+  cx: number, cy: number,
+  x1: number, y1: number,
+  t: number
+) {
+  // B'(t) = 2(1-t)(C-P0) + 2t(P1-C)
+  const mt = 1 - t;
+  const dx = 2 * mt * (cx - x0) + 2 * t * (x1 - cx);
+  const dy = 2 * mt * (cy - y0) + 2 * t * (y1 - cy);
+  const len = Math.sqrt(dx * dx + dy * dy) || 1;
+  return { x: dx / len, y: dy / len };
+}
+
+// Calculate 7-point polygon vertices for straight tapered arrow
+function calculateStraightArrowVertices(
+  x1: number, y1: number, // start (tail)
+  x2: number, y2: number, // end (tip)
+  strokeWidth: number
+) {
+  const tailWidth = strokeWidth * ARROW_TAIL_FACTOR;
+  const bodyWidth = strokeWidth * ARROW_BODY_FACTOR;
+  const headLength = strokeWidth * ARROW_HEAD_LENGTH;
+  const headWidth = strokeWidth * ARROW_HEAD_WIDTH;
+
+  const totalLen = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+
+  // Guard for very short arrows
+  const effectiveHeadLength = Math.min(headLength, totalLen * 0.6);
+
+  // Early return for degenerate case
+  if (totalLen < 1) {
+    return [{ x: x1, y: y1 }];
+  }
+
+  // Direction and perpendicular
+  const dir = unitVector(x1, y1, x2, y2);
+  const perp = perpendicular(dir.x, dir.y);
+
+  // Head junction point (where body meets head)
+  const junctionX = x2 - dir.x * effectiveHeadLength;
+  const junctionY = y2 - dir.y * effectiveHeadLength;
+
+  // 7 vertices (clockwise from tail-left)
+  return [
+    // 1. Tail left
+    { x: x1 + perp.x * tailWidth, y: y1 + perp.y * tailWidth },
+    // 2. Body left (at junction)
+    { x: junctionX + perp.x * bodyWidth, y: junctionY + perp.y * bodyWidth },
+    // 3. Head left shoulder
+    { x: junctionX + perp.x * headWidth, y: junctionY + perp.y * headWidth },
+    // 4. Tip
+    { x: x2, y: y2 },
+    // 5. Head right shoulder
+    { x: junctionX - perp.x * headWidth, y: junctionY - perp.y * headWidth },
+    // 6. Body right (at junction)
+    { x: junctionX - perp.x * bodyWidth, y: junctionY - perp.y * bodyWidth },
+    // 7. Tail right
+    { x: x1 - perp.x * tailWidth, y: y1 - perp.y * tailWidth },
+  ];
+}
+
+// Calculate vertices for curved tapered arrow (body follows Bezier, arrowhead at tangent)
+function calculateCurvedArrowVertices(
+  x1: number, y1: number,    // start (tail)
+  cx: number, cy: number,    // control point
+  x2: number, y2: number,    // end (tip)
+  strokeWidth: number
+) {
+  const tailWidth = strokeWidth * ARROW_TAIL_FACTOR;
+  const bodyWidth = strokeWidth * ARROW_BODY_FACTOR;
+  const headLength = strokeWidth * ARROW_HEAD_LENGTH;
+  const headWidth = strokeWidth * ARROW_HEAD_WIDTH;
+
+  // Approximate total curve length using straight-line distance
+  const totalLen = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2) || 1;
+
+  // Early return for degenerate case
+  if (totalLen < 1) {
+    return {
+      leftEdge: [{ x: x1, y: y1 }],
+      rightEdge: [{ x: x1, y: y1 }],
+      headLeft: { x: x1, y: y1 },
+      tip: { x: x2, y: y2 },
+      headRight: { x: x1, y: y1 },
+    };
+  }
+
+  // Guard for very short arrows
+  const effectiveHeadLength = Math.min(headLength, totalLen * 0.6);
+
+  // Calculate tHead (parameter where body meets arrowhead)
+  const tHead = Math.max(0.5, 1 - effectiveHeadLength / totalLen);
+
+  // Sample points along curve for smooth body edges
+  const samples = [0, 0.2, 0.4, 0.6, 0.8, tHead];
+
+  const leftEdge: { x: number; y: number }[] = [];
+  const rightEdge: { x: number; y: number }[] = [];
+
+  for (const t of samples) {
+    const pt = quadBezierPoint(x1, y1, cx, cy, x2, y2, t);
+    const tan = quadBezierTangent(x1, y1, cx, cy, x2, y2, t);
+    const perp = perpendicular(tan.x, tan.y);
+
+    // Interpolate width from tail to body junction
+    const width = tailWidth + (bodyWidth - tailWidth) * (t / tHead);
+
+    leftEdge.push({
+      x: pt.x + perp.x * width,
+      y: pt.y + perp.y * width,
+    });
+    rightEdge.push({
+      x: pt.x - perp.x * width,
+      y: pt.y - perp.y * width,
+    });
+  }
+
+  // Arrowhead at endpoint using tangent direction
+  const tipTan = quadBezierTangent(x1, y1, cx, cy, x2, y2, 1);
+  const tipPerp = perpendicular(tipTan.x, tipTan.y);
+
+  // Head junction point (on the curve at tHead)
+  const junctionPt = quadBezierPoint(x1, y1, cx, cy, x2, y2, tHead);
+
+  // Arrowhead vertices
+  const headLeftShoulder = {
+    x: junctionPt.x + tipPerp.x * headWidth,
+    y: junctionPt.y + tipPerp.y * headWidth,
+  };
+  const headRightShoulder = {
+    x: junctionPt.x - tipPerp.x * headWidth,
+    y: junctionPt.y - tipPerp.y * headWidth,
+  };
+
+  return {
+    leftEdge,
+    rightEdge: rightEdge.slice().reverse(), // Reversed for clockwise drawing
+    headLeft: headLeftShoulder,
+    tip: { x: x2, y: y2 },
+    headRight: headRightShoulder,
+  };
+}
 
 import { Annotation } from '../types';
 
@@ -147,13 +325,17 @@ function EllipseShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps
 }
 
 function ArrowShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps) {
-  const shapeRef = useRef<Konva.Arrow>(null);
+  const shapeRef = useRef<Konva.Shape>(null);
   const groupRef = useRef<Konva.Group>(null);
   const startCircleRef = useRef<Konva.Circle>(null);
   const endCircleRef = useRef<Konva.Circle>(null);
   const ctrlCircleRef = useRef<Konva.Circle>(null);
   const [hoveredEndpoint, setHoveredEndpoint] = useState<'start' | 'end' | 'ctrl' | null>(null);
   const [draggingEndpoint, setDraggingEndpoint] = useState<'start' | 'end' | 'ctrl' | null>(null);
+
+  // Refs for temporary positions during drag (for real-time visual updates without React re-render)
+  const tempPointsRef = useRef<number[] | null>(null);
+  const tempCtrlRef = useRef<{ x: number; y: number } | null>(null);
 
   // Use annotation points or fallback
   const basePoints = annotation.points || [0, 0, annotation.width, annotation.height];
@@ -200,22 +382,20 @@ function ArrowShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps) 
     const newX = node.x();
     const newY = node.y();
 
-    // Update arrow visually in real-time
-    if (shapeRef.current) {
-      if (endpoint === 'ctrl') {
-        // Update curve control point
-        shapeRef.current.points([x1, y1, newX, newY, x2, y2]);
-      } else if (endpoint === 'start') {
-        const endX = basePoints[2];
-        const endY = basePoints[3];
-        shapeRef.current.points([newX, newY, endX, endY]);
-      } else {
-        const startX = basePoints[0];
-        const startY = basePoints[1];
-        shapeRef.current.points([startX, startY, newX, newY]);
-      }
-      shapeRef.current.getLayer()?.batchDraw();
+    // Update temp refs for real-time visual update (sceneFunc reads these)
+    if (endpoint === 'ctrl') {
+      tempCtrlRef.current = { x: newX, y: newY };
+    } else if (endpoint === 'start') {
+      const endX = basePoints[2];
+      const endY = basePoints[3];
+      tempPointsRef.current = [newX, newY, endX, endY];
+    } else {
+      const startX = basePoints[0];
+      const startY = basePoints[1];
+      tempPointsRef.current = [startX, startY, newX, newY];
     }
+    // Force redraw using sceneFunc
+    shapeRef.current?.getLayer()?.batchDraw();
   };
 
   const handleEndpointDragEnd = (e: Konva.KonvaEventObject<DragEvent>, endpoint: 'start' | 'end' | 'ctrl') => {
@@ -230,6 +410,10 @@ function ArrowShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps) 
       groupRef.current.draggable(true);
     }
     setDraggingEndpoint(null);
+
+    // Clear temp refs after drag ends
+    tempPointsRef.current = null;
+    tempCtrlRef.current = null;
 
     if (endpoint === 'ctrl') {
       // When control point is dragged, save the offset from midpoint
@@ -293,18 +477,85 @@ function ArrowShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps) 
         });
       }}
     >
-      <Arrow
+      <Shape
         ref={shapeRef}
-        points={points}
-        stroke={annotation.stroke}
-        strokeWidth={annotation.strokeWidth}
+        sceneFunc={(context, shape) => {
+          // Use temp refs during drag, otherwise use annotation values
+          const drawPoints = tempPointsRef.current || basePoints;
+          const [px1, py1, px2, py2] = drawPoints;
+
+          // For straight arrows (Phase 02), draw tapered polygon
+          if (!annotation.curved) {
+            const vertices = calculateStraightArrowVertices(
+              px1, py1, px2, py2,
+              annotation.strokeWidth
+            );
+
+            if (vertices.length < 2) {
+              // Degenerate case - draw a small point
+              context.beginPath();
+              context.arc(px1, py1, 2, 0, Math.PI * 2);
+              context.fillStrokeShape(shape);
+              return;
+            }
+
+            context.beginPath();
+            context.moveTo(vertices[0].x, vertices[0].y);
+            for (let i = 1; i < vertices.length; i++) {
+              context.lineTo(vertices[i].x, vertices[i].y);
+            }
+            context.closePath();
+            context.fillStrokeShape(shape);
+          } else {
+            // Curved arrows - tapered body following Bezier curve
+            const drawCtrl = tempCtrlRef.current || ctrlPoint;
+            const { leftEdge, rightEdge, headLeft, tip, headRight } =
+              calculateCurvedArrowVertices(
+                px1, py1, drawCtrl.x, drawCtrl.y, px2, py2,
+                annotation.strokeWidth
+              );
+
+            if (leftEdge.length < 2) {
+              // Degenerate case
+              context.beginPath();
+              context.arc(px1, py1, 2, 0, Math.PI * 2);
+              context.fillStrokeShape(shape);
+              return;
+            }
+
+            context.beginPath();
+
+            // Left edge (from tail to head junction)
+            context.moveTo(leftEdge[0].x, leftEdge[0].y);
+            for (let i = 1; i < leftEdge.length; i++) {
+              context.lineTo(leftEdge[i].x, leftEdge[i].y);
+            }
+
+            // Arrowhead
+            context.lineTo(headLeft.x, headLeft.y);
+            context.lineTo(tip.x, tip.y);
+            context.lineTo(headRight.x, headRight.y);
+
+            // Right edge (from head junction back to tail)
+            for (const pt of rightEdge) {
+              context.lineTo(pt.x, pt.y);
+            }
+
+            context.closePath();
+            context.fillStrokeShape(shape);
+          }
+        }}
         fill={annotation.stroke}
-        pointerLength={annotation.strokeWidth * 3}
-        pointerWidth={annotation.strokeWidth * 3}
-        hitStrokeWidth={HIT_STROKE_WIDTH}
-        lineCap="square"
-        lineJoin="miter"
-        tension={annotation.curved ? 0.5 : 0}
+        hitFunc={(context, shape) => {
+          // Generous hit area for easier selection
+          const drawPoints = tempPointsRef.current || basePoints;
+          const [px1, py1, px2, py2] = drawPoints;
+          context.beginPath();
+          context.moveTo(px1, py1);
+          context.lineTo(px2, py2);
+          context.lineWidth = HIT_STROKE_WIDTH;
+          context.strokeShape(shape);
+        }}
       />
       {/* Draggable endpoint handles when selected */}
       {isSelected && (
