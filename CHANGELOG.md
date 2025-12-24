@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/mrgoonie/winshot/compare/v1.4.0...v1.4.1) (2025-12-24)
+
+
+### Bug Fixes
+
+* **release:** add @semantic-release/npm plugin to update package.json version ([#58](https://github.com/mrgoonie/winshot/issues/58)) ([69eedce](https://github.com/mrgoonie/winshot/commit/69eedce30d2154f22ace38a581e88db59605c722))
+
 # [1.4.0](https://github.com/mrgoonie/winshot/compare/v1.3.0...v1.4.0) (2025-12-24)
 
 
