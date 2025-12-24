@@ -8,6 +8,7 @@
 
 ### Features
 
+* **annotation:** implement tapered arrow shapes with curve support ([363f471](https://github.com/mrgoonie/winshot/commit/363f471fb826e808801b712435bc1c32dae78429))
 * **clipboard:** add Ctrl+V paste and JPEG quality export ([#48](https://github.com/mrgoonie/winshot/issues/48)) ([fe09cce](https://github.com/mrgoonie/winshot/commit/fe09cce30ca37f92134e193ce3b235624e405558))
 * **clipboard:** add multi-format paste and drag-drop image import ([c9700b6](https://github.com/mrgoonie/winshot/commit/c9700b6dd155c2eaf91f3f43aa576c0beb1cc384))
 * **notifications:** add capture notifications and copy path button ([#48](https://github.com/mrgoonie/winshot/issues/48)) ([8b3e94a](https://github.com/mrgoonie/winshot/commit/8b3e94a4eb9d88909c612f9708cfcc28f464065c))
