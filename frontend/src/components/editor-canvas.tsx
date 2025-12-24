@@ -24,6 +24,7 @@ interface EditorCanvasProps {
   strokeWidth: number;
   fontSize: number;
   fontStyle: 'normal' | 'bold' | 'italic' | 'bold italic';
+  nextNumber: number; // Next number for number annotations
   onAnnotationAdd: (annotation: Annotation) => void;
   onAnnotationSelect: (id: string | null) => void;
   onAnnotationUpdate: (id: string, updates: Partial<Annotation>) => void;
@@ -179,6 +180,7 @@ export function EditorCanvas({
   strokeWidth,
   fontSize,
   fontStyle,
+  nextNumber,
   onAnnotationAdd,
   onAnnotationSelect,
   onAnnotationUpdate,
@@ -470,6 +472,24 @@ export function EditorCanvas({
       return;
     }
 
+    // For number tool, create number annotation on click
+    if (activeTool === 'number') {
+      const numberAnnotation: Annotation = {
+        id: generateId(),
+        type: 'number',
+        x,
+        y,
+        width: 36, // Default circle diameter
+        height: 36,
+        stroke: strokeColor,
+        strokeWidth,
+        number: nextNumber,
+      };
+      onAnnotationAdd(numberAnnotation);
+      onAnnotationSelect(numberAnnotation.id);
+      return;
+    }
+
     setIsDrawing(true);
     setDrawStart({ x, y });
 
@@ -488,7 +508,7 @@ export function EditorCanvas({
       points: annotationType === 'arrow' || annotationType === 'line' ? [0, 0, 0, 0] : undefined,
     };
     setTempAnnotation(newAnnotation);
-  }, [activeTool, scale, strokeColor, strokeWidth, fontSize, fontStyle, generateId, onAnnotationSelect, onAnnotationAdd, isTransformerNode, spacePressed, handlePanStart]);
+  }, [activeTool, scale, strokeColor, strokeWidth, fontSize, fontStyle, nextNumber, generateId, onAnnotationSelect, onAnnotationAdd, isTransformerNode, spacePressed, handlePanStart]);
 
   // Handle mouse move for drawing
   const handleMouseMove = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {

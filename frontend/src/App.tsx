@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useUndoRedo } from './hooks/use-undo-redo';
 import Konva from 'konva';
 import { TitleBar } from './components/title-bar';
@@ -155,6 +155,21 @@ function App() {
   const [strokeWidth, setStrokeWidth] = useState(4);
   const [fontSize, setFontSize] = useState(48);
   const [fontStyle, setFontStyle] = useState<'normal' | 'bold' | 'italic' | 'bold italic'>('normal');
+
+  // Compute next available number (finds lowest positive integer not in use)
+  const nextNumber = useMemo(() => {
+    const usedNumbers = new Set(
+      annotations
+        .filter(a => a.type === 'number' && a.number !== undefined)
+        .map(a => a.number as number)
+    );
+    // Find the lowest positive integer not in use
+    let num = 1;
+    while (usedNumbers.has(num)) {
+      num++;
+    }
+    return num;
+  }, [annotations]);
 
   // Crop state - snapshot-based workflow
   const [cropMode, setCropMode] = useState(false);
@@ -952,6 +967,12 @@ function App() {
           case 't':
             handleToolChange('text');
             break;
+          case 'n':
+            handleToolChange('number');
+            break;
+          case 's':
+            handleToolChange('spotlight');
+            break;
           case 'c':
             handleCropToolSelect();
             break;
@@ -1348,6 +1369,7 @@ function App() {
           strokeWidth={strokeWidth}
           fontSize={fontSize}
           fontStyle={fontStyle}
+          nextNumber={nextNumber}
           onAnnotationAdd={handleAnnotationAdd}
           onAnnotationSelect={handleAnnotationSelect}
           onAnnotationUpdate={handleAnnotationUpdate}

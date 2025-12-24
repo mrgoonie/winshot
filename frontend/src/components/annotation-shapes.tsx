@@ -10,7 +10,7 @@ const ENDPOINT_HOVER_RADIUS = 8; // Slightly larger on hover
 // Tapered arrow shape constants
 const ARROW_TAIL_FACTOR = 0.5;   // Tail width = strokeWidth * 0.5
 const ARROW_BODY_FACTOR = 2;     // Body-head junction = strokeWidth * 2
-const ARROW_HEAD_LENGTH = 4;     // Arrowhead length = strokeWidth * 4
+const ARROW_HEAD_LENGTH = 6;     // Arrowhead length = strokeWidth * 6
 const ARROW_HEAD_WIDTH = 4;      // Arrowhead width = strokeWidth * 4
 
 // Geometry helper: Calculate unit vector from p1 to p2
@@ -135,8 +135,8 @@ function calculateCurvedArrowVertices(
   // Calculate tHead (parameter where body meets arrowhead)
   const tHead = Math.max(0.5, 1 - effectiveHeadLength / totalLen);
 
-  // Sample points along curve for smooth body edges
-  const samples = [0, 0.2, 0.4, 0.6, 0.8, tHead];
+  // Sample points along curve for smooth body edges (more samples = smoother)
+  const samples = [0, 0.033, 0.067, 0.1, 0.133, 0.167, 0.2, 0.233, 0.267, 0.3, 0.333, 0.367, 0.4, 0.433, 0.467, 0.5, 0.533, 0.567, 0.6, 0.633, 0.667, 0.7, 0.733, 0.767, 0.8, 0.833, 0.867, 0.9, 0.933, 0.967, tHead];
 
   const leftEdge: { x: number; y: number }[] = [];
   const rightEdge: { x: number; y: number }[] = [];
@@ -547,14 +547,52 @@ function ArrowShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps) 
         }}
         fill={annotation.stroke}
         hitFunc={(context, shape) => {
-          // Generous hit area for easier selection
+          // Draw enlarged polygon for generous hit area
           const drawPoints = tempPointsRef.current || basePoints;
           const [px1, py1, px2, py2] = drawPoints;
-          context.beginPath();
-          context.moveTo(px1, py1);
-          context.lineTo(px2, py2);
-          context.lineWidth = HIT_STROKE_WIDTH;
-          context.strokeShape(shape);
+          const hitWidth = HIT_STROKE_WIDTH / 2;
+
+          if (!annotation.curved) {
+            // Straight arrow: simple rectangle
+            const dx = px2 - px1;
+            const dy = py2 - py1;
+            const len = Math.sqrt(dx * dx + dy * dy) || 1;
+            const perpX = -dy / len * hitWidth;
+            const perpY = dx / len * hitWidth;
+
+            context.beginPath();
+            context.moveTo(px1 + perpX, py1 + perpY);
+            context.lineTo(px2 + perpX, py2 + perpY);
+            context.lineTo(px2 - perpX, py2 - perpY);
+            context.lineTo(px1 - perpX, py1 - perpY);
+            context.closePath();
+          } else {
+            // Curved arrow: follow the Bezier curve
+            const drawCtrl = tempCtrlRef.current || ctrlPoint;
+            const hitSamples = [0, 0.2, 0.4, 0.6, 0.8, 1.0];
+            const leftHit: {x: number, y: number}[] = [];
+            const rightHit: {x: number, y: number}[] = [];
+
+            for (const t of hitSamples) {
+              const pt = quadBezierPoint(px1, py1, drawCtrl.x, drawCtrl.y, px2, py2, t);
+              const tan = quadBezierTangent(px1, py1, drawCtrl.x, drawCtrl.y, px2, py2, t);
+              const perp = perpendicular(tan.x, tan.y);
+              leftHit.push({ x: pt.x + perp.x * hitWidth, y: pt.y + perp.y * hitWidth });
+              rightHit.push({ x: pt.x - perp.x * hitWidth, y: pt.y - perp.y * hitWidth });
+            }
+
+            // Draw polygon following the curve
+            context.beginPath();
+            context.moveTo(leftHit[0].x, leftHit[0].y);
+            for (let i = 1; i < leftHit.length; i++) {
+              context.lineTo(leftHit[i].x, leftHit[i].y);
+            }
+            for (let i = rightHit.length - 1; i >= 0; i--) {
+              context.lineTo(rightHit[i].x, rightHit[i].y);
+            }
+            context.closePath();
+          }
+          context.fillStrokeShape(shape);
         }}
       />
       {/* Draggable endpoint handles when selected */}
@@ -846,6 +884,99 @@ function SpotlightShape({ annotation, isSelected, onSelect, onUpdate }: ShapePro
   );
 }
 
+function NumberShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps) {
+  const groupRef = useRef<Konva.Group>(null);
+  const trRef = useRef<Konva.Transformer>(null);
+
+  // Calculate circle radius based on the number of digits
+  const numberValue = annotation.number || 1;
+  const digitCount = numberValue.toString().length;
+  const baseRadius = 18;
+  const radius = baseRadius + (digitCount - 1) * 6; // Increase radius for multi-digit numbers
+  const fontSize = radius * 1.2; // Font size relative to radius
+
+  useEffect(() => {
+    if (isSelected && trRef.current && groupRef.current) {
+      trRef.current.nodes([groupRef.current]);
+      trRef.current.getLayer()?.batchDraw();
+    }
+  }, [isSelected]);
+
+  return (
+    <>
+      <Group
+        ref={groupRef}
+        x={annotation.x}
+        y={annotation.y}
+        draggable
+        onClick={onSelect}
+        onTap={onSelect}
+        onDragEnd={(e) => {
+          onUpdate({
+            x: e.target.x(),
+            y: e.target.y(),
+          });
+        }}
+        onTransformEnd={() => {
+          const node = groupRef.current;
+          if (!node) return;
+          const scaleX = node.scaleX();
+          node.scaleX(1);
+          node.scaleY(1);
+          onUpdate({
+            x: node.x(),
+            y: node.y(),
+            // Keep width/height in sync with the visual size
+            width: radius * 2 * scaleX,
+            height: radius * 2 * scaleX,
+          });
+        }}
+      >
+        {/* Circle background */}
+        <Circle
+          x={0}
+          y={0}
+          radius={radius}
+          fill={annotation.stroke}
+          shadowColor="black"
+          shadowBlur={4}
+          shadowOpacity={0.3}
+          shadowOffsetY={2}
+        />
+        {/* Number text */}
+        <Text
+          x={-radius}
+          y={-fontSize / 2}
+          width={radius * 2}
+          height={fontSize}
+          text={numberValue.toString()}
+          fontSize={fontSize}
+          fontFamily="Arial"
+          fontStyle="bold"
+          fill="white"
+          align="center"
+          verticalAlign="middle"
+          listening={false}
+        />
+      </Group>
+      {isSelected && (
+        <Transformer
+          ref={trRef}
+          enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right']}
+          rotateEnabled={false}
+          keepRatio={true}
+          boundBoxFunc={(oldBox, newBox) => {
+            if (newBox.width < 20 || newBox.height < 20) {
+              return oldBox;
+            }
+            return newBox;
+          }}
+        />
+      )}
+    </>
+  );
+}
+
 function TextShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps) {
   const shapeRef = useRef<Konva.Text>(null);
   const trRef = useRef<Konva.Transformer>(null);
@@ -1055,6 +1186,8 @@ export function AnnotationShapes({
             return <LineShape key={annotation.id} {...props} />;
           case 'text':
             return <TextShape key={annotation.id} {...props} />;
+          case 'number':
+            return <NumberShape key={annotation.id} {...props} />;
           case 'spotlight':
             return <SpotlightShape key={annotation.id} {...props} />;
           default:
