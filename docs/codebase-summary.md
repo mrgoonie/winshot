@@ -1,6 +1,6 @@
 # WinShot - Codebase Summary
 
-**Date:** 2025-12-12 | **Version:** 1.1
+**Date:** 2025-12-24 | **Version:** 1.2
 
 ---
 
@@ -84,31 +84,53 @@ D:\www\winshot/
 ## Go Backend (~3,100 LOC)
 
 ### Package: `internal/config`
-**Files:** config.go (80 LOC), startup.go (40 LOC)
+**Files:** config.go (80 LOC), startup.go (100 LOC, Phase 1 update)
 
-Manages application configuration persistence.
+Manages application configuration persistence and Windows startup registry integration.
 
 **Key Structures:**
 ```go
 type Config struct {
   Hotkeys    HotkeyConfig
-  Startup    StartupConfig
+  Startup    StartupConfig    // Includes MinimizeToTray, LaunchOnStartup, CloseToTray
   QuickSave  QuickSaveConfig
   Export     ExportConfig
   Window     WindowConfig
+}
+
+type StartupConfig struct {
+  LaunchOnStartup bool  // Windows Registry autostart
+  MinimizeToTray  bool  // Start hidden (Wails StartHidden)
+  CloseToTray     bool  // Minimize on close button click
 }
 ```
 
 **Features:**
 - JSON persistence at `%APPDATA%\WinShot\config.json`
-- Windows Registry startup entry (via startup.go)
+- Windows Registry startup entry with quoted path handling (Phase 1: Fixed quoting)
+- Registry verification for write integrity (Phase 1: Added)
+- Improved error handling with context (Phase 1: Enhanced)
 - Default values factory pattern
 - Type-safe config loading
+
+**Registry Integration (Phase 1 - Startup Fixes):**
+- `IsStartupEnabled()` - Check if app registered in Run key
+- `SetStartupEnabled(enabled bool)` - Enable/disable autostart
+- `enableStartup()` - Private: Write quoted path to registry with verification
+- `disableStartup()` - Private: Remove registry entry gracefully
+
+**Key Changes (Phase 1):**
+1. Fixed registry path quoting to handle spaces in executable path
+2. Added verification step to confirm registry write succeeded
+3. Improved error wrapping with `fmt.Errorf()` for better debugging
+4. Graceful disableStartup if registry key doesn't exist
 
 **Entry Points:**
 - `config.Load()` - Load or create config
 - `config.Save()` - Persist to disk
 - `config.Default()` - Get default config
+- `config.IsStartupEnabled()` - Check autostart status
+- `config.SetStartupEnabled(bool)` - Toggle autostart
 
 ### Package: `internal/hotkeys`
 **File:** hotkeys.go (150 LOC)
@@ -283,14 +305,14 @@ Central App struct with all Wails-bound methods called from frontend.
 type App struct {
   ctx              context.Context
   hotkeyManager    *hotkeys.HotkeyManager
-  overlayManager   *overlay.Manager        // New: native overlay window
+  overlayManager   *overlay.Manager        // Native overlay window
   trayIcon         *tray.TrayIcon
   config           *config.Config
   lastWidth, lastHeight int                // Tracked for persistence
   preCaptureWidth, preCaptureHeight int    // Pre-capture size
   preCaptureX, preCaptureY int             // Pre-capture position
   isCapturing      bool                    // Prevent resize during capture
-  isWindowHidden   bool                    // Track visibility state (new)
+  isWindowHidden   bool                    // Track visibility state (Phase 1: Added)
 }
 ```
 
@@ -319,17 +341,28 @@ SaveConfig(config)
 SetHotkey(mode, combo)
 
 // Utility
-MinimizeToTray()
+MinimizeToTray()        // Hide window to tray
 UpdateWindowSize(width, height)
+ShowWindow()            // Show from tray + refresh z-order
+OnBeforeClose()         // Handle close-to-tray setting
 ```
 
-**Lifecycle:**
-- `startup(ctx)` - Initialize overlay manager, hotkey manager, tray icon, load config
-- `shutdown(ctx)` - Cleanup overlay, hotkeys, tray; save window size
+**Lifecycle (Phase 1 Update):**
+- `startup(ctx)` - Load config, check MinimizeToTray flag, initialize managers, set initial isWindowHidden state
+- `shutdown(ctx)` - Save window size and state, cleanup overlay/hotkeys/tray
+
+**Window Visibility Tracking (Phase 1 - New):**
+`isWindowHidden` boolean tracks actual window state:
+- Initialized to `cfg.Startup.MinimizeToTray` at startup
+- Set `true` when MinimizeToTray(), WindowHide(), OnBeforeClose() called
+- Set `false` when ShowWindow(), tray.OnShow callback triggered
+- Prevents race conditions in async capture flow (region selection waits for hide)
+- Used in PrepareRegionCapture() to avoid double-hide on already-hidden windows
 
 **Notable Implementation Details:**
 - Overlay manager started before hotkey listener (native overlay takes priority)
-- Window visibility state tracked via `isWindowHidden` flag
+- StartHidden Wails option set from cfg.Startup.MinimizeToTray (Phase 1: Added to main.go)
+- Window visibility state tracks actual Wails window state, not just intent
 - SetAlwaysOnTop toggle refreshes window z-order when showing from tray
 - UpdateWindowSize skips updates during capture (preserves pre-capture dimensions)
 - Pre-capture position saved for window restoration after region selection
@@ -339,7 +372,7 @@ UpdateWindowSize(width, height)
 ## React Frontend (~3,000 LOC)
 
 ### File: `App.tsx`
-**Size:** 24KB (5,452 tokens)
+**Size:** 32KB (7,100+ tokens, Phase 3: +1,300 tokens)
 
 Central state management and orchestration.
 
@@ -379,7 +412,12 @@ Central state management and orchestration.
    - `handleCropReset()` - Clear applied crop completely
    - `constrainToAspectRatio()` - Helper to maintain aspect ratio during resize
 
-5. **UI State**
+5. **Export State (Phase 02 New, Phase 3: Enhanced)**
+   - `lastSavedPath` - String | null - Tracks most recent file save location
+   - `isExporting` - Boolean flag for export operation in progress
+   - `jpegQuality` - Number (0-100, default: 95) - JPEG compression quality loaded from config
+
+6. **UI State**
    - `showWindowPicker`, `showRegionSelector`, `showSettings`
    - `statusMessage` - Toast/notification
    - `displayBounds` - Screen dimensions
@@ -389,19 +427,29 @@ Central state management and orchestration.
    - `handleCopyToClipboard()` - Manual copy trigger used by UI buttons
    - Auto-copy flow: Sets `pendingAutoCopy` on capture → useEffect detects pending flag → Waits for canvas render → Calls `copyStyledCanvasToClipboard()` if `autoCopyToClipboard` config enabled
 
+**Save & Path Management (Phase 02 New):**
+   - `handleQuickSave(format)` - Quick save with auto-clipboard path copy
+   - `handleCopyPath()` - Copy last saved file path to clipboard
+   - Auto-copy path: After QuickSave succeeds, immediately copies file path to clipboard with feedback
+   - `lastSavedPath` cleared on new capture to prevent stale paths
+
 **Key Features:**
 - localStorage persistence for editor settings
 - Hotkey event listeners (via Wails EventsOn)
 - Wails method bindings for backend calls
 - Canvas stage ref management with Konva
 - Styled canvas auto-copy to clipboard on capture completion (if enabled in config)
+- Capture notifications with toast messages
+- File path clipboard integration for quick access to saved files
+- Keyboard shortcuts for all major operations (see Phase 3 section below)
+- JPEG quality configuration loaded from app config on startup
 
 ### Components (13 total)
 
 **Toolbars (4 files):**
 - `capture-toolbar.tsx` - Fullscreen/Region/Window buttons
 - `annotation-toolbar.tsx` - Rectangle/Ellipse/Arrow/Line/Text tools
-- `export-toolbar.tsx` - Export with format/quality options
+- `export-toolbar.tsx` - Export with format/quality options + Copy Path button (Phase 02 New)
 - `crop-toolbar.tsx` - Crop mode controls
 
 **Modals & Panels (3 files):**
@@ -581,14 +629,20 @@ wails build -nsis           # Installer EXE
 
 | Metric | Value |
 |--------|-------|
-| Total Tokens | 58,044 |
-| Total Characters | 230,222 |
-| Total Files | 47 |
-| Go Files | 8 |
+| Total Tokens | ~65,000+ (Phase 3: +5,000) |
+| Total Characters | ~250,000+ |
+| Total Files | 49+ |
+| Go Files | 10 |
+| Test Files | 2 |
 | TypeScript/React Files | 18 |
 | Configuration Files | 8 |
 | Binary Files | 1 (font) |
-| Top File | App.tsx (5,452 tokens) |
+| Top File | App.tsx (7,100+ tokens, Phase 3: +1,300) |
+
+**Phase 3 Additions (Dec 24, 2025):**
+- Ctrl+V keyboard shortcut for clipboard paste
+- JPEG quality state and config loading
+- Enhanced export configuration management
 
 ---
 
@@ -621,6 +675,124 @@ wails build -nsis           # Installer EXE
 
 - All file paths use forward slashes in code (cross-platform compatible)
 - Base64 PNG data transmitted as JSON strings between Go/React
-- No database - configs stored as JSON files
+- No database - configs stored as JSON files and Windows Registry (startup)
 - Windows-only (uses Win32 APIs extensively)
 - Frameless window with custom title bar (Vibrant Glassmorphism design)
+
+## Phase 1 - Startup & Autostart Fixes (Dec 24, 2025)
+
+**Overview:** Fixed Windows startup registry integration and added window visibility state tracking.
+
+**Changes:**
+1. **main.go** - Added StartHidden Wails option tied to cfg.Startup.MinimizeToTray
+2. **app.go** - Added isWindowHidden state tracking + removed timing hacks from region capture
+3. **internal/config/startup.go** - Fixed registry path quoting, added verification, improved error handling
+4. **Tests** - Created app_test.go and internal/config/startup_test.go for new functionality
+
+**Key Improvements:**
+- Executable paths with spaces now properly quoted in registry
+- Registry write verification prevents silent failures
+- Window visibility state prevents double-hide race conditions
+- Better error context for debugging startup issues
+- Comprehensive unit tests for registry operations
+
+---
+
+## Phase 2 - Notifications & Copy Path (Dec 24, 2025)
+
+**Overview:** Added capture notifications, file path tracking, and Copy Path button for quick clipboard access to saved files.
+
+**Changes:**
+1. **frontend/src/App.tsx** - Added lastSavedPath state + handleCopyPath handler
+2. **frontend/src/components/export-toolbar.tsx** - Added Copy Path button with icon + tooltip
+3. **Notification flow** - Capture operations now show toast messages (Fullscreen/Window/Region captured)
+4. **Auto-copy path** - QuickSave auto-copies file path to clipboard with feedback
+
+**New Features:**
+- Capture mode notifications: "Fullscreen captured", "Window captured", "Region captured"
+- lastSavedPath tracks most recent file location after successful save
+- Copy Path button appears only after file save
+- Tooltip shows full file path on hover
+- QuickSave automatically copies path to clipboard with "Saved & path copied:" message
+- lastSavedPath cleared on new capture to prevent stale paths
+- Copy Path handler with user-friendly error messages
+
+**UI Changes:**
+- Added Link icon (lucide-react) to Copy Path button
+- Conditional rendering: Copy Path button only visible when lastSavedPath is set
+- Full path accessible via button tooltip
+- Toast notifications updated to include operation confirmation
+
+---
+
+## Phase 3 - Clipboard Import & Compression (Dec 24, 2025)
+
+**Overview:** Added Ctrl+V clipboard paste support and configurable JPEG export quality for image compression control.
+
+**Changes:**
+1. **frontend/src/App.tsx** - Added Ctrl+V keyboard shortcut + jpegQuality state loading
+2. **frontend/src/App.tsx** - Load JPEG quality from config on app startup via GetConfig()
+3. **frontend/src/App.tsx** - Pass jpegQuality to canvas export methods
+
+**Keyboard Shortcuts (Phase 3 - Enhanced):**
+- **Tool Selection** (single keys, no modifiers):
+  - `V` - Select tool (pointer/move)
+  - `R` - Rectangle annotation
+  - `E` - Ellipse annotation
+  - `A` - Arrow annotation
+  - `L` - Line annotation
+  - `T` - Text annotation
+  - `C` - Crop tool
+
+- **Undo/Redo:**
+  - `Ctrl+Z` - Undo annotation
+  - `Ctrl+Shift+Z` or `Ctrl+Y` - Redo annotation
+  - `Delete` or `Backspace` - Delete selected annotation
+
+- **Capture & Import (Ctrl modifiers):**
+  - `Ctrl+O` - Open/import image file dialog
+  - `Ctrl+V` - Paste image from clipboard (Phase 3 - NEW)
+
+- **Export & Copy:**
+  - `Ctrl+S` - Quick save with default format
+  - `Ctrl+Shift+S` - Export with format dialog
+  - `Ctrl+C` - Copy styled canvas to clipboard
+
+- **Navigation:**
+  - `Escape` - Cancel crop mode, deselect annotation, or reset tool
+
+**Export Configuration (Phase 3 - NEW):**
+- **JPEG Quality** (0-100 scale):
+  - Loaded from config file: `config.export.jpegQuality`
+  - Default value: 95 (high quality)
+  - Applied during canvas export: `quality = jpegQuality / 100`
+  - Affects file size: 95 ≈ visually lossless, lower values = smaller files
+  - Configuration persists across app restarts
+
+**Clipboard Paste Flow (Phase 3 - NEW):**
+```
+User presses Ctrl+V
+  → handleClipboardCapture() triggered
+  → Calls GetClipboardImage() (Go backend)
+  → Reads DIB image from Windows clipboard
+  → Returns CaptureResult {width, height, base64 data}
+  → Replaces current screenshot
+  → Resets annotations and crop state
+  → Shows toast: "Image pasted from clipboard"
+```
+
+**New Features:**
+- Clipboard image import via Ctrl+V (works anytime)
+- Replaces current screenshot (same as file import)
+- Full reset of annotations and crop state on paste
+- Clipboard error handling: "No image in clipboard" message
+- JPEG quality configurable per user preference
+- Quality setting exposed in Settings → Export tab (backend config)
+
+**Technical Details:**
+- `handleClipboardCapture()` mirrors `handleImportImage()` flow
+- Resets `cropState`, `annotations`, and `selectedAnnotationId`
+- Clears `lastSavedPath` on new clipboard import
+- Quality conversion: Wails canvas API uses 0-1 scale, so `jpegQuality / 100`
+- Config loaded on component mount via `useEffect` in GetConfig()
+- No config UI in Phase 3 (handled in Settings → Export backend)

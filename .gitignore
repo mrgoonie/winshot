@@ -71,3 +71,4 @@ prompt.md
 .gemini/settings.json
 .claude/settings.bak.json
 .claude/active-plan
+.claude

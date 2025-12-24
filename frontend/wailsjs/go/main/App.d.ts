@@ -30,6 +30,8 @@ export function GetDisplayBounds(arg1:number):Promise<main.DisplayBounds>;
 
 export function GetDisplayCount():Promise<number>;
 
+export function GetEditorConfig():Promise<config.EditorConfig>;
+
 export function GetHotkeyConfig():Promise<main.HotkeyConfig>;
 
 export function GetSkippedVersion():Promise<string>;
@@ -55,6 +57,8 @@ export function QuickSave(arg1:string,arg2:string):Promise<main.SaveImageResult>
 export function SaveBackgroundImages(arg1:Array<string>):Promise<void>;
 
 export function SaveConfig(arg1:config.Config):Promise<void>;
+
+export function SaveEditorConfig(arg1:config.EditorConfig):Promise<void>;
 
 export function SaveImage(arg1:string,arg2:string):Promise<main.SaveImageResult>;
 

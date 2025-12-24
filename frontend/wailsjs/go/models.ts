@@ -14,6 +14,28 @@ export namespace config {
 	        this.skippedVersion = source["skippedVersion"];
 	    }
 	}
+	export class EditorConfig {
+	    padding: number;
+	    cornerRadius: number;
+	    shadowSize: number;
+	    backgroundColor: string;
+	    outputRatio: string;
+	    showBackground: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new EditorConfig(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.padding = source["padding"];
+	        this.cornerRadius = source["cornerRadius"];
+	        this.shadowSize = source["shadowSize"];
+	        this.backgroundColor = source["backgroundColor"];
+	        this.outputRatio = source["outputRatio"];
+	        this.showBackground = source["showBackground"];
+	    }
+	}
 	export class WindowConfig {
 	    width: number;
 	    height: number;
@@ -100,6 +122,7 @@ export namespace config {
 	    quickSave: QuickSaveConfig;
 	    export: ExportConfig;
 	    window: WindowConfig;
+	    editor: EditorConfig;
 	    update: UpdateConfig;
 	    backgroundImages?: string[];
 	
@@ -114,6 +137,7 @@ export namespace config {
 	        this.quickSave = this.convertValues(source["quickSave"], QuickSaveConfig);
 	        this.export = this.convertValues(source["export"], ExportConfig);
 	        this.window = this.convertValues(source["window"], WindowConfig);
+	        this.editor = this.convertValues(source["editor"], EditorConfig);
 	        this.update = this.convertValues(source["update"], UpdateConfig);
 	        this.backgroundImages = source["backgroundImages"];
 	    }
@@ -136,6 +160,7 @@ export namespace config {
 		    return a;
 		}
 	}
+	
 	
 	
 	
