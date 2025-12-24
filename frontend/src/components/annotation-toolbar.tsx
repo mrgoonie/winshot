@@ -14,6 +14,7 @@ import {
   Crop,
   Undo2,
   Redo2,
+  Hash,
 } from 'lucide-react';
 
 interface AnnotationToolbarProps {
@@ -141,6 +142,12 @@ export function AnnotationToolbar({
       label: 'Text',
       shortcut: 'T',
       icon: <Type className="w-5 h-5" />,
+    },
+    {
+      id: 'number',
+      label: 'Number',
+      shortcut: 'N',
+      icon: <Hash className="w-5 h-5" />,
     },
     {
       id: 'spotlight',
