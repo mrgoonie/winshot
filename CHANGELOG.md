@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/mrgoonie/winshot/compare/v1.3.0...v1.4.0) (2025-12-24)
+
+
+### Features
+
+* **annotation:** implement tapered arrow shapes with curve support ([363f471](https://github.com/mrgoonie/winshot/commit/363f471fb826e808801b712435bc1c32dae78429))
+
 # [1.3.0](https://github.com/mrgoonie/winshot/compare/v1.2.0...v1.3.0) (2025-12-24)
 
 
