@@ -199,6 +199,7 @@ function App() {
 
   // Export state
   const [isExporting, setIsExporting] = useState(false);
+  const [lastSavedPath, setLastSavedPath] = useState<string | null>(null);
 
   // Auto-copy state: tracks when a fresh capture needs auto-copy after canvas renders
   const [pendingAutoCopy, setPendingAutoCopy] = useState(false);
@@ -325,7 +326,11 @@ function App() {
       resetAnnotations([]);
       setSelectedAnnotationId(null);
       setActiveTool('select');
-      setStatusMessage(undefined);
+      // Clear last saved path since this is a new capture
+      setLastSavedPath(null);
+      // Show capture success notification
+      setStatusMessage('Fullscreen captured');
+      setTimeout(() => setStatusMessage(undefined), 2000);
 
       // Trigger auto-copy of styled canvas (handled by useEffect)
       setPendingAutoCopy(true);
@@ -350,7 +355,11 @@ function App() {
       resetAnnotations([]);
       setSelectedAnnotationId(null);
       setActiveTool('select');
-      setStatusMessage(undefined);
+      // Clear last saved path since this is a new capture
+      setLastSavedPath(null);
+      // Show capture success notification
+      setStatusMessage('Window captured');
+      setTimeout(() => setStatusMessage(undefined), 2000);
 
       // Trigger auto-copy of styled canvas (handled by useEffect)
       setPendingAutoCopy(true);
@@ -372,7 +381,11 @@ function App() {
     resetAnnotations([]);
     setSelectedAnnotationId(null);
     setActiveTool('select');
-    setStatusMessage(undefined);
+    // Clear last saved path since this is a new capture
+    setLastSavedPath(null);
+    // Show capture success notification
+    setStatusMessage('Region captured');
+    setTimeout(() => setStatusMessage(undefined), 2000);
 
     // Restore window to normal state
     FinishRegionCapture();
@@ -386,6 +399,8 @@ function App() {
     resetAnnotations([]);
     setSelectedAnnotationId(null);
     setStatusMessage(undefined);
+    // Clear last saved path
+    setLastSavedPath(null);
     // Reset crop state
     setCropState({
       originalImage: null,
@@ -949,7 +964,15 @@ function App() {
       const result = await QuickSave(base64Data, format);
 
       if (result.success) {
-        setStatusMessage(`Saved to ${result.filePath}`);
+        setLastSavedPath(result.filePath);
+        // Auto-copy path to clipboard after QuickSave (per user validation)
+        try {
+          await navigator.clipboard.writeText(result.filePath);
+          setStatusMessage(`Saved & path copied: ${result.filePath}`);
+        } catch {
+          // Clipboard write may fail in some contexts, still show save success
+          setStatusMessage(`Saved to ${result.filePath}`);
+        }
       } else {
         setStatusMessage(result.error || 'Quick save failed');
       }
@@ -961,6 +984,25 @@ function App() {
     setIsExporting(false);
     setTimeout(() => setStatusMessage(undefined), 3000);
   }, [getCanvasDataUrl]);
+
+  // Copy file path to clipboard
+  const handleCopyPath = useCallback(async () => {
+    if (!lastSavedPath) {
+      setStatusMessage('No saved file path to copy');
+      setTimeout(() => setStatusMessage(undefined), 2000);
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(lastSavedPath);
+      setStatusMessage('Path copied to clipboard');
+      setTimeout(() => setStatusMessage(undefined), 2000);
+    } catch (error) {
+      console.error('Copy path failed:', error);
+      setStatusMessage('Failed to copy path');
+      setTimeout(() => setStatusMessage(undefined), 2000);
+    }
+  }, [lastSavedPath]);
 
   // Helper to copy styled canvas to clipboard (used by auto-copy and manual copy)
   const copyStyledCanvasToClipboard = useCallback(async (): Promise<boolean> => {
@@ -1221,6 +1263,8 @@ function App() {
           onSave={handleSave}
           onQuickSave={handleQuickSave}
           onCopyToClipboard={handleCopyToClipboard}
+          onCopyPath={handleCopyPath}
+          lastSavedPath={lastSavedPath}
           isExporting={isExporting}
         />
       )}

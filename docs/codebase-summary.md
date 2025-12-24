@@ -372,7 +372,7 @@ OnBeforeClose()         // Handle close-to-tray setting
 ## React Frontend (~3,000 LOC)
 
 ### File: `App.tsx`
-**Size:** 24KB (5,452 tokens)
+**Size:** 26KB (5,800+ tokens, Phase 2: +350 tokens)
 
 Central state management and orchestration.
 
@@ -412,7 +412,11 @@ Central state management and orchestration.
    - `handleCropReset()` - Clear applied crop completely
    - `constrainToAspectRatio()` - Helper to maintain aspect ratio during resize
 
-5. **UI State**
+5. **Export State (Phase 02 New)**
+   - `lastSavedPath` - String | null - Tracks most recent file save location
+   - `isExporting` - Boolean flag for export operation in progress
+
+6. **UI State**
    - `showWindowPicker`, `showRegionSelector`, `showSettings`
    - `statusMessage` - Toast/notification
    - `displayBounds` - Screen dimensions
@@ -422,19 +426,27 @@ Central state management and orchestration.
    - `handleCopyToClipboard()` - Manual copy trigger used by UI buttons
    - Auto-copy flow: Sets `pendingAutoCopy` on capture → useEffect detects pending flag → Waits for canvas render → Calls `copyStyledCanvasToClipboard()` if `autoCopyToClipboard` config enabled
 
+**Save & Path Management (Phase 02 New):**
+   - `handleQuickSave(format)` - Quick save with auto-clipboard path copy
+   - `handleCopyPath()` - Copy last saved file path to clipboard
+   - Auto-copy path: After QuickSave succeeds, immediately copies file path to clipboard with feedback
+   - `lastSavedPath` cleared on new capture to prevent stale paths
+
 **Key Features:**
 - localStorage persistence for editor settings
 - Hotkey event listeners (via Wails EventsOn)
 - Wails method bindings for backend calls
 - Canvas stage ref management with Konva
 - Styled canvas auto-copy to clipboard on capture completion (if enabled in config)
+- Capture notifications with toast messages
+- File path clipboard integration for quick access to saved files
 
 ### Components (13 total)
 
 **Toolbars (4 files):**
 - `capture-toolbar.tsx` - Fullscreen/Region/Window buttons
 - `annotation-toolbar.tsx` - Rectangle/Ellipse/Arrow/Line/Text tools
-- `export-toolbar.tsx` - Export with format/quality options
+- `export-toolbar.tsx` - Export with format/quality options + Copy Path button (Phase 02 New)
 - `crop-toolbar.tsx` - Crop mode controls
 
 **Modals & Panels (3 files):**
@@ -679,3 +691,30 @@ wails build -nsis           # Installer EXE
 - Window visibility state prevents double-hide race conditions
 - Better error context for debugging startup issues
 - Comprehensive unit tests for registry operations
+
+---
+
+## Phase 2 - Notifications & Copy Path (Dec 24, 2025)
+
+**Overview:** Added capture notifications, file path tracking, and Copy Path button for quick clipboard access to saved files.
+
+**Changes:**
+1. **frontend/src/App.tsx** - Added lastSavedPath state + handleCopyPath handler
+2. **frontend/src/components/export-toolbar.tsx** - Added Copy Path button with icon + tooltip
+3. **Notification flow** - Capture operations now show toast messages (Fullscreen/Window/Region captured)
+4. **Auto-copy path** - QuickSave auto-copies file path to clipboard with feedback
+
+**New Features:**
+- Capture mode notifications: "Fullscreen captured", "Window captured", "Region captured"
+- lastSavedPath tracks most recent file location after successful save
+- Copy Path button appears only after file save
+- Tooltip shows full file path on hover
+- QuickSave automatically copies path to clipboard with "Saved & path copied:" message
+- lastSavedPath cleared on new capture to prevent stale paths
+- Copy Path handler with user-friendly error messages
+
+**UI Changes:**
+- Added Link icon (lucide-react) to Copy Path button
+- Conditional rendering: Copy Path button only visible when lastSavedPath is set
+- Full path accessible via button tooltip
+- Toast notifications updated to include operation confirmation
