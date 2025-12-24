@@ -47,6 +47,16 @@ type WindowConfig struct {
 	Height int `json:"height"`
 }
 
+// EditorConfig holds editor panel settings (persisted separately from localStorage)
+type EditorConfig struct {
+	Padding         int    `json:"padding"`
+	CornerRadius    int    `json:"cornerRadius"`
+	ShadowSize      int    `json:"shadowSize"`
+	BackgroundColor string `json:"backgroundColor"`
+	OutputRatio     string `json:"outputRatio"`
+	ShowBackground  bool   `json:"showBackground"`
+}
+
 // Config holds all application settings
 type Config struct {
 	Hotkeys          HotkeyConfig    `json:"hotkeys"`
@@ -54,6 +64,7 @@ type Config struct {
 	QuickSave        QuickSaveConfig `json:"quickSave"`
 	Export           ExportConfig    `json:"export"`
 	Window           WindowConfig    `json:"window"`
+	Editor           EditorConfig    `json:"editor"`
 	Update           UpdateConfig    `json:"update"`
 	BackgroundImages []string        `json:"backgroundImages,omitempty"`
 }
@@ -88,6 +99,14 @@ func Default() *Config {
 		Window: WindowConfig{
 			Width:  1200,
 			Height: 800,
+		},
+		Editor: EditorConfig{
+			Padding:         40,
+			CornerRadius:    12,
+			ShadowSize:      20,
+			BackgroundColor: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+			OutputRatio:     "auto",
+			ShowBackground:  true,
 		},
 		Update: UpdateConfig{
 			CheckOnStartup: true,

@@ -23,6 +23,8 @@ import {
   FinishRegionCapture,
   UpdateWindowSize,
   GetConfig,
+  GetEditorConfig,
+  SaveEditorConfig,
   OpenImage,
   GetClipboardImage,
   CheckForUpdate,
@@ -31,45 +33,15 @@ import {
 import { updater } from '../wailsjs/go/models';
 import { EventsOn, EventsOff, WindowGetSize } from '../wailsjs/runtime/runtime';
 
-// Storage key for persistent editor settings
-const EDITOR_SETTINGS_KEY = 'winshot-editor-settings';
-
-interface EditorSettings {
-  padding: number;
-  cornerRadius: number;
-  shadowSize: number;
-  backgroundColor: string;
-  outputRatio: OutputRatio;
-  showBackground: boolean;
-}
-
-const DEFAULT_EDITOR_SETTINGS: EditorSettings = {
+// Default editor settings (used before Go config loads)
+const DEFAULT_EDITOR_SETTINGS = {
   padding: 40,
   cornerRadius: 12,
   shadowSize: 20,
   backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-  outputRatio: 'auto',
+  outputRatio: 'auto' as OutputRatio,
   showBackground: true,
 };
-
-// Load settings from localStorage
-function loadEditorSettings(): EditorSettings {
-  try {
-    const stored = localStorage.getItem(EDITOR_SETTINGS_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      return { ...DEFAULT_EDITOR_SETTINGS, ...parsed };
-    }
-  } catch {
-    // Invalid stored data, use defaults
-  }
-  return DEFAULT_EDITOR_SETTINGS;
-}
-
-// Save settings to localStorage
-function saveEditorSettings(settings: EditorSettings): void {
-  localStorage.setItem(EDITOR_SETTINGS_KEY, JSON.stringify(settings));
-}
 
 // Helper to parse ratio string into numeric ratio
 function parseRatio(ratio: OutputRatio): number | null {
@@ -152,13 +124,14 @@ function App() {
   const [showWindowPicker, setShowWindowPicker] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | undefined>();
 
-  // Editor settings (loaded from localStorage with lazy initialization)
-  const [padding, setPadding] = useState(() => loadEditorSettings().padding);
-  const [cornerRadius, setCornerRadius] = useState(() => loadEditorSettings().cornerRadius);
-  const [shadowSize, setShadowSize] = useState(() => loadEditorSettings().shadowSize);
-  const [backgroundColor, setBackgroundColor] = useState(() => loadEditorSettings().backgroundColor);
-  const [outputRatio, setOutputRatio] = useState<OutputRatio>(() => loadEditorSettings().outputRatio);
-  const [showBackground, setShowBackground] = useState(() => loadEditorSettings().showBackground);
+  // Editor settings (loaded from Go config on startup)
+  const [padding, setPadding] = useState(DEFAULT_EDITOR_SETTINGS.padding);
+  const [cornerRadius, setCornerRadius] = useState(DEFAULT_EDITOR_SETTINGS.cornerRadius);
+  const [shadowSize, setShadowSize] = useState(DEFAULT_EDITOR_SETTINGS.shadowSize);
+  const [backgroundColor, setBackgroundColor] = useState(DEFAULT_EDITOR_SETTINGS.backgroundColor);
+  const [outputRatio, setOutputRatio] = useState<OutputRatio>(DEFAULT_EDITOR_SETTINGS.outputRatio);
+  const [showBackground, setShowBackground] = useState(DEFAULT_EDITOR_SETTINGS.showBackground);
+  const [editorSettingsLoaded, setEditorSettingsLoaded] = useState(false);
   // Stores settings when background is hidden, so they can be restored
   const [savedBackgroundSettings, setSavedBackgroundSettings] = useState<{
     padding: number;
@@ -212,10 +185,34 @@ function App() {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<updater.UpdateInfo | null>(null);
 
-  // Persist editor settings to localStorage when they change
+  // Load editor settings from Go config on startup
   useEffect(() => {
-    saveEditorSettings({ padding, cornerRadius, shadowSize, backgroundColor, outputRatio, showBackground });
-  }, [padding, cornerRadius, shadowSize, backgroundColor, outputRatio, showBackground]);
+    const loadEditorSettings = async () => {
+      try {
+        const cfg = await GetEditorConfig();
+        if (cfg) {
+          if (cfg.padding !== undefined) setPadding(cfg.padding);
+          if (cfg.cornerRadius !== undefined) setCornerRadius(cfg.cornerRadius);
+          if (cfg.shadowSize !== undefined) setShadowSize(cfg.shadowSize);
+          if (cfg.backgroundColor) setBackgroundColor(cfg.backgroundColor);
+          if (cfg.outputRatio) setOutputRatio(cfg.outputRatio as OutputRatio);
+          if (cfg.showBackground !== undefined) setShowBackground(cfg.showBackground);
+        }
+      } catch (err) {
+        console.error('Failed to load editor settings:', err);
+      }
+      setEditorSettingsLoaded(true);
+    };
+    loadEditorSettings();
+  }, []);
+
+  // Persist editor settings to Go config when they change (after initial load)
+  useEffect(() => {
+    if (!editorSettingsLoaded) return;
+    SaveEditorConfig({ padding, cornerRadius, shadowSize, backgroundColor, outputRatio, showBackground }).catch(err => {
+      console.error('Failed to save editor settings:', err);
+    });
+  }, [padding, cornerRadius, shadowSize, backgroundColor, outputRatio, showBackground, editorSettingsLoaded]);
 
   // Load export settings from config on startup
   useEffect(() => {

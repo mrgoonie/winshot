@@ -746,3 +746,17 @@ func (a *App) SetSkippedVersion(version string) error {
 func (a *App) GetSkippedVersion() string {
 	return a.config.Update.SkippedVersion
 }
+
+// GetEditorConfig returns the current editor panel settings
+func (a *App) GetEditorConfig() *config.EditorConfig {
+	return &a.config.Editor
+}
+
+// SaveEditorConfig saves editor panel settings to persistent config
+func (a *App) SaveEditorConfig(editor *config.EditorConfig) error {
+	if editor == nil {
+		return nil
+	}
+	a.config.Editor = *editor
+	return a.config.Save()
+}
