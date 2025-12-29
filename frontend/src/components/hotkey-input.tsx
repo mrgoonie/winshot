@@ -70,9 +70,10 @@ export function HotkeyInput({ value, onChange, label, disabled = false }: Hotkey
     // Map special keys
     if (keyCodeToName[e.code]) {
       keyName = keyCodeToName[e.code];
-    } else if (e.key.length === 1) {
-      // Single character (letter or number)
-      keyName = e.key.toUpperCase();
+    } else if (e.code.startsWith("Digit")) {
+      keyName = e.code.slice(5);
+    } else if (e.code.startsWith("Key")) {
+      keyName = e.code.slice(3);
     }
 
     parts.push(keyName);
