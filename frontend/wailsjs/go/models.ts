@@ -253,6 +253,20 @@ export namespace main {
 	        this.height = source["height"];
 	    }
 	}
+	export class GDriveStatus {
+	    connected: boolean;
+	    email?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new GDriveStatus(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.connected = source["connected"];
+	        this.email = source["email"];
+	    }
+	}
 	export class HotkeyConfig {
 	    fullscreen: string;
 	    region: string;

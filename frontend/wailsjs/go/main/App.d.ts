@@ -41,6 +41,8 @@ export function GetEditorConfig():Promise<config.EditorConfig>;
 
 export function GetGDriveConfig():Promise<config.GDriveConfig>;
 
+export function GetGDriveStatus():Promise<main.GDriveStatus>;
+
 export function GetHotkeyConfig():Promise<main.HotkeyConfig>;
 
 export function GetR2Config():Promise<config.R2Config>;

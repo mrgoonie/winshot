@@ -70,6 +70,10 @@ export function GetGDriveConfig() {
   return window['go']['main']['App']['GetGDriveConfig']();
 }
 
+export function GetGDriveStatus() {
+  return window['go']['main']['App']['GetGDriveStatus']();
+}
+
 export function GetHotkeyConfig() {
   return window['go']['main']['App']['GetHotkeyConfig']();
 }

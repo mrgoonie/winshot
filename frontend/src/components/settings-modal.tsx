@@ -1,15 +1,32 @@
 import { useState, useEffect } from 'react';
 import { HotkeyInput } from './hotkey-input';
-import { GetConfig, SaveConfig, SelectFolder } from '../../wailsjs/go/main/App';
+import {
+  GetConfig,
+  SaveConfig,
+  SelectFolder,
+  GetR2Config,
+  SaveR2Config,
+  SaveR2Credentials,
+  IsR2Configured,
+  TestR2Connection,
+  GetGDriveConfig,
+  SaveGDriveConfig,
+  SaveGDriveCredentials,
+  HasGDriveCredentials,
+  GetGDriveStatus,
+  StartGDriveAuth,
+  DisconnectGDrive,
+} from '../../wailsjs/go/main/App';
+import { EventsOn, EventsOff } from '../../wailsjs/runtime/runtime';
 import { config } from '../../wailsjs/go/models';
-import { X } from 'lucide-react';
+import { X, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-type SettingsTab = 'hotkeys' | 'startup' | 'quicksave' | 'export' | 'updates';
+type SettingsTab = 'hotkeys' | 'startup' | 'quicksave' | 'export' | 'updates' | 'cloud';
 
 // Local interface for easier state management
 interface LocalConfig {
@@ -38,6 +55,37 @@ interface LocalConfig {
     checkOnStartup: boolean;
   };
 }
+
+// Cloud config local state
+interface CloudLocalConfig {
+  r2: {
+    accountId: string;
+    accessKeyId: string;
+    secretAccessKey: string;
+    bucket: string;
+    publicUrl: string;
+  };
+  gdrive: {
+    clientId: string;
+    clientSecret: string;
+    folderId: string;
+  };
+}
+
+const defaultCloudConfig: CloudLocalConfig = {
+  r2: {
+    accountId: '',
+    accessKeyId: '',
+    secretAccessKey: '',
+    bucket: '',
+    publicUrl: '',
+  },
+  gdrive: {
+    clientId: '',
+    clientSecret: '',
+    folderId: '',
+  },
+};
 
 const defaultConfig: LocalConfig = {
   hotkeys: {
@@ -73,12 +121,44 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Cloud state
+  const [cloudConfig, setCloudConfig] = useState<CloudLocalConfig>(defaultCloudConfig);
+  const [r2Status, setR2Status] = useState<'unconfigured' | 'testing' | 'connected' | 'error'>('unconfigured');
+  const [r2Error, setR2Error] = useState<string | null>(null);
+  const [gdriveEmail, setGdriveEmail] = useState<string | null>(null);
+  const [gdriveConnecting, setGdriveConnecting] = useState(false);
+  const [showR2Instructions, setShowR2Instructions] = useState(false);
+  const [showGDriveInstructions, setShowGDriveInstructions] = useState(false);
+
   // Load config when modal opens
   useEffect(() => {
     if (isOpen) {
       loadConfig();
+      loadCloudConfig();
     }
   }, [isOpen]);
+
+  // GDrive OAuth event listeners
+  useEffect(() => {
+    const successHandler = () => {
+      setGdriveConnecting(false);
+      loadCloudConfig();
+    };
+
+    const errorHandler = (err: string) => {
+      setGdriveConnecting(false);
+      setError(`Google Drive connection failed: ${err}`);
+      console.error('GDrive auth error:', err);
+    };
+
+    EventsOn('gdrive:auth:success', successHandler);
+    EventsOn('gdrive:auth:error', errorHandler);
+
+    return () => {
+      EventsOff('gdrive:auth:success');
+      EventsOff('gdrive:auth:error');
+    };
+  }, []);
 
   const loadConfig = async () => {
     try {
@@ -115,6 +195,98 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     } catch (err) {
       console.error('Failed to load config:', err);
       setError('Failed to load settings');
+    }
+  };
+
+  const loadCloudConfig = async () => {
+    try {
+      // R2
+      const r2Cfg = await GetR2Config();
+      setCloudConfig((prev) => ({
+        ...prev,
+        r2: {
+          ...prev.r2,
+          accountId: r2Cfg.accountId || '',
+          bucket: r2Cfg.bucket || '',
+          publicUrl: r2Cfg.publicUrl || '',
+        },
+      }));
+
+      const r2Configured = await IsR2Configured();
+      setR2Status(r2Configured ? 'connected' : 'unconfigured');
+      setR2Error(null);
+
+      // GDrive
+      const gdriveCfg = await GetGDriveConfig();
+      setCloudConfig((prev) => ({
+        ...prev,
+        gdrive: {
+          ...prev.gdrive,
+          folderId: gdriveCfg.folderId || '',
+        },
+      }));
+
+      const status = await GetGDriveStatus();
+      setGdriveEmail(status.connected ? status.email || null : null);
+    } catch (err) {
+      console.error('Failed to load cloud config:', err);
+    }
+  };
+
+  // R2 handlers
+  const handleR2Test = async () => {
+    setR2Status('testing');
+    setR2Error(null);
+    try {
+      // Save config first
+      await SaveR2Config(
+        cloudConfig.r2.accountId,
+        cloudConfig.r2.bucket,
+        cloudConfig.r2.publicUrl
+      );
+      await SaveR2Credentials(
+        cloudConfig.r2.accessKeyId,
+        cloudConfig.r2.secretAccessKey
+      );
+
+      // Test connection
+      await TestR2Connection();
+      setR2Status('connected');
+    } catch (err) {
+      setR2Status('error');
+      setR2Error(err instanceof Error ? err.message : 'Connection failed');
+      console.error('R2 test failed:', err);
+    }
+  };
+
+  // GDrive handlers
+  const handleGDriveConnect = async () => {
+    setGdriveConnecting(true);
+    try {
+      // Save credentials first
+      await SaveGDriveCredentials(
+        cloudConfig.gdrive.clientId,
+        cloudConfig.gdrive.clientSecret
+      );
+
+      // Save folder config
+      await SaveGDriveConfig(cloudConfig.gdrive.folderId);
+
+      // Start OAuth - opens browser
+      await StartGDriveAuth();
+      // Auth completion handled by event listener
+    } catch (err) {
+      setGdriveConnecting(false);
+      console.error('GDrive auth failed:', err);
+    }
+  };
+
+  const handleGDriveDisconnect = async () => {
+    try {
+      await DisconnectGDrive();
+      setGdriveEmail(null);
+    } catch (err) {
+      console.error('GDrive disconnect failed:', err);
     }
   };
 
@@ -170,6 +342,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     { id: 'quicksave', label: 'Quick Save' },
     { id: 'export', label: 'Export' },
     { id: 'updates', label: 'Updates' },
+    { id: 'cloud', label: 'Cloud' },
   ];
 
   return (
@@ -478,6 +651,235 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <p className="text-sm text-slate-400">
                   WinShot will notify you when a new version is available. Updates are downloaded from GitHub Releases as portable executables.
                 </p>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'cloud' && (
+            <div className="space-y-6">
+              {/* Cloudflare R2 Section */}
+              <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-slate-200">Cloudflare R2</h3>
+                  <div className="flex items-center gap-2">
+                    {r2Status === 'connected' && (
+                      <span className="text-xs text-emerald-400 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                        Connected
+                      </span>
+                    )}
+                    {r2Status === 'error' && (
+                      <span className="text-xs text-rose-400">Connection failed</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    placeholder="Account ID"
+                    value={cloudConfig.r2.accountId}
+                    onChange={(e) =>
+                      setCloudConfig((prev) => ({
+                        ...prev,
+                        r2: { ...prev.r2, accountId: e.target.value },
+                      }))
+                    }
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-slate-200 text-sm placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50"
+                  />
+                  <input
+                    type="password"
+                    placeholder="Access Key ID"
+                    value={cloudConfig.r2.accessKeyId}
+                    onChange={(e) =>
+                      setCloudConfig((prev) => ({
+                        ...prev,
+                        r2: { ...prev.r2, accessKeyId: e.target.value },
+                      }))
+                    }
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-slate-200 text-sm placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50"
+                  />
+                  <input
+                    type="password"
+                    placeholder="Secret Access Key"
+                    value={cloudConfig.r2.secretAccessKey}
+                    onChange={(e) =>
+                      setCloudConfig((prev) => ({
+                        ...prev,
+                        r2: { ...prev.r2, secretAccessKey: e.target.value },
+                      }))
+                    }
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-slate-200 text-sm placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Bucket Name"
+                    value={cloudConfig.r2.bucket}
+                    onChange={(e) =>
+                      setCloudConfig((prev) => ({
+                        ...prev,
+                        r2: { ...prev.r2, bucket: e.target.value },
+                      }))
+                    }
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-slate-200 text-sm placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Public URL (e.g., https://pub-xxx.r2.dev)"
+                    value={cloudConfig.r2.publicUrl}
+                    onChange={(e) =>
+                      setCloudConfig((prev) => ({
+                        ...prev,
+                        r2: { ...prev.r2, publicUrl: e.target.value },
+                      }))
+                    }
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-slate-200 text-sm placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50"
+                  />
+
+                  {r2Error && (
+                    <p className="text-xs text-rose-400">{r2Error}</p>
+                  )}
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleR2Test}
+                      disabled={r2Status === 'testing'}
+                      className="px-3 py-1.5 text-sm rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 transition-all duration-200 disabled:opacity-50"
+                    >
+                      {r2Status === 'testing' ? 'Testing...' : 'Test Connection'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Instructions toggle */}
+                <button
+                  onClick={() => setShowR2Instructions(!showR2Instructions)}
+                  className="mt-3 text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1"
+                >
+                  {showR2Instructions ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  {showR2Instructions ? 'Hide' : 'Show'} setup instructions
+                </button>
+
+                {showR2Instructions && (
+                  <div className="mt-2 p-3 text-xs text-slate-400 bg-black/20 rounded-lg">
+                    <ol className="list-decimal list-inside space-y-1">
+                      <li>Go to Cloudflare Dashboard → R2</li>
+                      <li>Create a bucket and enable public access</li>
+                      <li>Go to Manage R2 API Tokens</li>
+                      <li>Create token with Object Read & Write permission</li>
+                      <li>Copy Account ID, Access Key ID, and Secret</li>
+                      <li>Enter your public URL (r2.dev or custom domain)</li>
+                    </ol>
+                  </div>
+                )}
+              </div>
+
+              {/* Google Drive Section */}
+              <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-slate-200">Google Drive</h3>
+                  {gdriveEmail && (
+                    <span className="text-xs text-emerald-400 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                      {gdriveEmail}
+                    </span>
+                  )}
+                </div>
+
+                {!gdriveEmail ? (
+                  <>
+                    <div className="space-y-3 mb-3">
+                      <input
+                        type="text"
+                        placeholder="OAuth Client ID"
+                        value={cloudConfig.gdrive.clientId}
+                        onChange={(e) =>
+                          setCloudConfig((prev) => ({
+                            ...prev,
+                            gdrive: { ...prev.gdrive, clientId: e.target.value },
+                          }))
+                        }
+                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-slate-200 text-sm placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50"
+                      />
+                      <input
+                        type="password"
+                        placeholder="OAuth Client Secret"
+                        value={cloudConfig.gdrive.clientSecret}
+                        onChange={(e) =>
+                          setCloudConfig((prev) => ({
+                            ...prev,
+                            gdrive: { ...prev.gdrive, clientSecret: e.target.value },
+                          }))
+                        }
+                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-slate-200 text-sm placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Folder ID (optional)"
+                        value={cloudConfig.gdrive.folderId}
+                        onChange={(e) =>
+                          setCloudConfig((prev) => ({
+                            ...prev,
+                            gdrive: { ...prev.gdrive, folderId: e.target.value },
+                          }))
+                        }
+                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-slate-200 text-sm placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50"
+                      />
+                    </div>
+                    <button
+                      onClick={handleGDriveConnect}
+                      disabled={gdriveConnecting || !cloudConfig.gdrive.clientId || !cloudConfig.gdrive.clientSecret}
+                      className="px-4 py-2 text-sm rounded-lg bg-gradient-to-r from-violet-500 to-purple-600 text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {gdriveConnecting ? 'Connecting...' : 'Connect Google Account'}
+                    </button>
+                  </>
+                ) : (
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      placeholder="Folder ID (optional)"
+                      value={cloudConfig.gdrive.folderId}
+                      onChange={(e) =>
+                        setCloudConfig((prev) => ({
+                          ...prev,
+                          gdrive: { ...prev.gdrive, folderId: e.target.value },
+                        }))
+                      }
+                      onBlur={() => SaveGDriveConfig(cloudConfig.gdrive.folderId)}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-slate-200 text-sm placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50"
+                    />
+                    <p className="text-xs text-slate-500">Folder ID is auto-saved when you leave the field</p>
+                    <button
+                      onClick={handleGDriveDisconnect}
+                      className="px-4 py-2 text-sm rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30 transition-all duration-200"
+                    >
+                      Disconnect
+                    </button>
+                  </div>
+                )}
+
+                {/* Instructions toggle */}
+                <button
+                  onClick={() => setShowGDriveInstructions(!showGDriveInstructions)}
+                  className="mt-3 text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1"
+                >
+                  {showGDriveInstructions ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  {showGDriveInstructions ? 'Hide' : 'Show'} setup instructions
+                </button>
+
+                {showGDriveInstructions && (
+                  <div className="mt-2 p-3 text-xs text-slate-400 bg-black/20 rounded-lg">
+                    <ol className="list-decimal list-inside space-y-1">
+                      <li>Go to Google Cloud Console</li>
+                      <li>Create project and enable Drive API</li>
+                      <li>Configure OAuth consent screen (External)</li>
+                      <li>Create OAuth 2.0 Client ID (Desktop app)</li>
+                      <li>Add http://localhost:8089/callback as redirect URI</li>
+                      <li>Copy Client ID and Client Secret</li>
+                    </ol>
+                  </div>
+                )}
               </div>
             </div>
           )}

@@ -890,9 +890,24 @@ func (a *App) StartGDriveAuth() (string, error) {
 	return url, nil
 }
 
+// GDriveStatus represents the Google Drive connection status
+type GDriveStatus struct {
+	Connected bool   `json:"connected"`
+	Email     string `json:"email,omitempty"`
+}
+
 // IsGDriveConnected checks if Google Drive is connected and returns user email
 func (a *App) IsGDriveConnected() (bool, string, error) {
 	return a.gdriveUploader.IsConnected()
+}
+
+// GetGDriveStatus returns Google Drive connection status with email
+func (a *App) GetGDriveStatus() (*GDriveStatus, error) {
+	connected, email, err := a.gdriveUploader.IsConnected()
+	if err != nil {
+		return &GDriveStatus{Connected: false}, err
+	}
+	return &GDriveStatus{Connected: connected, Email: email}, nil
 }
 
 // DisconnectGDrive removes Google Drive authorization
