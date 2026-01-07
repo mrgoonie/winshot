@@ -29,6 +29,10 @@ import {
   GetClipboardImage,
   CheckForUpdate,
   GetSkippedVersion,
+  IsR2Configured,
+  GetGDriveStatus,
+  UploadToR2,
+  UploadToGDrive,
 } from '../wailsjs/go/main/App';
 import { updater } from '../wailsjs/go/models';
 import { EventsOn, EventsOff, WindowGetSize } from '../wailsjs/runtime/runtime';
@@ -200,6 +204,12 @@ function App() {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<updater.UpdateInfo | null>(null);
 
+  // Cloud upload state
+  const [isR2Configured, setIsR2Configured] = useState(false);
+  const [isGDriveConnected, setIsGDriveConnected] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
   // Load editor settings from Go config on startup
   useEffect(() => {
     const loadEditorSettings = async () => {
@@ -271,6 +281,38 @@ function App() {
     const timer = setTimeout(checkForUpdates, 2000);
     return () => clearTimeout(timer);
   }, []);
+
+  // Check cloud configuration on mount and after settings change
+  const checkCloudConfig = useCallback(async () => {
+    try {
+      const r2 = await IsR2Configured();
+      setIsR2Configured(r2);
+
+      const status = await GetGDriveStatus();
+      setIsGDriveConnected(status.connected);
+    } catch (err) {
+      console.error('Failed to check cloud config:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkCloudConfig();
+  }, [checkCloudConfig]);
+
+  // Re-check cloud config when settings modal closes
+  useEffect(() => {
+    if (!showSettings) {
+      checkCloudConfig();
+    }
+  }, [showSettings, checkCloudConfig]);
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   // Handle background visibility toggle
   const handleShowBackgroundChange = useCallback((show: boolean) => {
@@ -1121,6 +1163,60 @@ function App() {
     }
   }, [lastSavedPath]);
 
+  // Cloud upload handler
+  const handleCloudUpload = useCallback(async (provider: 'r2' | 'gdrive') => {
+    if (!screenshot) return;
+
+    const dataUrl = getCanvasDataUrl('png');
+    if (!dataUrl) {
+      setToast({ message: 'Upload failed: No canvas available', type: 'error' });
+      return;
+    }
+
+    setIsUploading(true);
+    setStatusMessage('Uploading...');
+
+    try {
+      // Generate filename
+      const now = new Date();
+      const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const filename = `winshot_${timestamp}.png`;
+
+      // Get base64 data
+      const base64Data = dataUrl.split(',')[1];
+
+      // Upload
+      let result;
+      if (provider === 'r2') {
+        result = await UploadToR2(base64Data, filename);
+      } else {
+        result = await UploadToGDrive(base64Data, filename);
+      }
+
+      if (result.success) {
+        // Copy URL to clipboard
+        try {
+          await navigator.clipboard.writeText(result.publicUrl);
+          setToast({ message: 'Uploaded! URL copied to clipboard', type: 'success' });
+        } catch {
+          // Clipboard failed, still show success with URL
+          setToast({ message: `Uploaded! ${result.publicUrl}`, type: 'success' });
+        }
+        setStatusMessage(`Uploaded to ${provider === 'r2' ? 'R2' : 'Google Drive'}`);
+      } else {
+        setToast({ message: `Upload failed: ${result.error}`, type: 'error' });
+        setStatusMessage('Upload failed');
+      }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+      setToast({ message: `Upload error: ${errorMsg}`, type: 'error' });
+      setStatusMessage('Upload failed');
+    }
+
+    setIsUploading(false);
+    setTimeout(() => setStatusMessage(undefined), 3000);
+  }, [screenshot, getCanvasDataUrl]);
+
   // Helper to copy styled canvas to clipboard (used by auto-copy and manual copy)
   const copyStyledCanvasToClipboard = useCallback(async (): Promise<boolean> => {
     const stage = stageRef.current;
@@ -1410,8 +1506,12 @@ function App() {
           onQuickSave={handleQuickSave}
           onCopyToClipboard={handleCopyToClipboard}
           onCopyPath={handleCopyPath}
+          onCloudUpload={handleCloudUpload}
           lastSavedPath={lastSavedPath}
           isExporting={isExporting}
+          isR2Configured={isR2Configured}
+          isGDriveConnected={isGDriveConnected}
+          isUploading={isUploading}
         />
       )}
 
@@ -1433,6 +1533,24 @@ function App() {
         onClose={() => setShowUpdateModal(false)}
         updateInfo={updateInfo}
       />
+
+      {/* Toast notification for cloud upload */}
+      {toast && (
+        <div
+          className={`fixed bottom-4 right-4 px-4 py-3 rounded-xl shadow-lg z-50 flex items-center gap-2 max-w-md
+                      ${toast.type === 'success'
+                        ? 'bg-emerald-500/90 text-white'
+                        : 'bg-rose-500/90 text-white'}`}
+        >
+          <span className="text-sm font-medium">{toast.message}</span>
+          <button
+            onClick={() => setToast(null)}
+            className="ml-2 p-1 rounded-lg hover:bg-white/20 transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+      )}
     </div>
   );
 }

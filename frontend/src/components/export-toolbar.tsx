@@ -1,13 +1,17 @@
-import { useState } from 'react';
-import { ClipboardCopy, Download, Save, Link } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ClipboardCopy, Download, Save, Link, Cloud, ChevronDown } from 'lucide-react';
 
 interface ExportToolbarProps {
   onSave: (format: 'png' | 'jpeg') => void;
   onQuickSave: (format: 'png' | 'jpeg') => void;
   onCopyToClipboard: () => void;
   onCopyPath: () => void;
+  onCloudUpload: (provider: 'r2' | 'gdrive') => void;
   lastSavedPath: string | null;
   isExporting: boolean;
+  isR2Configured: boolean;
+  isGDriveConnected: boolean;
+  isUploading: boolean;
 }
 
 export function ExportToolbar({
@@ -15,10 +19,30 @@ export function ExportToolbar({
   onQuickSave,
   onCopyToClipboard,
   onCopyPath,
+  onCloudUpload,
   lastSavedPath,
   isExporting,
+  isR2Configured,
+  isGDriveConnected,
+  isUploading,
 }: ExportToolbarProps) {
   const [format, setFormat] = useState<'png' | 'jpeg'>('png');
+  const [showUploadMenu, setShowUploadMenu] = useState(false);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setShowUploadMenu(false);
+    if (showUploadMenu) {
+      // Use setTimeout to avoid immediate closing when clicking the button
+      const timer = setTimeout(() => {
+        document.addEventListener('click', handleClickOutside);
+      }, 0);
+      return () => {
+        clearTimeout(timer);
+        document.removeEventListener('click', handleClickOutside);
+      };
+    }
+  }, [showUploadMenu]);
 
   return (
     <div className="flex items-center gap-3 px-3 py-2.5 glass">
@@ -96,6 +120,53 @@ export function ExportToolbar({
           Quick Save
         </button>
 
+        {/* Cloud Upload */}
+        <div className="relative">
+          <button
+            onClick={() => setShowUploadMenu(!showUploadMenu)}
+            disabled={isExporting || isUploading || (!isR2Configured && !isGDriveConnected)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg font-medium transition-all duration-200
+                       bg-gradient-to-r from-sky-500/20 to-cyan-500/20 hover:from-sky-500/30 hover:to-cyan-500/30
+                       border border-sky-500/30 hover:border-sky-500/50
+                       text-sky-300 hover:text-sky-200
+                       disabled:opacity-50 disabled:cursor-not-allowed"
+            title={!isR2Configured && !isGDriveConnected ? 'Configure cloud providers in Settings > Cloud' : 'Upload to Cloud'}
+          >
+            <Cloud className="w-4 h-4" />
+            Cloud
+            <ChevronDown className="w-3 h-3" />
+          </button>
+
+          {showUploadMenu && (
+            <div className="absolute top-full left-0 mt-1 py-1 min-w-[160px] rounded-lg bg-slate-800/95 border border-white/10 shadow-xl z-50">
+              <button
+                onClick={() => {
+                  onCloudUpload('r2');
+                  setShowUploadMenu(false);
+                }}
+                disabled={!isR2Configured || isUploading}
+                className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 text-slate-200
+                           hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${isR2Configured ? 'bg-emerald-400' : 'bg-slate-500'}`}></span>
+                Cloudflare R2
+              </button>
+              <button
+                onClick={() => {
+                  onCloudUpload('gdrive');
+                  setShowUploadMenu(false);
+                }}
+                disabled={!isGDriveConnected || isUploading}
+                className="w-full px-3 py-2 text-sm text-left flex items-center gap-2 text-slate-200
+                           hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${isGDriveConnected ? 'bg-emerald-400' : 'bg-slate-500'}`}></span>
+                Google Drive
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Save As */}
         <button
           onClick={() => onSave(format)}
@@ -117,6 +188,14 @@ export function ExportToolbar({
         <div className="flex items-center gap-2 ml-2">
           <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
           <span className="text-sm text-violet-300 animate-pulse font-medium">Exporting...</span>
+        </div>
+      )}
+
+      {/* Uploading indicator */}
+      {isUploading && (
+        <div className="flex items-center gap-2 ml-2">
+          <div className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
+          <span className="text-sm text-sky-300 animate-pulse font-medium">Uploading...</span>
         </div>
       )}
     </div>
