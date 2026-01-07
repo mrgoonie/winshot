@@ -1,0 +1,347 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>upload: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">winshot/internal/upload/credentials.go (85.7%)</option>
+				
+				<option value="file1">winshot/internal/upload/r2.go (41.7%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">// Package upload provides cloud upload functionality for screenshots.
+package upload
+
+import (
+        "errors"
+        "fmt"
+
+        "github.com/danieljoos/wincred"
+)
+
+// Credential key constants for Windows Credential Manager
+const (
+        credentialPrefix = "WinShot_"
+
+        // CredR2AccessKeyID is the key for R2 access key ID
+        CredR2AccessKeyID = credentialPrefix + "R2_AccessKeyID"
+        // CredR2SecretAccessKey is the key for R2 secret access key
+        CredR2SecretAccessKey = credentialPrefix + "R2_SecretAccessKey"
+        // CredR2Endpoint is the key for R2 endpoint URL
+        CredR2Endpoint = credentialPrefix + "R2_Endpoint"
+        // CredR2BucketName is the key for R2 bucket name
+        CredR2BucketName = credentialPrefix + "R2_BucketName"
+        // CredR2PublicURL is the key for R2 public URL base
+        CredR2PublicURL = credentialPrefix + "R2_PublicURL"
+        // CredGDriveToken is the key for Google Drive OAuth token JSON
+        CredGDriveToken = credentialPrefix + "GDrive_Token"
+        // CredGDriveClientID is the key for user-provided OAuth client ID
+        CredGDriveClientID = credentialPrefix + "GDrive_ClientID"
+        // CredGDriveClientSecret is the key for user-provided OAuth client secret
+        CredGDriveClientSecret = credentialPrefix + "GDrive_ClientSecret"
+)
+
+// ErrCredentialNotFound is returned when a credential does not exist
+var ErrCredentialNotFound = errors.New("credential not found")
+
+// CredentialManager provides methods to store and retrieve credentials
+// using Windows Credential Manager (DPAPI encrypted storage).
+type CredentialManager struct{}
+
+// NewCredentialManager creates a new CredentialManager instance.
+func NewCredentialManager() *CredentialManager <span class="cov8" title="1">{
+        return &amp;CredentialManager{}
+}</span>
+
+// Set stores a credential value in Windows Credential Manager.
+// If the credential already exists, it will be overwritten.
+// Credentials are stored per-user (not machine-wide) to avoid requiring admin.
+func (cm *CredentialManager) Set(key, value string) error <span class="cov8" title="1">{
+        if key == "" </span><span class="cov0" title="0">{
+                return errors.New("credential key cannot be empty")
+        }</span>
+        <span class="cov8" title="1">cred := wincred.NewGenericCredential(key)
+        cred.CredentialBlob = []byte(value)
+        cred.Persist = wincred.PersistEnterprise // Per-user, roaming-profile compatible
+        return cred.Write()</span>
+}
+
+// Get retrieves a credential value from Windows Credential Manager.
+// Returns ErrCredentialNotFound if the credential does not exist.
+// Note: Error string matching based on wincred v1.2.3 behavior.
+func (cm *CredentialManager) Get(key string) (string, error) <span class="cov8" title="1">{
+        cred, err := wincred.GetGenericCredential(key)
+        if err != nil </span><span class="cov8" title="1">{
+                // Check if credential not found (wincred v1.2.3 error message)
+                if err.Error() == "Element not found." </span><span class="cov8" title="1">{
+                        return "", ErrCredentialNotFound
+                }</span>
+                <span class="cov0" title="0">return "", fmt.Errorf("failed to get credential: %w", err)</span>
+        }
+        <span class="cov8" title="1">return string(cred.CredentialBlob), nil</span>
+}
+
+// Delete removes a credential from Windows Credential Manager.
+// Returns nil if the credential doesn't exist.
+// Note: Error string matching based on wincred v1.2.3 behavior.
+func (cm *CredentialManager) Delete(key string) error <span class="cov8" title="1">{
+        cred, err := wincred.GetGenericCredential(key)
+        if err != nil </span><span class="cov8" title="1">{
+                // Credential doesn't exist, nothing to delete (wincred v1.2.3 error message)
+                if err.Error() == "Element not found." </span><span class="cov8" title="1">{
+                        return nil
+                }</span>
+                <span class="cov0" title="0">return fmt.Errorf("failed to get credential for deletion: %w", err)</span>
+        }
+        <span class="cov8" title="1">return cred.Delete()</span>
+}
+
+// Exists checks if a credential exists in Windows Credential Manager.
+func (cm *CredentialManager) Exists(key string) bool <span class="cov8" title="1">{
+        _, err := wincred.GetGenericCredential(key)
+        return err == nil
+}</span>
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package upload
+
+import (
+        "bytes"
+        "context"
+        "fmt"
+        "strings"
+        "time"
+
+        "github.com/aws/aws-sdk-go-v2/aws"
+        "github.com/aws/aws-sdk-go-v2/credentials"
+        "github.com/aws/aws-sdk-go-v2/service/s3"
+)
+
+const (
+        r2UploadTimeout     = 60 * time.Second
+        r2TestTimeout       = 10 * time.Second
+        r2MaxRetries        = 3
+        r2RetryBaseDelay    = 500 * time.Millisecond
+)
+
+// R2Config holds configuration for Cloudflare R2.
+type R2Config struct {
+        AccountID string `json:"accountId"`
+        Bucket    string `json:"bucket"`
+        PublicURL string `json:"publicUrl"`
+}
+
+// R2Uploader implements Uploader for Cloudflare R2.
+type R2Uploader struct {
+        creds  *CredentialManager
+        config *R2Config
+}
+
+// NewR2Uploader creates a new R2Uploader instance.
+func NewR2Uploader(creds *CredentialManager, cfg *R2Config) *R2Uploader <span class="cov8" title="1">{
+        return &amp;R2Uploader{creds: creds, config: cfg}
+}</span>
+
+// IsConfigured returns true if R2 credentials and config are set.
+func (r *R2Uploader) IsConfigured() bool <span class="cov8" title="1">{
+        if r.config == nil || r.config.AccountID == "" || r.config.Bucket == "" </span><span class="cov8" title="1">{
+                return false
+        }</span>
+        <span class="cov8" title="1">return r.creds.Exists(CredR2AccessKeyID) &amp;&amp; r.creds.Exists(CredR2SecretAccessKey)</span>
+}
+
+// getClient creates an S3 client configured for Cloudflare R2.
+func (r *R2Uploader) getClient() (*s3.Client, error) <span class="cov8" title="1">{
+        accessKey, err := r.creds.Get(CredR2AccessKeyID)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("missing R2 access key: %w", err)
+        }</span>
+        <span class="cov0" title="0">secretKey, err := r.creds.Get(CredR2SecretAccessKey)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("missing R2 secret key: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">endpoint := fmt.Sprintf("https://%s.r2.cloudflarestorage.com", r.config.AccountID)
+
+        client := s3.New(s3.Options{
+                Region:       "auto",
+                BaseEndpoint: aws.String(endpoint),
+                Credentials:  credentials.NewStaticCredentialsProvider(accessKey, secretKey, ""),
+        })
+
+        return client, nil</span>
+}
+
+// detectContentType returns the MIME type based on filename extension.
+func detectContentType(filename string) string <span class="cov8" title="1">{
+        lower := strings.ToLower(filename)
+        switch </span>{
+        case strings.HasSuffix(lower, ".jpg"), strings.HasSuffix(lower, ".jpeg"):<span class="cov8" title="1">
+                return "image/jpeg"</span>
+        case strings.HasSuffix(lower, ".png"):<span class="cov8" title="1">
+                return "image/png"</span>
+        case strings.HasSuffix(lower, ".gif"):<span class="cov8" title="1">
+                return "image/gif"</span>
+        case strings.HasSuffix(lower, ".webp"):<span class="cov8" title="1">
+                return "image/webp"</span>
+        default:<span class="cov8" title="1">
+                return "application/octet-stream"</span>
+        }
+}
+
+// Upload uploads image data to R2 with retry logic.
+func (r *R2Uploader) Upload(ctx context.Context, data []byte, filename string) (*UploadResult, error) <span class="cov8" title="1">{
+        client, err := r.getClient()
+        if err != nil </span><span class="cov8" title="1">{
+                return &amp;UploadResult{Success: false, Error: err.Error()}, err
+        }</span>
+
+        <span class="cov0" title="0">contentType := detectContentType(filename)
+
+        var lastErr error
+        for attempt := 0; attempt &lt; r2MaxRetries; attempt++ </span><span class="cov0" title="0">{
+                if attempt &gt; 0 </span><span class="cov0" title="0">{
+                        // Exponential backoff: 500ms, 1s, 2s
+                        delay := r2RetryBaseDelay * time.Duration(1&lt;&lt;attempt)
+                        select </span>{
+                        case &lt;-ctx.Done():<span class="cov0" title="0">
+                                return &amp;UploadResult{Success: false, Error: ctx.Err().Error()}, ctx.Err()</span>
+                        case &lt;-time.After(delay):<span class="cov0" title="0"></span>
+                        }
+                }
+
+                <span class="cov0" title="0">uploadCtx, cancel := context.WithTimeout(ctx, r2UploadTimeout)
+                _, err = client.PutObject(uploadCtx, &amp;s3.PutObjectInput{
+                        Bucket:      aws.String(r.config.Bucket),
+                        Key:         aws.String(filename),
+                        Body:        bytes.NewReader(data),
+                        ContentType: aws.String(contentType),
+                })
+                cancel()
+
+                if err == nil </span><span class="cov0" title="0">{
+                        // Success - construct public URL
+                        publicURL := strings.TrimSuffix(r.config.PublicURL, "/") + "/" + filename
+                        return &amp;UploadResult{Success: true, PublicURL: publicURL}, nil
+                }</span>
+                <span class="cov0" title="0">lastErr = err</span>
+        }
+
+        // All retries failed
+        <span class="cov0" title="0">errMsg := fmt.Sprintf("upload failed after %d attempts: %v", r2MaxRetries, lastErr)
+        return &amp;UploadResult{Success: false, Error: errMsg}, lastErr</span>
+}
+
+// TestConnection verifies R2 credentials and bucket access.
+func (r *R2Uploader) TestConnection() error <span class="cov8" title="1">{
+        client, err := r.getClient()
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+
+        <span class="cov0" title="0">ctx, cancel := context.WithTimeout(context.Background(), r2TestTimeout)
+        defer cancel()
+
+        _, err = client.HeadBucket(ctx, &amp;s3.HeadBucketInput{
+                Bucket: aws.String(r.config.Bucket),
+        })
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("R2 connection test failed: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
