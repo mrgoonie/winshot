@@ -1,3 +1,23 @@
+# [1.5.0-beta.1](https://github.com/mrgoonie/winshot/compare/v1.4.0...v1.5.0-beta.1) (2026-01-07)
+
+
+### Bug Fixes
+
+* **release:** add @semantic-release/npm plugin to update package.json version ([b30744e](https://github.com/mrgoonie/winshot/commit/b30744e0ad5664eb9000973e5cebf4842729f8c4))
+* **release:** add @semantic-release/npm plugin to update package.json version ([#58](https://github.com/mrgoonie/winshot/issues/58)) ([69eedce](https://github.com/mrgoonie/winshot/commit/69eedce30d2154f22ace38a581e88db59605c722))
+
+
+### Features
+
+* **app:** add Wails bindings for cloud upload (R2 + GDrive) ([fa87274](https://github.com/mrgoonie/winshot/commit/fa8727442618346088819d838866ce42a0c5eb9e))
+* **cloud:** add Cloud settings tab with R2 and GDrive configuration ([69b799a](https://github.com/mrgoonie/winshot/commit/69b799ae13d1d4e1f9242ac93d08c6cf88c5977c))
+* **cloud:** add Cloud upload button with dropdown menu ([3e27b1c](https://github.com/mrgoonie/winshot/commit/3e27b1c220d2aa9ff8c4f492aa98870ee3973613))
+* **config:** add cloud provider config structs for R2 and GDrive ([502f648](https://github.com/mrgoonie/winshot/commit/502f64826994ed5020209c78ebeebadb5041cfe8))
+* **r2:** add directory prefix support and fix dropdown menu ([7bade9c](https://github.com/mrgoonie/winshot/commit/7bade9ce746e1e589cd6619be62e5aa72a5cd5ec))
+* **upload:** add Cloudflare R2 uploader with retry logic ([558796c](https://github.com/mrgoonie/winshot/commit/558796ce9e45561605c67d21d9520bdec2d71617))
+* **upload:** add Google Drive uploader with OAuth2 flow ([e3ac924](https://github.com/mrgoonie/winshot/commit/e3ac924b510c73da0dd21eebf4dca44bfa6d0bbc))
+* **upload:** add Windows Credential Manager wrapper for cloud upload credentials ([8f2c55a](https://github.com/mrgoonie/winshot/commit/8f2c55a575db0d4976e1ceffee541c99ea6f6487))
+
 ## [1.4.1](https://github.com/mrgoonie/winshot/compare/v1.4.0...v1.4.1) (2025-12-24)
 
 
