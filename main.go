@@ -55,7 +55,7 @@ func main() {
 
 	app := NewApp()
 
-	err := wails.Run(&options.App{
+	err = wails.Run(&options.App{
 		Title:            "WinShot",
 		Width:            width,
 		Height:           height,
