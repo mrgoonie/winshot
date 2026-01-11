@@ -1080,6 +1080,10 @@ function App() {
       outputRatio
     );
 
+    // Hide all Transformer nodes before export (selection handles)
+    const transformers = stage.find('Transformer');
+    transformers.forEach((tr) => tr.hide());
+
     // Save current stage properties
     const oldScaleX = stage.scaleX();
     const oldScaleY = stage.scaleY();
@@ -1108,6 +1112,9 @@ function App() {
     stage.scaleY(oldScaleY);
     stage.x(oldX);
     stage.y(oldY);
+
+    // Restore Transformer visibility
+    transformers.forEach((tr) => tr.show());
 
     return dataUrl;
   }, [screenshot, padding, outputRatio, jpegQuality]);
@@ -1268,6 +1275,10 @@ function App() {
         outputRatio
       );
 
+      // Hide all Transformer nodes before export (selection handles)
+      const transformers = stage.find('Transformer');
+      transformers.forEach((tr) => tr.hide());
+
       // Save current stage properties
       const oldScaleX = stage.scaleX();
       const oldScaleY = stage.scaleY();
@@ -1294,6 +1305,9 @@ function App() {
       stage.scaleY(oldScaleY);
       stage.x(oldX);
       stage.y(oldY);
+
+      // Restore Transformer visibility
+      transformers.forEach((tr) => tr.show());
 
       const blob = await new Promise<Blob | null>((resolve) => {
         canvas.toBlob(resolve, 'image/png');
@@ -1495,6 +1509,7 @@ function App() {
           backgroundColor={backgroundColor}
           outputRatio={outputRatio}
           inset={inset}
+          insetBackgroundColor={extractedColor ?? undefined}
           stageRef={stageRef}
           activeTool={activeTool}
           annotations={annotations}

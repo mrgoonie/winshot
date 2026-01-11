@@ -16,6 +16,7 @@ interface EditorCanvasProps {
   backgroundColor: string;
   outputRatio: OutputRatio;
   inset: number; // 0-50 percentage for screenshot scaling
+  insetBackgroundColor?: string; // Background color revealed when inset > 0 (extracted from screenshot)
   stageRef?: React.RefObject<Konva.Stage>;
   // Annotation props
   activeTool: EditorTool;
@@ -174,6 +175,7 @@ export function EditorCanvas({
   backgroundColor,
   outputRatio,
   inset,
+  insetBackgroundColor,
   stageRef,
   activeTool,
   annotations,
@@ -735,6 +737,19 @@ export function EditorCanvas({
                   height={baseTotalHeight}
                 />
               </Group>
+            )}
+
+            {/* Inset background - revealed when screenshot is scaled down */}
+            {inset > 0 && insetBackgroundColor && (
+              <Rect
+                x={actualPaddingX}
+                y={actualPaddingY}
+                width={innerWidth}
+                height={innerHeight}
+                fill={insetBackgroundColor}
+                cornerRadius={cornerRadius}
+                listening={false}
+              />
             )}
 
             {/* Screenshot with shadow (inset scales the entire group) */}
