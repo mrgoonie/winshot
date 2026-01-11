@@ -1494,6 +1494,7 @@ function App() {
           shadowSize={shadowSize}
           backgroundColor={backgroundColor}
           outputRatio={outputRatio}
+          inset={inset}
           stageRef={stageRef}
           activeTool={activeTool}
           annotations={annotations}

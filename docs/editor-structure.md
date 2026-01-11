@@ -1,18 +1,19 @@
 # WinShot Editor Structure Analysis
 
-**Date:** 2025-12-06 | **Last Updated:** 2025-12-06T22:40 | **Purpose:** Debug crop tool issues
+**Date:** 2025-12-06 | **Last Updated:** 2026-01-12 | **Phase:** 4 (Canvas Integration) | **Status:** Complete
 
 ---
 
 ## Table of Contents
 1. [Coordinate Systems](#coordinate-systems)
 2. [Konva Layer Structure](#konva-layer-structure)
-3. [Component Hierarchy](#component-hierarchy)
-4. [State Management](#state-management)
-5. [Event Flow](#event-flow)
-6. [Crop Tool Workflow](#crop-tool-workflow)
-7. [Known Issues](#known-issues)
-8. [Resolved Issues](#resolved-issues)
+3. [Inset Scale Transform (Phase 4)](#inset-scale-transform-phase-4)
+4. [Component Hierarchy](#component-hierarchy)
+5. [State Management](#state-management)
+6. [Event Flow](#event-flow)
+7. [Crop Tool Workflow](#crop-tool-workflow)
+8. [Known Issues](#known-issues)
+9. [Resolved Issues](#resolved-issues)
 
 ---
 
@@ -144,6 +145,61 @@ Stage (containerWidth x containerHeight)
 
 ---
 
+## Inset Scale Transform (Phase 4)
+
+### Overview
+
+The **inset slider** (0-50%) scales the screenshot down while keeping it centered within the background and padding. This creates a "shrinking" effect that reveals more background, useful for presentation layouts and design mockups.
+
+### Implementation
+
+**In editor-canvas.tsx (lines 637-745):**
+
+```typescript
+// Calculate inset scale (0% = 1.0, 50% = 0.5)
+const insetScale = 1 - inset / 100;
+
+// Calculate offset to keep screenshot centered after scale
+const insetOffsetX = innerWidth * (1 - insetScale) / 2;
+const insetOffsetY = innerHeight * (1 - insetScale) / 2;
+
+// Apply transform to screenshot Group
+<Group
+  x={actualPaddingX + insetOffsetX}
+  y={actualPaddingY + insetOffsetY}
+  scaleX={insetScale}
+  scaleY={insetScale}
+>
+  {/* Screenshot image and shadow */}
+</Group>
+```
+
+### Behavior
+
+| Inset % | Scale | Effect |
+|---------|-------|--------|
+| 0% | 1.0 | Screenshot at full size |
+| 25% | 0.75 | Screenshot shrinks 25% |
+| 50% | 0.5 | Screenshot shrinks 50% |
+
+**Centering:** Screenshot remains centered in canvas; only the screenshot size changes, not padding/background.
+
+### UI Control (Settings Panel)
+
+- **Slider:** Range 0-50% with live preview
+- **State:** Persisted to localStorage via `SaveEditorConfig()`
+- **Integration:** Disabled when `showBackground=false`
+- **Callback:** `onInsetChange(value)` → `setInset(value)` in App.tsx
+
+### Export Behavior
+
+When exporting with inset applied:
+1. Stage transform is reset to scale=1, x=0, y=0
+2. Scaled Group with `scaleX/Y=insetScale` is rendered as-is
+3. Exported image includes full background + scaled screenshot
+
+---
+
 ## Component Hierarchy
 
 ```
@@ -217,9 +273,9 @@ const [cropAspectRatio, setCropAspectRatio] = useState<CropAspectRatio>('free');
 const [isDrawingCrop, setIsDrawingCrop] = useState(false); // Drawing new region?
 const [appliedCrop, setAppliedCrop] = useState<CropArea | null>(null); // For export
 
-// Background & display settings (Phase 3 - UI Controls)
-const [inset, setInset] = useState(0);              // Background inset % (0-50)
-const [autoBackground, setAutoBackground] = useState(true);  // Auto/Manual mode
+// Inset & background settings (Phase 4 - Canvas Integration)
+const [inset, setInset] = useState(0);              // Screenshot inset: 0-50% (applies scale transform)
+const [autoBackground, setAutoBackground] = useState(true);  // Auto-extract dominant color vs manual
 const [extractedColor, setExtractedColor] = useState<string | null>(null); // Dominant edge color
 
 // CropArea interface
@@ -236,9 +292,9 @@ onCropChange={handleCropChange}       // Updates cropArea state
 onCropStart={handleCropChange}        // SAME callback - no distinction
 onDrawingCropChange={setIsDrawingCrop}
 
-// Background control callbacks (Phase 3)
-onInsetChange={setInset}              // Range: 0-50%
-onAutoBackgroundChange={handleAutoBackgroundChange}  // Toggle auto vs manual
+// Inset control callbacks (Phase 4)
+onInsetChange={setInset}              // Range: 0-50% → scaleX/Y: 1.0 to 0.5
+onAutoBackgroundChange={handleAutoBackgroundChange}  // Toggle color extraction mode
 ```
 
 ### State Flow

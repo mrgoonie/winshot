@@ -15,6 +15,7 @@ interface EditorCanvasProps {
   shadowSize: number;
   backgroundColor: string;
   outputRatio: OutputRatio;
+  inset: number; // 0-50 percentage for screenshot scaling
   stageRef?: React.RefObject<Konva.Stage>;
   // Annotation props
   activeTool: EditorTool;
@@ -172,6 +173,7 @@ export function EditorCanvas({
   shadowSize,
   backgroundColor,
   outputRatio,
+  inset,
   stageRef,
   activeTool,
   annotations,
@@ -631,6 +633,13 @@ export function EditorCanvas({
   // Calculate actual padding (centered)
   const actualPaddingX = (baseTotalWidth - innerWidth) / 2;
   const actualPaddingY = (baseTotalHeight - innerHeight) / 2;
+
+  // Calculate inset scale (0% = 1.0, 50% = 0.5)
+  const insetScale = 1 - inset / 100;
+  // Calculate offset to keep screenshot centered after scale
+  const insetOffsetX = innerWidth * (1 - insetScale) / 2;
+  const insetOffsetY = innerHeight * (1 - insetScale) / 2;
+
   // With snapshot-based crop, the screenshot is already cropped, so we use full dimensions
   const totalWidth = baseTotalWidth;
   const totalHeight = baseTotalHeight;
@@ -728,8 +737,13 @@ export function EditorCanvas({
               </Group>
             )}
 
-            {/* Screenshot with shadow */}
-            <Group x={actualPaddingX} y={actualPaddingY}>
+            {/* Screenshot with shadow (inset scales the entire group) */}
+            <Group
+              x={actualPaddingX + insetOffsetX}
+              y={actualPaddingY + insetOffsetY}
+              scaleX={insetScale}
+              scaleY={insetScale}
+            >
               {/* Shadow rect - same size as image, with blur shadow */}
               <Rect
                 x={0}

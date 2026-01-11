@@ -1,6 +1,6 @@
 # WinShot - Project Overview & Product Development Requirements
 
-**Date:** 2025-12-03 | **Version:** 1.0 | **Status:** Active Development
+**Date:** 2025-12-03 | **Last Updated:** 2026-01-12 | **Version:** 1.5.0 | **Status:** Active Development (Phase 4 Complete)
 
 ---
 
@@ -295,22 +295,30 @@ Value: Polished, branded screenshots
 - JPEG export with quality control
 - **Target:** v1.1 (Dec 2025)
 
-### Phase 3: Polish (Planned)
-- Keyboard shortcuts reference
-- Undo/redo for annotations
-- Animation presets for export
-- Clipboard history integration
-- Dark/light theme toggle
-- **Target:** v1.2 (Jan 2026)
+### Phase 3: Polish (In Progress)
+- ✅ Keyboard shortcuts reference
+- ✅ Undo/redo for annotations
+- ✅ Clipboard image import (Ctrl+V)
+- ✅ Configurable JPEG compression quality
+- ✅ Comprehensive keyboard shortcuts
+- Dark/light theme toggle (Pending)
+- **Status:** 80% Complete | **Target:** v1.2 (Jan 2026)
 
-### Phase 4: Advanced (Future)
+### Phase 4: Canvas Integration (Completed)
+- ✅ Screenshot inset/scale slider (0-50%)
+- ✅ Auto-background mode (color extraction)
+- ✅ Manual background control
+- ✅ Cloud upload (R2 + Google Drive)
+- ✅ Hotkey customization with presets
+- **Release:** v1.3-1.5 (Complete)
+
+### Phase 5: Advanced (Future)
 - Screen recording (video capture)
 - Built-in editor for post-export editing
 - OCR (extract text from screenshots)
-- Cloud sync for settings
 - Plugin system for custom annotation types
 - macOS/Linux port (using Wails cross-platform support)
-- **Target:** v2.0 (2026)
+- **Target:** v2.0 (2026+)
 
 ---
 
