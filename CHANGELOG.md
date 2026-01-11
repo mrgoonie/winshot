@@ -1,3 +1,21 @@
+# [1.5.0-beta.2](https://github.com/mrgoonie/winshot/compare/v1.5.0-beta.1...v1.5.0-beta.2) (2026-01-11)
+
+
+### Bug Fixes
+
+* **app:** prevent duplicate instances and sync startup path on version update ([06774a6](https://github.com/mrgoonie/winshot/commit/06774a6a133a2edb69272488c784960b20ad2648))
+
+
+### Features
+
+* **editor:** add canvas zoom and scale controls ([c42a6b5](https://github.com/mrgoonie/winshot/commit/c42a6b5e25c1155e116bfa081c5af64d0bc447ca))
+* **editor:** add color extraction utility for auto-background feature ([9ee2190](https://github.com/mrgoonie/winshot/commit/9ee2190d65452a52f5329e94b09aef7b89a506dc))
+* **editor:** add inset and auto-background state management ([ff927ec](https://github.com/mrgoonie/winshot/commit/ff927ecb00e5947c39fa1d4f28d8316981323f14))
+* **editor:** add inset scale transform to canvas for screenshot scaling ([ff8b9ea](https://github.com/mrgoonie/winshot/commit/ff8b9ea546aa4efe16590bf8d80f6f886a64f138))
+* **editor:** add inset slider and auto-background UI controls ([3eea549](https://github.com/mrgoonie/winshot/commit/3eea549ea4a2908ea0b373d406564ba7bd5fe24b))
+* **hotkey-input:** add preset buttons for PrintScreen assignment ([b1160e4](https://github.com/mrgoonie/winshot/commit/b1160e458bf9c6c5a094f73e65620fca3dc125ad)), closes [#67](https://github.com/mrgoonie/winshot/issues/67)
+* **settings:** enhance settings panel and go runtime ([bd201a2](https://github.com/mrgoonie/winshot/commit/bd201a2b431ddb6de9414059eb2eb6df1ccb36f4))
+
 # [1.5.0-beta.1](https://github.com/mrgoonie/winshot/compare/v1.4.0...v1.5.0-beta.1) (2026-01-07)
 
 
