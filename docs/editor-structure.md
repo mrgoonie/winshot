@@ -1,18 +1,19 @@
 # WinShot Editor Structure Analysis
 
-**Date:** 2025-12-06 | **Last Updated:** 2025-12-06T22:40 | **Purpose:** Debug crop tool issues
+**Date:** 2025-12-06 | **Last Updated:** 2026-01-12 | **Phase:** 4 (Canvas Integration) | **Status:** Complete
 
 ---
 
 ## Table of Contents
 1. [Coordinate Systems](#coordinate-systems)
 2. [Konva Layer Structure](#konva-layer-structure)
-3. [Component Hierarchy](#component-hierarchy)
-4. [State Management](#state-management)
-5. [Event Flow](#event-flow)
-6. [Crop Tool Workflow](#crop-tool-workflow)
-7. [Known Issues](#known-issues)
-8. [Resolved Issues](#resolved-issues)
+3. [Inset Scale Transform (Phase 4)](#inset-scale-transform-phase-4)
+4. [Component Hierarchy](#component-hierarchy)
+5. [State Management](#state-management)
+6. [Event Flow](#event-flow)
+7. [Crop Tool Workflow](#crop-tool-workflow)
+8. [Known Issues](#known-issues)
+9. [Resolved Issues](#resolved-issues)
 
 ---
 
@@ -144,48 +145,125 @@ Stage (containerWidth x containerHeight)
 
 ---
 
+## Inset Scale Transform (Phase 4)
+
+### Overview
+
+The **inset slider** (0-50%) scales the screenshot down while keeping it centered within the background and padding. This creates a "shrinking" effect that reveals more background, useful for presentation layouts and design mockups.
+
+### Implementation
+
+**In editor-canvas.tsx (lines 637-745):**
+
+```typescript
+// Calculate inset scale (0% = 1.0, 50% = 0.5)
+const insetScale = 1 - inset / 100;
+
+// Calculate offset to keep screenshot centered after scale
+const insetOffsetX = innerWidth * (1 - insetScale) / 2;
+const insetOffsetY = innerHeight * (1 - insetScale) / 2;
+
+// Apply transform to screenshot Group
+<Group
+  x={actualPaddingX + insetOffsetX}
+  y={actualPaddingY + insetOffsetY}
+  scaleX={insetScale}
+  scaleY={insetScale}
+>
+  {/* Screenshot image and shadow */}
+</Group>
+```
+
+### Behavior
+
+| Inset % | Scale | Effect |
+|---------|-------|--------|
+| 0% | 1.0 | Screenshot at full size |
+| 25% | 0.75 | Screenshot shrinks 25% |
+| 50% | 0.5 | Screenshot shrinks 50% |
+
+**Centering:** Screenshot remains centered in canvas; only the screenshot size changes, not padding/background.
+
+### UI Control (Settings Panel)
+
+- **Slider:** Range 0-50% with live preview
+- **State:** Persisted to localStorage via `SaveEditorConfig()`
+- **Integration:** Disabled when `showBackground=false`
+- **Callback:** `onInsetChange(value)` → `setInset(value)` in App.tsx
+
+### Export Behavior
+
+When exporting with inset applied:
+1. Stage transform is reset to scale=1, x=0, y=0
+2. Scaled Group with `scaleX/Y=insetScale` is rendered as-is
+3. Exported image includes full background + scaled screenshot
+
+---
+
 ## Component Hierarchy
 
 ```
 App.tsx
 ├── State: cropMode, cropArea, cropAspectRatio, isDrawingCrop, appliedCrop
+├── State: inset (0-50%), autoBackground (true/false), extractedColor
 ├── Handlers: handleCropToolSelect, handleCropChange, handleCropApply, etc.
 │
-└── editor-canvas.tsx (kebab-case filename)
-    ├── Props: cropMode, cropArea, cropAspectRatio, isDrawingCrop, appliedCrop
-    ├── Props: onCropChange, onCropStart, onDrawingCropChange
-    ├── Local State: scale, panOffset, isPanning, isDrawing (for annotations)
-    ├── Local State: baseScale, userZoom, spacePressed
+├── editor-canvas.tsx (kebab-case filename)
+│   ├── Props: cropMode, cropArea, cropAspectRatio, isDrawingCrop, appliedCrop
+│   ├── Props: onCropChange, onCropStart, onDrawingCropChange
+│   ├── Local State: scale, panOffset, isPanning, isDrawing (for annotations)
+│   ├── Local State: baseScale, userZoom, spacePressed
+│   │
+│   ├── Calculated Values:
+│   │   ├── totalWidth/Height (canvas dimensions via calculateOutputDimensions)
+│   │   ├── actualPaddingX/Y (image offset - centered)
+│   │   └── innerWidth/Height (displayed image size preserving aspect ratio)
+│   │
+│   └── crop-overlay.tsx (kebab-case filename, rendered when cropMode=true)
+│       ├── Props: imageX, imageY, imageWidth, imageHeight (= actualPadding, inner)
+│       ├── Props: cropArea, aspectRatio, isDrawing (NOTE: scale NOT passed)
+│       ├── Props: onCropChange, onCropStart, onDrawingChange
+│       ├── Uses: stage.getRelativePointerPosition() for coordinate conversion
+│       │
+│       ├── Local State: dragMode ('none' | 'drawing' | 'moving' | HandlePosition)
+│       ├── Refs: dragStartRef, drawStartRef (for manual drag tracking)
+│       │
+│       ├── DarkenedOverlay (inline sub-component)
+│       │   └── 4 Rects covering area outside crop region (listening=false)
+│       │
+│       ├── CropFrame (inline Rect - NOT draggable)
+│       │   └── Border rect for moving crop region (manual drag via refs)
+│       │
+│       └── ResizeHandles (inline Rects - NOT draggable)
+│           └── 8 handle rects for resizing (manual drag via refs)
+│
+└── settings-panel.tsx (RIGHT SIDEBAR)
+    ├── Props: padding, cornerRadius, shadowSize, backgroundColor, outputRatio
+    ├── Props: showBackground, imageWidth, imageHeight
+    ├── Props: inset, autoBackground, extractedColor (NEW - Phase 3)
+    ├── Props: onInsetChange, onAutoBackgroundChange (NEW - Phase 3 callbacks)
+    ├── Props: onPaddingChange, onCornerRadiusChange, onShadowSizeChange, etc.
     │
-    ├── Calculated Values:
-    │   ├── totalWidth/Height (canvas dimensions via calculateOutputDimensions)
-    │   ├── actualPaddingX/Y (image offset - centered)
-    │   └── innerWidth/Height (displayed image size preserving aspect ratio)
+    ├── UI Controls (Phase 3 Additions):
+    │   ├── Inset Slider (0-50%) - Controls background inset/shrink
+    │   │   └── Disabled when showBackground=false (opacity-50, pointer-events-none)
+    │   │
+    │   └── Auto/Manual Toggle - Two-button group
+    │       ├── Auto: Uses extractedColor from dominant edge
+    │       └── Manual: Allows gradient/color/image selection
     │
-    └── crop-overlay.tsx (kebab-case filename, rendered when cropMode=true)
-        ├── Props: imageX, imageY, imageWidth, imageHeight (= actualPadding, inner)
-        ├── Props: cropArea, aspectRatio, isDrawing (NOTE: scale NOT passed)
-        ├── Props: onCropChange, onCropStart, onDrawingChange
-        ├── Uses: stage.getRelativePointerPosition() for coordinate conversion
-        │
-        ├── Local State: dragMode ('none' | 'drawing' | 'moving' | HandlePosition)
-        ├── Refs: dragStartRef, drawStartRef (for manual drag tracking)
-        │
-        ├── DarkenedOverlay (inline sub-component)
-        │   └── 4 Rects covering area outside crop region (listening=false)
-        │
-        ├── CropFrame (inline Rect - NOT draggable)
-        │   └── Border rect for moving crop region (manual drag via refs)
-        │
-        └── ResizeHandles (inline Rects - NOT draggable)
-            └── 8 handle rects for resizing (manual drag via refs)
+    └── Background Controls:
+        ├── Gradient Presets (24 options)
+        ├── Custom Color Picker
+        ├── Image Background Gallery + Upload
+        └── All disabled when autoBackground=true or showBackground=false
 ```
 
 ---
 
 ## State Management
 
-### Crop-Related State in App.tsx
+### Editor Settings State in App.tsx
 
 ```typescript
 // Crop state
@@ -194,6 +272,11 @@ const [cropArea, setCropArea] = useState<CropArea | null>(null);  // Current reg
 const [cropAspectRatio, setCropAspectRatio] = useState<CropAspectRatio>('free');
 const [isDrawingCrop, setIsDrawingCrop] = useState(false); // Drawing new region?
 const [appliedCrop, setAppliedCrop] = useState<CropArea | null>(null); // For export
+
+// Inset & background settings (Phase 4 - Canvas Integration)
+const [inset, setInset] = useState(0);              // Screenshot inset: 0-50% (applies scale transform)
+const [autoBackground, setAutoBackground] = useState(true);  // Auto-extract dominant color vs manual
+const [extractedColor, setExtractedColor] = useState<string | null>(null); // Dominant edge color
 
 // CropArea interface
 interface CropArea {
@@ -208,6 +291,10 @@ interface CropArea {
 onCropChange={handleCropChange}       // Updates cropArea state
 onCropStart={handleCropChange}        // SAME callback - no distinction
 onDrawingCropChange={setIsDrawingCrop}
+
+// Inset control callbacks (Phase 4)
+onInsetChange={setInset}              // Range: 0-50% → scaleX/Y: 1.0 to 0.5
+onAutoBackgroundChange={handleAutoBackgroundChange}  // Toggle color extraction mode
 ```
 
 ### State Flow

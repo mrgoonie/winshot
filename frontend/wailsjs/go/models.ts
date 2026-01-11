@@ -83,6 +83,8 @@ export namespace config {
 	    backgroundColor: string;
 	    outputRatio: string;
 	    showBackground: boolean;
+	    inset: number;
+	    autoBackground: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new EditorConfig(source);
@@ -96,6 +98,8 @@ export namespace config {
 	        this.backgroundColor = source["backgroundColor"];
 	        this.outputRatio = source["outputRatio"];
 	        this.showBackground = source["showBackground"];
+	        this.inset = source["inset"];
+	        this.autoBackground = source["autoBackground"];
 	    }
 	}
 	export class WindowConfig {

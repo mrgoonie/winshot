@@ -55,6 +55,8 @@ type EditorConfig struct {
 	BackgroundColor string `json:"backgroundColor"`
 	OutputRatio     string `json:"outputRatio"`
 	ShowBackground  bool   `json:"showBackground"`
+	Inset           int    `json:"inset"`          // 0-50 percentage for screenshot scaling
+	AutoBackground  bool   `json:"autoBackground"` // Auto-extract edge color for background
 }
 
 // R2Config holds Cloudflare R2 settings (secrets stored in Credential Manager)
@@ -127,6 +129,8 @@ func Default() *Config {
 			BackgroundColor: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
 			OutputRatio:     "auto",
 			ShowBackground:  true,
+			Inset:           0,
+			AutoBackground:  true,
 		},
 		Update: UpdateConfig{
 			CheckOnStartup: true,

@@ -33,6 +33,13 @@ const keyCodeToName: Record<string, string> = {
 // Keys that shouldn't be used as main hotkey
 const blockedKeys = new Set(['Control', 'Alt', 'Shift', 'Meta', 'CapsLock', 'NumLock', 'ScrollLock']);
 
+// Preset hotkeys for keys browsers cannot capture (WebView2/Chromium intercepts PrintScreen)
+const HOTKEY_PRESETS = [
+  { value: 'PrintScreen', label: 'PrtSc' },
+  { value: 'Ctrl+PrintScreen', label: 'Ctrl+PrtSc' },
+  { value: 'Ctrl+Shift+PrintScreen', label: 'Ctrl+Shift+PrtSc' },
+] as const;
+
 export function HotkeyInput({ value, onChange, label, disabled = false }: HotkeyInputProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [currentKeys, setCurrentKeys] = useState<string[]>([]);
@@ -159,6 +166,27 @@ export function HotkeyInput({ value, onChange, label, disabled = false }: Hotkey
             <X className="w-4 h-4" />
           </button>
         )}
+      </div>
+      {/* Preset buttons for browser-blocked keys */}
+      <div className="mt-2">
+        <span className="text-xs text-slate-500 mb-1.5 block">or select preset:</span>
+        <div className="flex flex-wrap gap-1.5">
+          {HOTKEY_PRESETS.map((preset) => (
+            <button
+              key={preset.value}
+              type="button"
+              onClick={() => !disabled && onChange(preset.value)}
+              disabled={disabled}
+              className={`px-2.5 py-1 text-xs rounded-lg transition-all duration-200 ${
+                value === preset.value
+                  ? 'bg-violet-500/30 text-violet-300 border border-violet-500/50'
+                  : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-300 border border-white/10'
+              } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+            >
+              {preset.label}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

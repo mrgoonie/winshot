@@ -66,12 +66,17 @@ interface SettingsPanelProps {
   showBackground: boolean;
   imageWidth: number;
   imageHeight: number;
+  inset: number;
+  autoBackground: boolean;
+  extractedColor: string | null;
   onPaddingChange: (value: number) => void;
   onCornerRadiusChange: (value: number) => void;
   onShadowSizeChange: (value: number) => void;
   onBackgroundChange: (value: string) => void;
   onOutputRatioChange: (value: OutputRatio) => void;
   onShowBackgroundChange: (value: boolean) => void;
+  onInsetChange: (value: number) => void;
+  onAutoBackgroundChange: (value: boolean) => void;
 }
 
 const GRADIENT_PRESETS = [
@@ -116,12 +121,17 @@ export function SettingsPanel({
   showBackground,
   imageWidth,
   imageHeight,
+  inset,
+  autoBackground,
+  extractedColor,
   onPaddingChange,
   onCornerRadiusChange,
   onShadowSizeChange,
   onBackgroundChange,
   onOutputRatioChange,
   onShowBackgroundChange,
+  onInsetChange,
+  onAutoBackgroundChange,
 }: SettingsPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
@@ -231,6 +241,22 @@ export function SettingsPanel({
         />
       </div>
 
+      {/* Inset */}
+      <div className={`mb-6 transition-opacity duration-200 ${!showBackground ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className="flex justify-between items-center mb-2">
+          <label className="text-sm text-slate-300 font-medium">Inset</label>
+          <span className="text-xs text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-full">{inset}%</span>
+        </div>
+        <input
+          type="range"
+          min="0"
+          max="50"
+          value={inset}
+          onChange={(e) => onInsetChange(Number(e.target.value))}
+          className="w-full"
+        />
+      </div>
+
       {/* Corner Radius */}
       <div className={`mb-6 transition-opacity duration-200 ${!showBackground ? 'opacity-50 pointer-events-none' : ''}`}>
         <div className="flex justify-between items-center mb-2">
@@ -313,10 +339,52 @@ export function SettingsPanel({
         </div>
       </div>
 
+      {/* Auto/Manual Background Toggle */}
+      <div className={`mb-4 transition-opacity duration-200 ${!showBackground ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className="flex gap-2">
+          <button
+            onClick={() => onAutoBackgroundChange(true)}
+            className={`flex-1 px-3 py-2 text-xs rounded-lg transition-all duration-200 font-medium
+              ${autoBackground
+                ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/30'
+                : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/5'
+              }`}
+          >
+            Auto
+          </button>
+          <button
+            onClick={() => onAutoBackgroundChange(false)}
+            className={`flex-1 px-3 py-2 text-xs rounded-lg transition-all duration-200 font-medium
+              ${!autoBackground
+                ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/30'
+                : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/5'
+              }`}
+          >
+            Manual
+          </button>
+        </div>
+      </div>
+
+      {/* Extracted Color Preview (shown in Auto mode) */}
+      {autoBackground && extractedColor && showBackground && (
+        <div className="mb-4 flex items-center gap-3">
+          <div
+            className="w-8 h-8 rounded-lg border border-white/20 shadow-inner"
+            style={{ backgroundColor: extractedColor }}
+            title={`Extracted color: ${extractedColor}`}
+          />
+          <div className="text-xs">
+            <div className="text-slate-400">Extracted Color</div>
+            <div className="text-slate-300 font-mono">{extractedColor}</div>
+          </div>
+        </div>
+      )}
+
       {/* Background Gradients */}
-      <div className={`mb-6 transition-opacity duration-200 ${!showBackground ? 'opacity-50 pointer-events-none' : ''}`}>
+      <div className={`mb-6 transition-opacity duration-200 ${!showBackground || autoBackground ? 'opacity-50 pointer-events-none' : ''}`}>
         <label className="block text-sm text-slate-300 font-medium mb-3">
           Gradient Presets
+          {autoBackground && <span className="ml-2 text-xs text-slate-500">(Auto mode)</span>}
         </label>
         <div className="grid grid-cols-4 gap-2">
           {GRADIENT_PRESETS.map((gradient) => (
@@ -336,7 +404,7 @@ export function SettingsPanel({
       </div>
 
       {/* Custom Color */}
-      <div className={`mb-6 transition-opacity duration-200 ${!showBackground ? 'opacity-50 pointer-events-none' : ''}`}>
+      <div className={`mb-6 transition-opacity duration-200 ${!showBackground || autoBackground ? 'opacity-50 pointer-events-none' : ''}`}>
         <label className="block text-sm text-slate-300 font-medium mb-3">
           Custom Color
         </label>
@@ -351,7 +419,7 @@ export function SettingsPanel({
       </div>
 
       {/* Image Background */}
-      <div className={`mb-6 transition-opacity duration-200 ${!showBackground ? 'opacity-50 pointer-events-none' : ''}`}>
+      <div className={`mb-6 transition-opacity duration-200 ${!showBackground || autoBackground ? 'opacity-50 pointer-events-none' : ''}`}>
         <label className="block text-sm text-slate-300 font-medium mb-3">
           Image Background
           <span className="ml-2 text-xs text-slate-500">({uploadedImages.length}/{MAX_BACKGROUND_IMAGES})</span>

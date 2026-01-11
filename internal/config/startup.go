@@ -79,6 +79,19 @@ func enableStartup() error {
 	return nil
 }
 
+// SyncStartupPath updates the registry startup path to match current executable.
+// This fixes the duplicate app issue when user downloads new version to different location.
+// Call this on app startup when startup is enabled.
+func SyncStartupPath() error {
+	enabled, err := IsStartupEnabled()
+	if err != nil || !enabled {
+		return nil // No sync needed if startup not enabled
+	}
+
+	// Re-enable startup to update path to current executable
+	return enableStartup()
+}
+
 func disableStartup() error {
 	key, err := registry.OpenKey(registry.CURRENT_USER, startupKeyPath, registry.SET_VALUE)
 	if err != nil {

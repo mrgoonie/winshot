@@ -6,16 +6,41 @@ import (
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
-	"github.com/wailsapp/wails/v2/pkg/options/windows"
+	wailsWindows "github.com/wailsapp/wails/v2/pkg/options/windows"
+	"golang.org/x/sys/windows"
 	"winshot/internal/config"
 )
 
 //go:embed all:frontend/dist
 var assets embed.FS
 
+// Single instance mutex name
+const singleInstanceMutex = "WinShot-SingleInstance-Mutex-7F3A9B2E"
+
 func main() {
+	// Single instance check using Windows mutex
+	mutexName, _ := windows.UTF16PtrFromString(singleInstanceMutex)
+	handle, err := windows.CreateMutex(nil, false, mutexName)
+	if err != nil {
+		// Failed to create mutex - another instance likely running
+		println("WinShot is already running")
+		return
+	}
+	defer windows.CloseHandle(handle)
+
+	// Check if mutex already existed (another instance owns it)
+	if windows.GetLastError() == windows.ERROR_ALREADY_EXISTS {
+		println("WinShot is already running")
+		return
+	}
+
 	// Load config to get saved window size and startup settings
 	cfg, _ := config.Load()
+
+	// Sync startup registry path if startup is enabled (fixes duplicate app issue #61)
+	if cfg != nil && cfg.Startup.LaunchOnStartup {
+		_ = config.SyncStartupPath()
+	}
 	width := cfg.Window.Width
 	height := cfg.Window.Height
 	if width < 800 {
@@ -30,7 +55,7 @@ func main() {
 
 	app := NewApp()
 
-	err := wails.Run(&options.App{
+	err = wails.Run(&options.App{
 		Title:            "WinShot",
 		Width:            width,
 		Height:           height,
@@ -48,10 +73,10 @@ func main() {
 		Bind: []interface{}{
 			app,
 		},
-		Windows: &windows.Options{
+		Windows: &wailsWindows.Options{
 			WebviewIsTransparent: false,
 			WindowIsTranslucent:  false,
-			Theme:                windows.Dark,
+			Theme:                wailsWindows.Dark,
 		},
 	})
 

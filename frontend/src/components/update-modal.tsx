@@ -1,4 +1,5 @@
 import { X, Download, ExternalLink, SkipForward } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { OpenURL, SetSkippedVersion } from '../../wailsjs/go/main/App';
 import { updater } from '../../wailsjs/go/models';
 
@@ -85,8 +86,30 @@ export function UpdateModal({ isOpen, onClose, updateInfo }: UpdateModalProps) {
                 View on GitHub
               </button>
             </div>
-            <div className="p-3 rounded-xl bg-white/5 border border-white/10 max-h-32 overflow-y-auto">
-              <p className="text-sm text-slate-400 whitespace-pre-wrap">{releaseNotes}</p>
+            <div className="p-3 rounded-xl bg-white/5 border border-white/10 max-h-48 overflow-y-auto prose-changelog">
+              <ReactMarkdown
+                components={{
+                  h1: ({ children }) => <h1 className="text-base font-bold text-slate-200 mb-2 mt-0">{children}</h1>,
+                  h2: ({ children }) => <h2 className="text-sm font-semibold text-slate-300 mb-2 mt-3 first:mt-0">{children}</h2>,
+                  h3: ({ children }) => <h3 className="text-sm font-medium text-slate-300 mb-1 mt-2">{children}</h3>,
+                  p: ({ children }) => <p className="text-sm text-slate-400 mb-2 last:mb-0">{children}</p>,
+                  ul: ({ children }) => <ul className="text-sm text-slate-400 mb-2 pl-4 space-y-1">{children}</ul>,
+                  ol: ({ children }) => <ol className="text-sm text-slate-400 mb-2 pl-4 space-y-1 list-decimal">{children}</ol>,
+                  li: ({ children }) => <li className="text-sm text-slate-400 list-disc">{children}</li>,
+                  strong: ({ children }) => <strong className="font-semibold text-slate-300">{children}</strong>,
+                  em: ({ children }) => <em className="italic text-slate-400">{children}</em>,
+                  code: ({ children }) => <code className="px-1.5 py-0.5 rounded bg-white/10 text-xs font-mono text-violet-300">{children}</code>,
+                  a: ({ href, children }) => (
+                    <a href={href} className="text-violet-400 hover:text-violet-300 underline" onClick={(e) => { e.preventDefault(); if (href) OpenURL(href); }}>
+                      {children}
+                    </a>
+                  ),
+                  blockquote: ({ children }) => <blockquote className="border-l-2 border-violet-500/50 pl-3 my-2 text-slate-400 italic">{children}</blockquote>,
+                  hr: () => <hr className="border-white/10 my-3" />,
+                }}
+              >
+                {releaseNotes}
+              </ReactMarkdown>
             </div>
           </div>
         </div>

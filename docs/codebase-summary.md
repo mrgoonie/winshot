@@ -25,6 +25,8 @@ D:\www\winshot/
 │   │   ├── App.tsx                 # Central state management (24KB, 5,452 tokens)
 │   │   ├── main.tsx                # React entry point
 │   │   ├── types/index.ts          # TypeScript interfaces
+│   │   ├── utils/                  # Utility functions (Phase 2: Color extraction)
+│   │   │   └── extract-edge-color.ts
 │   │   ├── components/             # 14 React components
 │   │   │   ├── title-bar.tsx
 │   │   │   ├── capture-toolbar.tsx
@@ -84,7 +86,7 @@ D:\www\winshot/
 ## Go Backend (~3,100 LOC)
 
 ### Package: `internal/config`
-**Files:** config.go (80 LOC), startup.go (100 LOC, Phase 1 update)
+**Files:** config.go (203 LOC), startup.go (100 LOC, Phase 1 update)
 
 Manages application configuration persistence and Windows startup registry integration.
 
@@ -96,6 +98,19 @@ type Config struct {
   QuickSave  QuickSaveConfig
   Export     ExportConfig
   Window     WindowConfig
+  Editor     EditorConfig    // Phase 2: Added Inset, AutoBackground
+  Cloud      CloudConfig     // R2, Google Drive uploads
+}
+
+type EditorConfig struct {
+  Padding        int    // Space around screenshot
+  CornerRadius   int    // Rounded corners (0-50px)
+  ShadowSize     int    // Drop shadow depth
+  BackgroundColor string // Gradient or solid color
+  OutputRatio    string // Aspect ratio preset
+  ShowBackground bool   // Include background in export
+  Inset          int    // Phase 2: 0-50 percentage for screenshot scaling
+  AutoBackground bool   // Phase 2: Auto-extract edge color
 }
 
 type StartupConfig struct {
@@ -444,6 +459,19 @@ Central state management and orchestration.
 - Keyboard shortcuts for all major operations (see Phase 3 section below)
 - JPEG quality configuration loaded from app config on startup
 
+### Utils: `utils/extract-edge-color.ts`
+**File:** extract-edge-color.ts (Phase 2 - Color Extraction)
+
+Color extraction utility for identifying dominant edge colors from screenshot images.
+
+**Features:**
+- Edge color extraction from image borders
+- Dominant color detection algorithm
+- Support for color normalization
+
+**Entry Points:**
+- `extractEdgeColor(imageData)` - Extract dominant color from image edges
+
 ### Components (13 total)
 
 **Toolbars (4 files):**
@@ -459,7 +487,7 @@ Central state management and orchestration.
 
 **Selectors (2 files):**
 - `window-picker.tsx` - Window enumeration + preview
-- `hotkey-input.tsx` - Custom hotkey binding UI
+- `hotkey-input.tsx` - Custom hotkey binding UI (Phase 01: Preset buttons for browser-blocked keys)
 - *(region-selector.tsx removed - replaced by native overlay)*
 
 **Canvas & Drawing (3 files):**
@@ -796,3 +824,133 @@ User presses Ctrl+V
 - Quality conversion: Wails canvas API uses 0-1 scale, so `jpegQuality / 100`
 - Config loaded on component mount via `useEffect` in GetConfig()
 - No config UI in Phase 3 (handled in Settings → Export backend)
+
+---
+
+## Phase 01 - Preset Buttons for Browser-Blocked Hotkeys (Jan 12, 2026)
+
+**Overview:** Added preset button UI to HotkeyInput component for easy assignment of PrintScreen-based hotkeys that browsers/WebView2 cannot capture directly.
+
+**Changes:**
+1. **frontend/src/components/hotkey-input.tsx** - Added preset buttons with HOTKEY_PRESETS constant
+
+**New Feature:**
+- `HOTKEY_PRESETS` constant defines 3 preset combinations:
+  - `PrintScreen` → label "PrtSc"
+  - `Ctrl+PrintScreen` → label "Ctrl+PrtSc"
+  - `Ctrl+Shift+PrintScreen` → label "Ctrl+Shift+PrtSc"
+- Preset buttons displayed below hotkey input field with text "or select preset:"
+- Button styling follows glassmorphism design:
+  - Inactive: `bg-white/5 text-slate-400 border-white/10` (light hover states)
+  - Active: `bg-violet-500/30 text-violet-300 border-violet-500/50` (purple highlight)
+  - Disabled: `opacity-50 cursor-not-allowed` (grayed out)
+- Click preset button → directly sets hotkey value (no need for keyboard input)
+- Solves browser blocking of PrintScreen key capture in frontend
+
+**Technical Details:**
+- Presets are static and non-configurable (covers common use cases)
+- Button click calls `onChange(preset.value)` directly
+- Respects disabled state like main input field
+- Small font size (text-xs) for compact layout in hotkey form
+- Flex wrap allows responsive button layout on small screens
+
+---
+
+## Phase 2 - Color Extraction Utility (Jan 12, 2026)
+
+**Overview:** Created color extraction utility for identifying dominant edge colors from screenshot images.
+
+**Changes:**
+1. **frontend/src/utils/extract-edge-color.ts** - New color extraction utility (foundation for Phase 3+ features)
+
+**New Files:**
+- `frontend/src/utils/` folder created
+- `extract-edge-color.ts` - Color extraction algorithm with edge detection and normalization
+
+**Features:**
+- Edge color extraction from screenshot borders
+- Dominant color detection for palette analysis
+- Color normalization for consistent output
+
+**Purpose:** Foundation utility for future color-based features (auto-background selection, color grading, etc.)
+
+**Technical Details:**
+- Zero dependencies (vanilla TypeScript)
+- Pure function design for testability
+- Handles multiple color spaces and normalizations
+
+---
+
+## Phase 2 - State Management & Backend Config Completion (Jan 12, 2026)
+
+**Overview:** Finalized state management in React frontend and added editor configuration fields to support Inset and AutoBackground features.
+
+**Changes:**
+
+1. **frontend/src/App.tsx** - Enhanced state management:
+   - Added editor state loading from Go backend config (EditorConfig fields)
+   - Integrated `Inset` state for screenshot scaling (0-50 percentage)
+   - Integrated `AutoBackground` state for auto edge-color extraction
+   - Load editor config on component mount via `useEffect` + `GetEditorConfig()`
+   - State updates reflect backend config persistence
+
+2. **internal/config/config.go** - Extended EditorConfig:
+   - Added `Inset` field (int, 0-50 percentage) for screenshot inset/scaling
+   - Added `AutoBackground` field (bool) for automatic edge color detection
+   - Default values: `Inset: 0`, `AutoBackground: true`
+   - Both fields persist to `config.json` with existing editor settings
+
+**Architecture:**
+- Config persistence: JSON file at `%APPDATA%\WinShot\config.json`
+- Go ↔ TypeScript binding: Wails auto-generates types from Go structs
+- Frontend loads config on startup, can modify and persist back to Go
+- All editor settings survive app restarts (full persistence layer)
+
+**State Flow:**
+```
+App.tsx startup
+  → useEffect calls GetEditorConfig()
+  → Returns EditorConfig {padding, cornerRadius, shadowSize, ...inset, autoBackground}
+  → setState(editorConfig)
+  → SettingsPanel displays all fields
+  → User changes values
+  → SaveEditorConfig() persists back to Go
+  → Config written to disk at next save
+```
+
+**Default Values (Phase 2):**
+```json
+{
+  "padding": 40,
+  "cornerRadius": 12,
+  "shadowSize": 20,
+  "backgroundColor": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  "outputRatio": "auto",
+  "showBackground": true,
+  "inset": 0,
+  "autoBackground": true
+}
+```
+
+**New Config Fields:**
+- **Inset** (0-50): Percentage-based scaling/margin for screenshot content within editor bounds
+  - 0 = no inset (full screenshot)
+  - 50 = maximum inset (50% reduction in effective screenshot size)
+  - Used by frontend to render screenshot with internal margin for visual breathing room
+
+- **AutoBackground** (true/false): Enable automatic edge color extraction for background
+  - When true: App can auto-detect dominant edge color and apply as background
+  - When false: Use user-selected gradient or custom color
+  - Powered by `extractDominantEdgeColor()` utility from Phase 2 color extraction
+
+**Impact on UI:**
+- SettingsPanel now displays Inset slider (0-50 range)
+- SettingsPanel now displays AutoBackground toggle
+- Changes immediately reflect in EditorCanvas viewport
+- All changes persist across app restarts
+
+**Technical Details:**
+- Inset calculation in EditorCanvas affects canvas scaling and positioning
+- AutoBackground flag enables/disables color extraction pipeline
+- No breaking changes to existing config files (new fields use defaults if missing)
+- Full backward compatibility with older config versions
