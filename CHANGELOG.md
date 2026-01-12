@@ -1,3 +1,34 @@
+# [1.5.0-beta.1](https://github.com/mrgoonie/winshot/compare/v1.4.1...v1.5.0-beta.1) (2026-01-12)
+
+
+### Bug Fixes
+
+* **app:** prevent duplicate instances and sync startup path on version update ([06774a6](https://github.com/mrgoonie/winshot/commit/06774a6a133a2edb69272488c784960b20ad2648))
+* **release:** add @semantic-release/npm plugin to update package.json version ([b30744e](https://github.com/mrgoonie/winshot/commit/b30744e0ad5664eb9000973e5cebf4842729f8c4))
+* **release:** add channel config and seed v1.6.0 version series ([8515aac](https://github.com/mrgoonie/winshot/commit/8515aac0a1f6fe9084be5530219f13670ed93e4a))
+
+
+### Features
+
+* **app:** add fill color and corner radius controls to editor state ([df5cfe6](https://github.com/mrgoonie/winshot/commit/df5cfe60d055e738967cf39a4ed77921a79db0f7))
+* **app:** add Wails bindings for cloud upload (R2 + GDrive) ([fa87274](https://github.com/mrgoonie/winshot/commit/fa8727442618346088819d838866ce42a0c5eb9e))
+* **canvas:** render fill colors and corner radius for shapes ([fa92942](https://github.com/mrgoonie/winshot/commit/fa929420c8bbb2e3ab9a3aeab12a3c5ef01916de))
+* **cloud:** add Cloud settings tab with R2 and GDrive configuration ([69b799a](https://github.com/mrgoonie/winshot/commit/69b799ae13d1d4e1f9242ac93d08c6cf88c5977c))
+* **cloud:** add Cloud upload button with dropdown menu ([3e27b1c](https://github.com/mrgoonie/winshot/commit/3e27b1c220d2aa9ff8c4f492aa98870ee3973613))
+* **config:** add cloud provider config structs for R2 and GDrive ([502f648](https://github.com/mrgoonie/winshot/commit/502f64826994ed5020209c78ebeebadb5041cfe8))
+* **editor:** add canvas zoom and scale controls ([c42a6b5](https://github.com/mrgoonie/winshot/commit/c42a6b5e25c1155e116bfa081c5af64d0bc447ca))
+* **editor:** add color extraction utility for auto-background feature ([9ee2190](https://github.com/mrgoonie/winshot/commit/9ee2190d65452a52f5329e94b09aef7b89a506dc))
+* **editor:** add inset and auto-background state management ([ff927ec](https://github.com/mrgoonie/winshot/commit/ff927ecb00e5947c39fa1d4f28d8316981323f14))
+* **editor:** add inset scale transform to canvas for screenshot scaling ([ff8b9ea](https://github.com/mrgoonie/winshot/commit/ff8b9ea546aa4efe16590bf8d80f6f886a64f138))
+* **editor:** add inset slider and auto-background UI controls ([3eea549](https://github.com/mrgoonie/winshot/commit/3eea549ea4a2908ea0b373d406564ba7bd5fe24b))
+* **hotkey-input:** add preset buttons for PrintScreen assignment ([b1160e4](https://github.com/mrgoonie/winshot/commit/b1160e458bf9c6c5a094f73e65620fca3dc125ad)), closes [#67](https://github.com/mrgoonie/winshot/issues/67)
+* **r2:** add directory prefix support and fix dropdown menu ([7bade9c](https://github.com/mrgoonie/winshot/commit/7bade9ce746e1e589cd6619be62e5aa72a5cd5ec))
+* **settings:** enhance settings panel and go runtime ([bd201a2](https://github.com/mrgoonie/winshot/commit/bd201a2b431ddb6de9414059eb2eb6df1ccb36f4))
+* **types:** add fill color and corner radius to annotation model ([3960593](https://github.com/mrgoonie/winshot/commit/396059311cf84eb8ed8df647b890f138562abdff))
+* **upload:** add Cloudflare R2 uploader with retry logic ([558796c](https://github.com/mrgoonie/winshot/commit/558796ce9e45561605c67d21d9520bdec2d71617))
+* **upload:** add Google Drive uploader with OAuth2 flow ([e3ac924](https://github.com/mrgoonie/winshot/commit/e3ac924b510c73da0dd21eebf4dca44bfa6d0bbc))
+* **upload:** add Windows Credential Manager wrapper for cloud upload credentials ([8f2c55a](https://github.com/mrgoonie/winshot/commit/8f2c55a575db0d4976e1ceffee541c99ea6f6487))
+
 # [1.5.0-beta.3](https://github.com/mrgoonie/winshot/compare/v1.5.0-beta.2...v1.5.0-beta.3) (2026-01-12)
 
 
