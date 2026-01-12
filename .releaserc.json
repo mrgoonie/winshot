@@ -1,7 +1,7 @@
 {
   "branches": [
-    "main",
-    { "name": "dev", "prerelease": "beta" }
+    { "name": "main", "channel": "latest" },
+    { "name": "dev", "prerelease": "beta", "channel": "beta" }
   ],
   "plugins": [
     [

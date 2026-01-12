@@ -85,6 +85,8 @@ export namespace config {
 	    showBackground: boolean;
 	    inset: number;
 	    autoBackground: boolean;
+	    insetBackgroundColor?: string;
+	    shapeCornerRadius: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new EditorConfig(source);
@@ -100,6 +102,8 @@ export namespace config {
 	        this.showBackground = source["showBackground"];
 	        this.inset = source["inset"];
 	        this.autoBackground = source["autoBackground"];
+	        this.insetBackgroundColor = source["insetBackgroundColor"];
+	        this.shapeCornerRadius = source["shapeCornerRadius"];
 	    }
 	}
 	export class WindowConfig {

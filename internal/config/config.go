@@ -49,14 +49,16 @@ type WindowConfig struct {
 
 // EditorConfig holds editor panel settings (persisted separately from localStorage)
 type EditorConfig struct {
-	Padding         int    `json:"padding"`
-	CornerRadius    int    `json:"cornerRadius"`
-	ShadowSize      int    `json:"shadowSize"`
-	BackgroundColor string `json:"backgroundColor"`
-	OutputRatio     string `json:"outputRatio"`
-	ShowBackground  bool   `json:"showBackground"`
-	Inset           int    `json:"inset"`          // 0-50 percentage for screenshot scaling
-	AutoBackground  bool   `json:"autoBackground"` // Auto-extract edge color for background
+	Padding              int    `json:"padding"`
+	CornerRadius         int    `json:"cornerRadius"`
+	ShadowSize           int    `json:"shadowSize"`
+	BackgroundColor      string `json:"backgroundColor"`
+	OutputRatio          string `json:"outputRatio"`
+	ShowBackground       bool   `json:"showBackground"`
+	Inset                int    `json:"inset"`                          // 0-50 percentage for screenshot scaling
+	AutoBackground       bool   `json:"autoBackground"`                 // Auto-extract edge color for background
+	InsetBackgroundColor string `json:"insetBackgroundColor,omitempty"` // Custom inset background color
+	ShapeCornerRadius    int    `json:"shapeCornerRadius"`              // Default corner radius for rectangle annotations (0-50)
 }
 
 // R2Config holds Cloudflare R2 settings (secrets stored in Credential Manager)
@@ -123,14 +125,15 @@ func Default() *Config {
 			Height: 800,
 		},
 		Editor: EditorConfig{
-			Padding:         40,
-			CornerRadius:    12,
-			ShadowSize:      20,
-			BackgroundColor: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-			OutputRatio:     "auto",
-			ShowBackground:  true,
-			Inset:           0,
-			AutoBackground:  true,
+			Padding:           40,
+			CornerRadius:      12,
+			ShadowSize:        20,
+			BackgroundColor:   "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+			OutputRatio:       "auto",
+			ShowBackground:    true,
+			Inset:             0,
+			AutoBackground:    true,
+			ShapeCornerRadius: 0,
 		},
 		Update: UpdateConfig{
 			CheckOnStartup: true,

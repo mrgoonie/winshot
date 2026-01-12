@@ -46,9 +46,10 @@ export interface Annotation {
   y: number;
   width: number;
   height: number;
-  stroke: string;
+  stroke?: string; // Optional: undefined = no stroke for shapes
   strokeWidth: number;
-  fill?: string;
+  fill?: string; // Optional: undefined = no fill
+  cornerRadius?: number; // For rectangles: rounded corners (0-50)
   // For arrows and lines
   points?: number[];
   // For arrows - curved style

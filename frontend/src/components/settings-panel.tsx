@@ -69,6 +69,7 @@ interface SettingsPanelProps {
   inset: number;
   autoBackground: boolean;
   extractedColor: string | null;
+  insetBackgroundColor: string | null;
   onPaddingChange: (value: number) => void;
   onCornerRadiusChange: (value: number) => void;
   onShadowSizeChange: (value: number) => void;
@@ -77,6 +78,7 @@ interface SettingsPanelProps {
   onShowBackgroundChange: (value: boolean) => void;
   onInsetChange: (value: number) => void;
   onAutoBackgroundChange: (value: boolean) => void;
+  onInsetBackgroundColorChange: (value: string) => void;
 }
 
 const GRADIENT_PRESETS = [
@@ -124,6 +126,7 @@ export function SettingsPanel({
   inset,
   autoBackground,
   extractedColor,
+  insetBackgroundColor,
   onPaddingChange,
   onCornerRadiusChange,
   onShadowSizeChange,
@@ -132,6 +135,7 @@ export function SettingsPanel({
   onShowBackgroundChange,
   onInsetChange,
   onAutoBackgroundChange,
+  onInsetBackgroundColorChange,
 }: SettingsPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
@@ -256,6 +260,27 @@ export function SettingsPanel({
           className="w-full"
         />
       </div>
+
+      {/* Inset Background Color - only shown when inset > 0 */}
+      {inset > 0 && showBackground && (
+        <div className="mb-6">
+          <label className="block text-sm text-slate-300 font-medium mb-2">
+            Inset Color
+          </label>
+          <div className="flex items-center gap-3">
+            <input
+              type="color"
+              value={insetBackgroundColor || extractedColor || '#1a1a2e'}
+              onChange={(e) => onInsetBackgroundColorChange(e.target.value)}
+              className="w-10 h-10 rounded-lg cursor-pointer bg-white/5 border border-white/10 hover:border-white/20 transition-colors"
+            />
+            <div className="text-xs">
+              <div className="text-slate-400">Background Color</div>
+              <div className="text-slate-300 font-mono">{insetBackgroundColor || extractedColor || '#1a1a2e'}</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Corner Radius */}
       <div className={`mb-6 transition-opacity duration-200 ${!showBackground ? 'opacity-50 pointer-events-none' : ''}`}>
