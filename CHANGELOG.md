@@ -1,3 +1,12 @@
+# [1.5.0-beta.3](https://github.com/mrgoonie/winshot/compare/v1.5.0-beta.2...v1.5.0-beta.3) (2026-01-12)
+
+
+### Features
+
+* **app:** add fill color and corner radius controls to editor state ([df5cfe6](https://github.com/mrgoonie/winshot/commit/df5cfe60d055e738967cf39a4ed77921a79db0f7))
+* **canvas:** render fill colors and corner radius for shapes ([fa92942](https://github.com/mrgoonie/winshot/commit/fa929420c8bbb2e3ab9a3aeab12a3c5ef01916de))
+* **types:** add fill color and corner radius to annotation model ([3960593](https://github.com/mrgoonie/winshot/commit/396059311cf84eb8ed8df647b890f138562abdff))
+
 # [1.5.0-beta.2](https://github.com/mrgoonie/winshot/compare/v1.5.0-beta.1...v1.5.0-beta.2) (2026-01-11)
 
 
