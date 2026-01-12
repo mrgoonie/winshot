@@ -239,6 +239,33 @@ export namespace config {
 
 }
 
+export namespace library {
+	
+	export class LibraryImage {
+	    filepath: string;
+	    filename: string;
+	    modifiedDate: string;
+	    thumbnail: string;
+	    width: number;
+	    height: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new LibraryImage(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.filepath = source["filepath"];
+	        this.filename = source["filename"];
+	        this.modifiedDate = source["modifiedDate"];
+	        this.thumbnail = source["thumbnail"];
+	        this.width = source["width"];
+	        this.height = source["height"];
+	    }
+	}
+
+}
+
 export namespace main {
 	
 	export class DisplayBounds {

@@ -116,3 +116,13 @@ export interface AppConfig {
   quickSave: QuickSaveConfig;
   export: ExportConfig;
 }
+
+// Library types - for screenshot history
+export interface LibraryImage {
+  filepath: string;
+  filename: string;
+  modifiedDate: string;
+  thumbnail: string; // Base64 PNG
+  width: number;
+  height: number;
+}
