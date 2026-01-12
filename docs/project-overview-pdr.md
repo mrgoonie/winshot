@@ -131,8 +131,17 @@ Value: Polished, branded screenshots
 ### 6. System Integration (Implemented)
 - **System Tray** - Icon in taskbar tray area
 - **Tray Context Menu** - Quick access to capture modes
+- **Tray Left-Click** - Opens Screenshot Library (Jan 2026)
 - **Global Hotkeys** - Work even when WinShot is unfocused
 - **Native Windowing** - Frameless custom title bar
+
+### 7. Screenshot Library (Implemented - Jan 2026)
+- **History Browser** - Grid view of captured screenshots from QuickSave folder
+- **Thumbnail Previews** - High-quality 150px thumbnails with CatmullRom scaling
+- **Quick Actions** - Open in editor, delete, capture new screenshot
+- **Keyboard Navigation** - Arrow keys, Enter to edit, Delete to remove, Escape to close
+- **Dual Access** - Via tray icon left-click or export toolbar Library button
+- **Glassmorphism Design** - Matches WinShot's dark theme aesthetic
 
 ---
 
@@ -157,6 +166,8 @@ Value: Polished, branded screenshots
 | FR-13 | Customize hotkeys via UI dialog | ✓ Implemented | P2 |
 | FR-14 | Configure startup behavior and quick-save defaults | ✓ Implemented | P2 |
 | FR-15 | System tray icon with context menu | ✓ Implemented | P2 |
+| FR-16 | Screenshot history library with thumbnails | ✓ Implemented | P2 |
+| FR-17 | Tray icon left-click opens library | ✓ Implemented | P2 |
 
 ### Non-Functional Requirements
 
@@ -311,6 +322,15 @@ Value: Polished, branded screenshots
 - ✅ Cloud upload (R2 + Google Drive)
 - ✅ Hotkey customization with presets
 - **Release:** v1.3-1.5 (Complete)
+
+### Phase 4.5: Screenshot Library (Completed - Jan 2026)
+- ✅ Screenshot history browser (grid view)
+- ✅ Thumbnail generation with CatmullRom scaling
+- ✅ Tray icon left-click opens library
+- ✅ Export toolbar Library button
+- ✅ Open in editor / Delete actions
+- ✅ Keyboard navigation support
+- **Release:** v1.5.0-beta
 
 ### Phase 5: Advanced (Future)
 - Screen recording (video capture)

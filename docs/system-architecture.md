@@ -77,6 +77,11 @@ app.go (App struct)
 ├── [Hotkey Methods]
 │   └── SetHotkey(mode, combo)
 │
+├── [Library Methods] → internal/library (NEW)
+│   ├── GetLibraryImages() → []LibraryImage
+│   ├── OpenInEditor(imagePath) → CaptureResult
+│   └── DeleteScreenshot(imagePath)
+│
 └── [Utility Methods]
     ├── MinimizeToTray()
     └── UpdateWindowSize(width, height)
@@ -361,7 +366,7 @@ type WindowInfo struct {
 
 ### Package: `internal/tray`
 
-**Responsibility:** System tray icon and context menu
+**Responsibility:** System tray icon, context menu, and library trigger
 
 **Lifecycle:**
 ```
@@ -372,6 +377,11 @@ NewTrayIcon("WinShot")
 
 tray.Start()
   └─ Display icon in system tray
+
+User left-clicks tray icon (NEW)
+  ├─ WM_LBUTTONUP detected in window procedure
+  ├─ Invoke callback(MenuLibrary)
+  └─ Opens Screenshot Library window
 
 User right-clicks tray icon
   ├─ Show context menu
@@ -390,6 +400,64 @@ tray.Stop()
 - Uses Windows Shell.NotifyIcon API
 - Custom menu handling
 - Callback-based event notification
+- Left-click triggers MenuLibrary (1007) for library window
+
+### Package: `internal/library`
+
+**Responsibility:** Screenshot history management with thumbnail generation
+
+**Architecture:**
+```
+GetLibraryImages() called from frontend
+  ↓
+library.ScanFolder(quickSavePath)
+  ├─ Check if folder exists (create if missing)
+  ├─ List files with .png/.jpeg/.jpg extensions
+  ├─ For each file:
+  │  ├─ Read file info (name, modified date)
+  │  ├─ GenerateThumbnail() → base64 PNG (150px max)
+  │  └─ Add to []LibraryImage
+  ├─ Sort by ModifiedDate descending
+  └─ Return result array
+  ↓
+Frontend receives LibraryImage[]
+  └─ Render grid with thumbnails
+
+DeleteScreenshot() called
+  ↓
+library.DeleteImage(filepath)
+  ├─ Validate path within QuickSave folder (security)
+  ├─ os.Remove(filepath)
+  └─ Return success/error
+```
+
+**Thumbnail Generation:**
+```
+GenerateThumbnail(imagePath)
+  ├─ Decode image (PNG or JPEG)
+  ├─ Calculate scaled dimensions (max 150px, preserve aspect)
+  ├─ Create destination image
+  ├─ draw.CatmullRom.Scale() (high-quality resampling)
+  ├─ Encode as PNG to bytes
+  └─ Return base64, originalWidth, originalHeight
+```
+
+**Key Types:**
+```go
+type LibraryImage struct {
+  Filepath     string    // Full path for operations
+  Filename     string    // Display name
+  ModifiedDate time.Time // Sort key
+  Thumbnail    string    // Base64 PNG (150px max)
+  Width        int       // Original dimensions
+  Height       int
+}
+```
+
+**Security:**
+- Path validation prevents directory traversal attacks
+- All operations constrained to QuickSave folder
+- Relative paths resolved and validated before file access
 
 ### Root: `app.go`
 
@@ -445,6 +513,18 @@ App.tsx (Root)
 │   └── Fullscreen, Region, Window buttons
 ├── WindowPicker (if showWindowPicker)
 │   └── Window list + preview
+├── LibraryWindow (if showLibrary) [NEW]
+│   ├── Modal overlay with glassmorphism
+│   ├── Grid of thumbnail cards
+│   │   ├── Image preview
+│   │   ├── Filename + date overlay
+│   │   └── Selection highlight
+│   ├── Action bar
+│   │   ├── Capture button
+│   │   ├── Edit button
+│   │   ├── Delete button
+│   │   └── Close button
+│   └── Keyboard navigation handler
 ├── EditorCanvas (direct after capture, no React region selector)
 │   ├── Konva Stage
 │   │   ├── Layer
@@ -460,6 +540,7 @@ App.tsx (Root)
 ├── ExportToolbar
 │   ├── Export button
 │   ├── Format selector
+│   ├── Library button [NEW]
 │   └── Quality/settings
 ├── SettingsPanel (collapsible)
 │   └── Padding, radius, shadow, background
@@ -650,6 +731,49 @@ User releases mouse or presses Escape
   ├─ Go captures region → base64 PNG
   ├─ Return CaptureResult
   └─ setScreenshot(result) → EditorCanvas renders
+```
+
+**Library Flow (Tray Left-Click):**
+```
+User left-clicks system tray icon
+  ↓
+Go tray window procedure detects WM_LBUTTONUP
+  ↓
+tray.callback(MenuLibrary)
+  ↓
+app.onTrayMenu(MenuLibrary)
+  ├─ Emit runtime.EventsEmit(ctx, "tray:library")
+  └─ Call runtime.WindowShow(ctx) if hidden
+  ↓
+Frontend receives Wails event "tray:library"
+  ↓
+App.useEffect (EventsOn)
+  └─ setShowLibrary(true)
+  ↓
+LibraryWindow renders
+  ├─ Call GetLibraryImages() [Go binding]
+  │  └─ Go: library.ScanFolder() → generate thumbnails
+  ├─ Display grid of LibraryImage cards
+  └─ Setup keyboard navigation (arrows, Enter, Delete, Escape)
+  ↓
+User interacts with library
+  ├─ Click thumbnail → select
+  ├─ Double-click or Enter → OpenInEditor(path)
+  │  └─ Go loads image → frontend receives CaptureResult
+  ├─ Delete key → DeleteScreenshot(path)
+  │  └─ Go removes file → frontend refreshes list
+  └─ Escape or Close → setShowLibrary(false)
+```
+
+**Library Flow (Export Toolbar Button):**
+```
+User clicks Library button in export toolbar
+  ↓
+ExportToolbar.onOpenLibrary()
+  ↓
+App.setShowLibrary(true)
+  ↓
+LibraryWindow renders (same flow as tray left-click)
 ```
 
 ---

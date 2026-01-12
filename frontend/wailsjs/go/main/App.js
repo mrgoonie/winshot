@@ -30,6 +30,10 @@ export function ClearR2Credentials() {
   return window['go']['main']['App']['ClearR2Credentials']();
 }
 
+export function DeleteScreenshot(arg1) {
+  return window['go']['main']['App']['DeleteScreenshot'](arg1);
+}
+
 export function DisconnectGDrive() {
   return window['go']['main']['App']['DisconnectGDrive']();
 }
@@ -78,6 +82,10 @@ export function GetHotkeyConfig() {
   return window['go']['main']['App']['GetHotkeyConfig']();
 }
 
+export function GetLibraryImages() {
+  return window['go']['main']['App']['GetLibraryImages']();
+}
+
 export function GetR2Config() {
   return window['go']['main']['App']['GetR2Config']();
 }
@@ -120,6 +128,10 @@ export function MinimizeToTray() {
 
 export function OpenImage() {
   return window['go']['main']['App']['OpenImage']();
+}
+
+export function OpenInEditor(arg1) {
+  return window['go']['main']['App']['OpenInEditor'](arg1);
 }
 
 export function OpenURL(arg1) {

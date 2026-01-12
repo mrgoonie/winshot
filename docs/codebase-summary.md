@@ -27,11 +27,11 @@ D:\www\winshot/
 │   │   ├── types/index.ts          # TypeScript interfaces
 │   │   ├── utils/                  # Utility functions (Phase 2: Color extraction)
 │   │   │   └── extract-edge-color.ts
-│   │   ├── components/             # 14 React components
+│   │   ├── components/             # 15 React components
 │   │   │   ├── title-bar.tsx
 │   │   │   ├── capture-toolbar.tsx
 │   │   │   ├── annotation-toolbar.tsx
-│   │   │   ├── export-toolbar.tsx
+│   │   │   ├── export-toolbar.tsx  # Includes Library button
 │   │   │   ├── settings-panel.tsx
 │   │   │   ├── settings-modal.tsx  # App config dialog (16KB)
 │   │   │   ├── editor-canvas.tsx   # Konva Stage wrapper (15KB)
@@ -40,6 +40,7 @@ D:\www\winshot/
 │   │   │   ├── crop-overlay.tsx
 │   │   │   ├── region-selector.tsx # Region capture UI
 │   │   │   ├── window-picker.tsx   # Window enumeration UI
+│   │   │   ├── library-window.tsx  # Screenshot history library modal
 │   │   │   ├── status-bar.tsx
 │   │   │   └── hotkey-input.tsx    # Custom hotkey binding
 │   │   ├── assets/
@@ -60,6 +61,9 @@ D:\www\winshot/
 │   │   └── startup.go              # Windows startup registry
 │   ├── hotkeys/
 │   │   └── hotkeys.go              # RegisterHotKey() implementation
+│   ├── library/
+│   │   ├── library.go              # Screenshot library scanning + management
+│   │   └── thumbnail.go            # Thumbnail generation with CatmullRom scaling
 │   ├── overlay/
 │   │   ├── types.go                # Win32 constants + GDI structures
 │   │   ├── overlay.go              # Native overlay manager + message loop
@@ -69,7 +73,7 @@ D:\www\winshot/
 │   │   ├── window.go               # Window capture + DPI handling
 │   │   └── clipboard.go            # Win32 clipboard DIB image reader
 │   ├── tray/
-│   │   └── tray.go                 # System tray icon + menu
+│   │   └── tray.go                 # System tray icon + menu (+ left-click library)
 │   └── windows/
 │       └── enum.go                 # Window enumeration (EnumWindows)
 ├── docs/
@@ -282,7 +286,7 @@ Wraps kbinani/screenshot library with DPI-awareness, multi-display support, and 
 - `GetClipboardImage()` → CaptureResult (new)
 
 ### Package: `internal/tray`
-**File:** tray.go (180 LOC)
+**File:** tray.go (200 LOC)
 
 Implements system tray icon and context menu using Windows APIs.
 
@@ -291,11 +295,55 @@ Implements system tray icon and context menu using Windows APIs.
 - Context menu with 3 capture modes
 - Show/minimize window toggle
 - Exit action
+- **Left-click opens Screenshot Library** (Jan 2026)
+
+**Menu Constants:**
+```go
+const (
+  MenuFullscreen = 1001
+  MenuRegion     = 1002
+  MenuWindow     = 1003
+  MenuShow       = 1004
+  MenuExit       = 1005
+  MenuSettings   = 1006
+  MenuLibrary    = 1007  // NEW: Left-click trigger
+)
+```
 
 **Entry Points:**
 - `NewTrayIcon(title)` - Create tray icon
 - `Start()` - Show icon
 - `Stop()` - Hide and cleanup
+
+### Package: `internal/library`
+**Files:** library.go (150 LOC), thumbnail.go (100 LOC)
+
+Screenshot history library - scans QuickSave folder and generates thumbnails.
+
+**Key Structures:**
+```go
+type LibraryImage struct {
+  Filepath     string    // Full path to image file
+  Filename     string    // Filename only
+  ModifiedDate time.Time // Last modified timestamp
+  Thumbnail    string    // Base64 PNG thumbnail (150px max dimension)
+  Width        int       // Original image width
+  Height       int       // Original image height
+}
+```
+
+**Features:**
+- `ScanFolder(folderPath)` - Returns []LibraryImage sorted by date descending
+- `DeleteImage(filepath)` - Remove screenshot with path validation
+- `GenerateThumbnail(imagePath)` - High-quality CatmullRom scaling to 150px max
+- Supports PNG and JPEG formats
+- Auto-creates QuickSave folder if missing
+- Directory traversal protection (validates paths within QuickSave folder)
+
+**Entry Points:**
+- `ScanFolder(path)` → []LibraryImage
+- `DeleteImage(path)` → error
+- `GenerateThumbnail(path)` → (string, int, int, error)
 
 ### Package: `internal/windows`
 **File:** enum.go (80 LOC)
@@ -331,7 +379,7 @@ type App struct {
 }
 ```
 
-**Key Methods (~30 total):**
+**Key Methods (~35 total):**
 ```go
 // Capture operations
 CaptureFullscreen()
@@ -354,6 +402,11 @@ GetDisplayBounds()
 GetConfig()
 SaveConfig(config)
 SetHotkey(mode, combo)
+
+// Library operations (NEW - Jan 2026)
+GetLibraryImages()           // Scan QuickSave folder, return thumbnails
+OpenInEditor(imagePath)      // Load image into editor with path validation
+DeleteScreenshot(imagePath)  // Remove file with path validation
 
 // Utility
 MinimizeToTray()        // Hide window to tray
@@ -536,6 +589,15 @@ interface CropArea {
   y: number
   width: number
   height: number
+}
+
+interface LibraryImage {
+  filepath: string      // Full path to image file
+  filename: string      // Filename only
+  modifiedDate: string  // ISO date string
+  thumbnail: string     // Base64 PNG (150px max)
+  width: number         // Original image width
+  height: number        // Original image height
 }
 
 type CropAspectRatio = 'free' | '16:9' | '4:3' | '1:1' | '9:16' | '3:4'
@@ -954,3 +1016,85 @@ App.tsx startup
 - AutoBackground flag enables/disables color extraction pipeline
 - No breaking changes to existing config files (new fields use defaults if missing)
 - Full backward compatibility with older config versions
+
+---
+
+## Screenshot Library Feature (Jan 12, 2026)
+
+**Overview:** Added Screenshot History Library accessible via tray icon left-click or export toolbar button. Displays grid of captured screenshots with thumbnails for quick browsing, editing, and deletion.
+
+**Backend Changes:**
+
+1. **internal/library/library.go** (New file)
+   - `LibraryImage` struct: filepath, filename, modifiedDate, thumbnail (base64), width, height
+   - `ScanFolder(path)` - Scans QuickSave folder for PNG/JPEG files, returns sorted by date descending
+   - `DeleteImage(filepath)` - Removes file with directory traversal protection
+   - Auto-creates QuickSave folder if it doesn't exist
+
+2. **internal/library/thumbnail.go** (New file)
+   - `GenerateThumbnail(imagePath)` - High-quality thumbnail generation
+   - Uses `golang.org/x/image/draw` with CatmullRom scaling
+   - Max dimension 150px while preserving aspect ratio
+   - Returns base64 PNG + original dimensions
+
+3. **internal/tray/tray.go** (Modified)
+   - Added `MenuLibrary = 1007` constant
+   - Added `WM_LBUTTONUP` handler for left-click detection
+   - Left-click triggers `MenuLibrary` callback to open library window
+
+4. **app.go** (Modified)
+   - Added `GetLibraryImages()` - Returns all screenshots from QuickSave folder
+   - Added `OpenInEditor(imagePath)` - Loads image into editor with path validation
+   - Added `DeleteScreenshot(imagePath)` - Removes screenshot with path validation
+   - Added `MenuLibrary` case to `onTrayMenu` handler
+
+**Frontend Changes:**
+
+1. **frontend/src/components/library-window.tsx** (New file)
+   - Full modal component with glassmorphism design
+   - Grid layout with responsive thumbnail cards
+   - Selection state with highlight border
+   - Action bar: Capture, Edit, Delete, Close buttons
+   - Keyboard navigation: Arrow keys, Enter to edit, Delete to remove, Escape to close
+   - Uses Wails bindings: `GetLibraryImages()`, `DeleteScreenshot()`
+
+2. **frontend/src/components/export-toolbar.tsx** (Modified)
+   - Added `onOpenLibrary` prop to interface
+   - Added Library button between Quick Save and Cloud
+   - Amber/orange gradient styling to match WinShot theme
+
+3. **frontend/src/App.tsx** (Modified)
+   - Added `showLibrary` state
+   - Added handlers: `handleLibraryClose`, `handleLibraryEdit`, `handleLibraryCapture`
+   - Added `tray:library` event listener for tray left-click
+   - Added `LibraryWindow` component rendering
+   - Added `onOpenLibrary` prop to ExportToolbar
+
+4. **frontend/src/types/index.ts** (Modified)
+   - Added `LibraryImage` interface
+
+**User Flow:**
+
+```
+Left-click on TrayIcon
+  → Go: WM_LBUTTONUP triggers MenuLibrary callback
+  → App.onTrayMenu(MenuLibrary)
+  → Wails EventsEmit("tray:library")
+  → Frontend: EventsOn handler sets showLibrary=true
+  → LibraryWindow modal renders
+  → GetLibraryImages() fetches thumbnails
+  → Grid displays with selection and keyboard nav
+
+Or: Click Library button in export toolbar
+  → onOpenLibrary callback
+  → setShowLibrary(true)
+  → Same modal rendering flow
+```
+
+**Design Decisions:**
+- Single-select only for v1 (multi-select deferred)
+- Thumbnails regenerated each open (no disk cache)
+- Default sort: date descending (newest first)
+- Empty state: Show empty list, auto-create folder
+- Path validation: Prevents directory traversal attacks
+- Thumbnail quality: CatmullRom scaling for crisp previews
