@@ -49,14 +49,15 @@ type WindowConfig struct {
 
 // EditorConfig holds editor panel settings (persisted separately from localStorage)
 type EditorConfig struct {
-	Padding         int    `json:"padding"`
-	CornerRadius    int    `json:"cornerRadius"`
-	ShadowSize      int    `json:"shadowSize"`
-	BackgroundColor string `json:"backgroundColor"`
-	OutputRatio     string `json:"outputRatio"`
-	ShowBackground  bool   `json:"showBackground"`
-	Inset           int    `json:"inset"`          // 0-50 percentage for screenshot scaling
-	AutoBackground  bool   `json:"autoBackground"` // Auto-extract edge color for background
+	Padding              int    `json:"padding"`
+	CornerRadius         int    `json:"cornerRadius"`
+	ShadowSize           int    `json:"shadowSize"`
+	BackgroundColor      string `json:"backgroundColor"`
+	OutputRatio          string `json:"outputRatio"`
+	ShowBackground       bool   `json:"showBackground"`
+	Inset                int    `json:"inset"`                          // 0-50 percentage for screenshot scaling
+	AutoBackground       bool   `json:"autoBackground"`                 // Auto-extract edge color for background
+	InsetBackgroundColor string `json:"insetBackgroundColor,omitempty"` // Custom inset background color
 }
 
 // R2Config holds Cloudflare R2 settings (secrets stored in Credential Manager)
