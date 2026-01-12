@@ -22,8 +22,10 @@ interface EditorCanvasProps {
   activeTool: EditorTool;
   annotations: Annotation[];
   selectedAnnotationId: string | null;
-  strokeColor: string;
+  strokeColor: string | null; // null = no stroke
+  fillColor: string | null; // null = transparent
   strokeWidth: number;
+  shapeCornerRadius: number; // For rectangle annotations
   fontSize: number;
   fontStyle: 'normal' | 'bold' | 'italic' | 'bold italic';
   nextNumber: number; // Next number for number annotations
@@ -181,7 +183,9 @@ export function EditorCanvas({
   annotations,
   selectedAnnotationId,
   strokeColor,
+  fillColor,
   strokeWidth,
+  shapeCornerRadius,
   fontSize,
   fontStyle,
   nextNumber,
@@ -463,7 +467,7 @@ export function EditorCanvas({
         y,
         width: 200,
         height: 60,
-        stroke: strokeColor,
+        stroke: strokeColor || '#ef4444', // Text always needs a color
         strokeWidth,
         text: '', // Empty text triggers immediate edit mode
         fontSize,
@@ -485,7 +489,7 @@ export function EditorCanvas({
         y,
         width: 36, // Default circle diameter
         height: 36,
-        stroke: strokeColor,
+        stroke: strokeColor || '#ef4444', // Number always needs a color
         strokeWidth,
         number: nextNumber,
       };
@@ -507,12 +511,17 @@ export function EditorCanvas({
       y,
       width: 0,
       height: 0,
-      stroke: strokeColor,
+      // Apply stroke color (null/undefined = no stroke for shapes, default to red for lines/arrows)
+      stroke: strokeColor || ((annotationType === 'rectangle' || annotationType === 'ellipse') ? undefined : '#ef4444'),
       strokeWidth,
+      // Apply fill color for rectangle and ellipse shapes
+      fill: (annotationType === 'rectangle' || annotationType === 'ellipse') && fillColor ? fillColor : undefined,
+      // Apply corner radius for rectangles
+      cornerRadius: annotationType === 'rectangle' ? shapeCornerRadius : undefined,
       points: annotationType === 'arrow' || annotationType === 'line' ? [0, 0, 0, 0] : undefined,
     };
     setTempAnnotation(newAnnotation);
-  }, [activeTool, scale, strokeColor, strokeWidth, fontSize, fontStyle, nextNumber, generateId, onAnnotationSelect, onAnnotationAdd, isTransformerNode, spacePressed, handlePanStart]);
+  }, [activeTool, scale, strokeColor, fillColor, strokeWidth, shapeCornerRadius, fontSize, fontStyle, nextNumber, generateId, onAnnotationSelect, onAnnotationAdd, isTransformerNode, spacePressed, handlePanStart]);
 
   // Handle mouse move for drawing
   const handleMouseMove = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {

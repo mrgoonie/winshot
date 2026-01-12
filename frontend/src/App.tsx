@@ -141,6 +141,7 @@ function App() {
   const [inset, setInset] = useState(DEFAULT_EDITOR_SETTINGS.inset);
   const [autoBackground, setAutoBackground] = useState(DEFAULT_EDITOR_SETTINGS.autoBackground);
   const [extractedColor, setExtractedColor] = useState<string | null>(null);
+  const [insetBackgroundColor, setInsetBackgroundColor] = useState<string | null>(null);
   const [editorSettingsLoaded, setEditorSettingsLoaded] = useState(false);
   // Stores settings when background is hidden, so they can be restored
   const [savedBackgroundSettings, setSavedBackgroundSettings] = useState<{
@@ -161,8 +162,10 @@ function App() {
     canRedo,
   } = useUndoRedo<Annotation[]>([]);
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
-  const [strokeColor, setStrokeColor] = useState('#ef4444');
+  const [strokeColor, setStrokeColor] = useState<string | null>('#ef4444'); // null = no stroke
+  const [fillColor, setFillColor] = useState<string | null>(null); // null = transparent
   const [strokeWidth, setStrokeWidth] = useState(4);
+  const [shapeCornerRadius, setShapeCornerRadius] = useState(0); // For rectangle annotations
   const [fontSize, setFontSize] = useState(48);
   const [fontStyle, setFontStyle] = useState<'normal' | 'bold' | 'italic' | 'bold italic'>('normal');
 
@@ -230,6 +233,7 @@ function App() {
           if (cfg.showBackground !== undefined) setShowBackground(cfg.showBackground);
           if (cfg.inset !== undefined) setInset(cfg.inset);
           if (cfg.autoBackground !== undefined) setAutoBackground(cfg.autoBackground);
+          if (cfg.insetBackgroundColor) setInsetBackgroundColor(cfg.insetBackgroundColor);
         }
       } catch (err) {
         console.error('Failed to load editor settings:', err);
@@ -242,10 +246,20 @@ function App() {
   // Persist editor settings to Go config when they change (after initial load)
   useEffect(() => {
     if (!editorSettingsLoaded) return;
-    SaveEditorConfig({ padding, cornerRadius, shadowSize, backgroundColor, outputRatio, showBackground, inset, autoBackground }).catch(err => {
+    SaveEditorConfig({
+      padding,
+      cornerRadius,
+      shadowSize,
+      backgroundColor,
+      outputRatio,
+      showBackground,
+      inset,
+      autoBackground,
+      insetBackgroundColor: insetBackgroundColor || undefined,
+    }).catch(err => {
       console.error('Failed to save editor settings:', err);
     });
-  }, [padding, cornerRadius, shadowSize, backgroundColor, outputRatio, showBackground, inset, autoBackground, editorSettingsLoaded]);
+  }, [padding, cornerRadius, shadowSize, backgroundColor, outputRatio, showBackground, inset, autoBackground, insetBackgroundColor, editorSettingsLoaded]);
 
   // Load export settings from config on startup
   useEffect(() => {
@@ -339,6 +353,7 @@ function App() {
       // Apply auto-color if enabled
       if (autoBackground) {
         setBackgroundColor(color);
+        setInsetBackgroundColor(color);
       }
     };
   }, [screenshot]); // Intentionally exclude autoBackground to prevent re-extraction
@@ -348,6 +363,7 @@ function App() {
     setAutoBackground(auto);
     if (auto && extractedColor) {
       setBackgroundColor(extractedColor);
+      setInsetBackgroundColor(extractedColor);
     }
   }, [extractedColor]);
 
@@ -732,12 +748,29 @@ function App() {
   }, []);
 
   // Update selected annotation color when stroke color changes
-  const handleStrokeColorChange = useCallback((color: string) => {
+  const handleStrokeColorChange = useCallback((color: string | null) => {
     setStrokeColor(color);
     if (selectedAnnotationId) {
-      handleAnnotationUpdate(selectedAnnotationId, { stroke: color });
+      const selectedAnnotation = annotations.find(a => a.id === selectedAnnotationId);
+      // Only apply no-stroke to shapes that support it (rectangle, ellipse)
+      if (color === null && selectedAnnotation?.type !== 'rectangle' && selectedAnnotation?.type !== 'ellipse') {
+        return; // Don't allow no-stroke for non-shape annotations
+      }
+      handleAnnotationUpdate(selectedAnnotationId, { stroke: color || undefined });
     }
-  }, [selectedAnnotationId, handleAnnotationUpdate]);
+  }, [selectedAnnotationId, annotations, handleAnnotationUpdate]);
+
+  // Update selected annotation fill color when fill color changes
+  const handleFillColorChange = useCallback((color: string | null) => {
+    setFillColor(color);
+    if (selectedAnnotationId) {
+      const selectedAnnotation = annotations.find(a => a.id === selectedAnnotationId);
+      // Only apply fill to shapes that support it (rectangle, ellipse)
+      if (selectedAnnotation?.type === 'rectangle' || selectedAnnotation?.type === 'ellipse') {
+        handleAnnotationUpdate(selectedAnnotationId, { fill: color || undefined });
+      }
+    }
+  }, [selectedAnnotationId, annotations, handleAnnotationUpdate]);
 
   // Update selected annotation stroke width when it changes
   const handleStrokeWidthChange = useCallback((width: number) => {
@@ -746,6 +779,17 @@ function App() {
       handleAnnotationUpdate(selectedAnnotationId, { strokeWidth: width });
     }
   }, [selectedAnnotationId, handleAnnotationUpdate]);
+
+  // Update selected rectangle corner radius when it changes
+  const handleShapeCornerRadiusChange = useCallback((radius: number) => {
+    setShapeCornerRadius(radius);
+    if (selectedAnnotationId) {
+      const selectedAnnotation = annotations.find(a => a.id === selectedAnnotationId);
+      if (selectedAnnotation?.type === 'rectangle') {
+        handleAnnotationUpdate(selectedAnnotationId, { cornerRadius: radius });
+      }
+    }
+  }, [selectedAnnotationId, annotations, handleAnnotationUpdate]);
 
   // Update selected text annotation font size when it changes
   const handleFontSizeChange = useCallback((size: number) => {
@@ -1466,12 +1510,16 @@ function App() {
           <AnnotationToolbar
             activeTool={activeTool}
             strokeColor={strokeColor}
+            fillColor={fillColor}
             strokeWidth={strokeWidth}
+            cornerRadius={shapeCornerRadius}
             fontSize={fontSize}
             fontStyle={fontStyle}
             onToolChange={handleToolChange}
             onColorChange={handleStrokeColorChange}
+            onFillColorChange={handleFillColorChange}
             onStrokeWidthChange={handleStrokeWidthChange}
+            onCornerRadiusChange={handleShapeCornerRadiusChange}
             onFontSizeChange={handleFontSizeChange}
             onFontStyleChange={handleFontStyleChange}
             onCurvedChange={handleCurvedChange}
@@ -1509,13 +1557,15 @@ function App() {
           backgroundColor={backgroundColor}
           outputRatio={outputRatio}
           inset={inset}
-          insetBackgroundColor={extractedColor ?? undefined}
+          insetBackgroundColor={insetBackgroundColor ?? extractedColor ?? undefined}
           stageRef={stageRef}
           activeTool={activeTool}
           annotations={annotations}
           selectedAnnotationId={selectedAnnotationId}
           strokeColor={strokeColor}
+          fillColor={fillColor}
           strokeWidth={strokeWidth}
+          shapeCornerRadius={shapeCornerRadius}
           fontSize={fontSize}
           fontStyle={fontStyle}
           nextNumber={nextNumber}
@@ -1546,6 +1596,7 @@ function App() {
             inset={inset}
             autoBackground={autoBackground}
             extractedColor={extractedColor}
+            insetBackgroundColor={insetBackgroundColor}
             onPaddingChange={setPadding}
             onCornerRadiusChange={setCornerRadius}
             onShadowSizeChange={setShadowSize}
@@ -1554,6 +1605,7 @@ function App() {
             onShowBackgroundChange={handleShowBackgroundChange}
             onInsetChange={setInset}
             onAutoBackgroundChange={handleAutoBackgroundChange}
+            onInsetBackgroundColorChange={setInsetBackgroundColor}
           />
         )}
       </div>
