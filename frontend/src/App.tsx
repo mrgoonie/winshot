@@ -234,6 +234,7 @@ function App() {
           if (cfg.inset !== undefined) setInset(cfg.inset);
           if (cfg.autoBackground !== undefined) setAutoBackground(cfg.autoBackground);
           if (cfg.insetBackgroundColor) setInsetBackgroundColor(cfg.insetBackgroundColor);
+          if (cfg.shapeCornerRadius !== undefined) setShapeCornerRadius(cfg.shapeCornerRadius);
         }
       } catch (err) {
         console.error('Failed to load editor settings:', err);
@@ -256,10 +257,11 @@ function App() {
       inset,
       autoBackground,
       insetBackgroundColor: insetBackgroundColor || undefined,
+      shapeCornerRadius,
     }).catch(err => {
       console.error('Failed to save editor settings:', err);
     });
-  }, [padding, cornerRadius, shadowSize, backgroundColor, outputRatio, showBackground, inset, autoBackground, insetBackgroundColor, editorSettingsLoaded]);
+  }, [padding, cornerRadius, shadowSize, backgroundColor, outputRatio, showBackground, inset, autoBackground, insetBackgroundColor, shapeCornerRadius, editorSettingsLoaded]);
 
   // Load export settings from config on startup
   useEffect(() => {
