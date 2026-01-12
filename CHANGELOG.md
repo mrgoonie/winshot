@@ -1,3 +1,10 @@
+# [1.6.0-beta.1](https://github.com/mrgoonie/winshot/compare/v1.5.0-beta.1...v1.6.0-beta.1) (2026-01-12)
+
+
+### Bug Fixes
+
+* **shape:** persist border radius ([c1a4043](https://github.com/mrgoonie/winshot/commit/c1a4043ff4f725028ea4692e27190b725ef95a3e))
+
 # [1.6.0-beta.1](https://github.com/mrgoonie/winshot/compare/v1.5.0...v1.6.0-beta.1) (2026-01-12)
 
 
