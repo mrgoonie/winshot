@@ -1,5 +1,5 @@
 import { CaptureMode } from '../types';
-import { Monitor, Scan, AppWindow, Settings, ChevronDown, FolderOpen, Clipboard } from 'lucide-react';
+import { Monitor, Scan, AppWindow, Settings, ChevronDown, FolderOpen, Clipboard, QrCode } from 'lucide-react';
 
 interface CaptureToolbarProps {
   onCapture: (mode: CaptureMode) => void;
@@ -10,9 +10,10 @@ interface CaptureToolbarProps {
   onOpenSettings?: () => void;
   onImportImage?: () => void;
   onClipboardCapture?: () => void;
+  onQRScan?: () => void;
 }
 
-export function CaptureToolbar({ onCapture, isCapturing, hasScreenshot, onClear, onMinimize, onOpenSettings, onImportImage, onClipboardCapture }: CaptureToolbarProps) {
+export function CaptureToolbar({ onCapture, isCapturing, hasScreenshot, onClear, onMinimize, onOpenSettings, onImportImage, onClipboardCapture, onQRScan }: CaptureToolbarProps) {
   return (
     <div className="flex items-center gap-4 px-4 py-3 glass">
       <div className="flex gap-2">
@@ -92,6 +93,23 @@ export function CaptureToolbar({ onCapture, isCapturing, hasScreenshot, onClear,
           >
             <FolderOpen className="w-4 h-4" />
             Import
+          </button>
+        )}
+
+        {/* Scan QR - Indigo/purple gradient */}
+        {onQRScan && (
+          <button
+            onClick={onQRScan}
+            disabled={isCapturing || !hasScreenshot}
+            className="px-4 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-2
+                       bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400
+                       disabled:from-slate-600 disabled:to-slate-700 disabled:opacity-50
+                       text-white font-medium shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40
+                       hover:-translate-y-0.5 active:translate-y-0"
+            title="Scan QR code from current screenshot"
+          >
+            <QrCode className="w-4 h-4" />
+            Scan QR
           </button>
         )}
       </div>

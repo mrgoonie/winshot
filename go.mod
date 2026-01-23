@@ -9,6 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.95.0
 	github.com/danieljoos/wincred v1.2.3
 	github.com/kbinani/screenshot v0.0.0-20250624051815-089614a94018
+	github.com/liyue201/goqr v0.0.0-20200803022322-df443203d4ea
 	github.com/wailsapp/wails/v2 v2.10.2
 	golang.org/x/image v0.33.0
 	golang.org/x/oauth2 v0.34.0

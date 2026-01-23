@@ -166,6 +166,10 @@ export function SaveR2Credentials(arg1, arg2) {
   return window['go']['main']['App']['SaveR2Credentials'](arg1, arg2);
 }
 
+export function ScanQRCode(arg1) {
+  return window['go']['main']['App']['ScanQRCode'](arg1);
+}
+
 export function SelectFolder() {
   return window['go']['main']['App']['SelectFolder']();
 }
