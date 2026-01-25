@@ -77,8 +77,14 @@ export function HotkeyInput({ value, onChange, label, disabled = false }: Hotkey
     // Map special keys
     if (keyCodeToName[e.code]) {
       keyName = keyCodeToName[e.code];
+    } else if (e.code.startsWith('Digit')) {
+      // Number keys (0-9) - use code to avoid shifted symbols like $ for Shift+4
+      keyName = e.code.replace('Digit', '');
+    } else if (e.code.startsWith('Key')) {
+      // Letter keys (A-Z) - use code to get consistent uppercase letter
+      keyName = e.code.replace('Key', '');
     } else if (e.key.length === 1) {
-      // Single character (letter or number)
+      // Other single character keys
       keyName = e.key.toUpperCase();
     }
 
