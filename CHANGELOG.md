@@ -1,3 +1,19 @@
+# [1.5.0-beta.3](https://github.com/mrgoonie/winshot/compare/v1.5.0-beta.2...v1.5.0-beta.3) (2026-01-25)
+
+
+### Bug Fixes
+
+* **editor:** align border corner radius with screenshot image ([6685da8](https://github.com/mrgoonie/winshot/commit/6685da8beb6b8fe33fcca781e86975f18b3acf8f))
+* **editor:** render border above screenshot image ([36b93e8](https://github.com/mrgoonie/winshot/commit/36b93e8fc10131c940653f238379a32b1e9b6e60))
+* **startup:** sync registry on app start when config says enabled ([3088086](https://github.com/mrgoonie/winshot/commit/30880866efec98b87da05e21fbfb99bc1c67cf6a)), closes [#62](https://github.com/mrgoonie/winshot/issues/62)
+* **test:** make R2 credential test environment-aware ([719e5e0](https://github.com/mrgoonie/winshot/commit/719e5e04af52de114002b1f8e51229bdbbebca80))
+
+
+### Features
+
+* **editor:** add screenshot border styling ([4280fe6](https://github.com/mrgoonie/winshot/commit/4280fe6661bdcce150c599afb0002977e5c2313d)), closes [#62](https://github.com/mrgoonie/winshot/issues/62)
+* **tray:** show version in system tray tooltip ([434af43](https://github.com/mrgoonie/winshot/commit/434af4355f33c67ca042cd0c98cf1dedc41d333c))
+
 # [1.5.0-beta.2](https://github.com/mrgoonie/winshot/compare/v1.5.0-beta.1...v1.5.0-beta.2) (2026-01-25)
 
 
