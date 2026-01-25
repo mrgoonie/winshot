@@ -21,6 +21,19 @@
 
 ### Features
 
+* force release v1.7.0-beta.1 ([bfc7d36](https://github.com/mrgoonie/winshot/commit/bfc7d36aff112974a1569518730684cb428e753c))
+* **library:** add screenshot history library with tray integration ([ed0ac37](https://github.com/mrgoonie/winshot/commit/ed0ac37d5dedaefa060c6c000ff1ed8b92c926ec)), closes [hi#quality](https://github.com/hi/issues/quality)
+
+# [1.5.0-beta.2](https://github.com/mrgoonie/winshot/compare/v1.5.0-beta.1...v1.5.0-beta.2) (2026-01-25)
+
+
+### Bug Fixes
+
+* **shape:** persist border radius ([c1a4043](https://github.com/mrgoonie/winshot/commit/c1a4043ff4f725028ea4692e27190b725ef95a3e))
+
+
+### Features
+
 * **library:** add screenshot history library with tray integration ([ed0ac37](https://github.com/mrgoonie/winshot/commit/ed0ac37d5dedaefa060c6c000ff1ed8b92c926ec)), closes [hi#quality](https://github.com/hi/issues/quality)
 
 # [1.6.0-beta.1](https://github.com/mrgoonie/winshot/compare/v1.5.0-beta.1...v1.6.0-beta.1) (2026-01-25)
