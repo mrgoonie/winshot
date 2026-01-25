@@ -27,6 +27,9 @@ import (
 	winEnum "winshot/internal/windows"
 )
 
+// Version is set at build time via ldflags
+var Version = "dev"
+
 // App struct
 type App struct {
 	ctx              context.Context
@@ -80,8 +83,8 @@ func (a *App) startup(ctx context.Context) {
 		println("Warning: failed to start overlay manager:", err.Error())
 	}
 
-	// Initialize system tray
-	a.trayIcon = tray.NewTrayIcon("WinShot - Screenshot Tool")
+	// Initialize system tray with version in tooltip
+	a.trayIcon = tray.NewTrayIcon(fmt.Sprintf("WinShot v%s", Version))
 	a.trayIcon.SetCallback(a.onTrayMenu)
 	a.trayIcon.SetOnShow(func() {
 		runtime.WindowShow(a.ctx)
