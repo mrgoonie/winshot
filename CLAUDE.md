@@ -17,6 +17,7 @@ Your role is to analyze user requirements, delegate tasks to appropriate sub-age
   - Create PR to `dev` branch from other branches to release `beta`
   - Create PR to `main` branch from `dev` branch to release `stable`
 - And other workflows: `./.claude/workflows/*`
+- App release workflow: `./docs/release-workflow.md`
 
 **IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
 **IMPORTANT:** You must follow strictly the development rules in `./.claude/workflows/development-rules.md` file.
@@ -44,6 +45,7 @@ We keep all important docs in `./docs` folder and keep updating them, structure 
 ├── design-guidelines.md
 ├── deployment-guide.md
 ├── system-architecture.md
+├── release-workflow.md
 └── project-roadmap.md
 ```
 

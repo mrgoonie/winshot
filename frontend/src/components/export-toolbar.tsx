@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { ClipboardCopy, Download, Save, Link, Cloud, ChevronUp } from 'lucide-react';
+import { ClipboardCopy, Download, Save, Link, Cloud, ChevronUp, Image } from 'lucide-react';
 
 interface ExportToolbarProps {
   onSave: (format: 'png' | 'jpeg') => void;
   onQuickSave: (format: 'png' | 'jpeg') => void;
   onCopyToClipboard: () => void;
   onCopyPath: () => void;
+  onOpenLibrary: () => void;
   onCloudUpload: (provider: 'r2' | 'gdrive') => void;
   lastSavedPath: string | null;
   isExporting: boolean;
@@ -19,6 +20,7 @@ export function ExportToolbar({
   onQuickSave,
   onCopyToClipboard,
   onCopyPath,
+  onOpenLibrary,
   onCloudUpload,
   lastSavedPath,
   isExporting,
@@ -118,6 +120,19 @@ export function ExportToolbar({
         >
           <Download className="w-4 h-4" />
           Quick Save
+        </button>
+
+        {/* Library */}
+        <button
+          onClick={onOpenLibrary}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg font-medium transition-all duration-200
+                     bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30
+                     border border-amber-500/30 hover:border-amber-500/50
+                     text-amber-300 hover:text-amber-200"
+          title="Open Screenshot Library"
+        >
+          <Image className="w-4 h-4" />
+          Library
         </button>
 
         {/* Cloud Upload */}

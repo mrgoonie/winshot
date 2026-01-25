@@ -4,6 +4,7 @@ import Konva from 'konva';
 import { TitleBar } from './components/title-bar';
 import { CaptureToolbar } from './components/capture-toolbar';
 import { WindowPicker } from './components/window-picker';
+import { LibraryWindow } from './components/library-window';
 import { EditorCanvas } from './components/editor-canvas';
 import { SettingsPanel } from './components/settings-panel';
 import { SettingsModal } from './components/settings-modal';
@@ -12,7 +13,7 @@ import { StatusBar } from './components/status-bar';
 import { AnnotationToolbar } from './components/annotation-toolbar';
 import { ExportToolbar } from './components/export-toolbar';
 import { CropToolbar } from './components/crop-toolbar';
-import { CaptureResult, CaptureMode, WindowInfo, Annotation, EditorTool, OutputRatio, CropArea, CropAspectRatio, CropState } from './types';
+import { CaptureResult, CaptureMode, WindowInfo, Annotation, EditorTool, OutputRatio, CropArea, CropAspectRatio, CropState, BorderType, LibraryImage } from './types';
 import {
   CaptureFullscreen,
   CaptureWindow,
@@ -33,6 +34,7 @@ import {
   GetGDriveStatus,
   UploadToR2,
   UploadToGDrive,
+  OpenInEditor,
 } from '../wailsjs/go/main/App';
 import { updater } from '../wailsjs/go/models';
 import { EventsOn, EventsOff, WindowGetSize } from '../wailsjs/runtime/runtime';
@@ -48,6 +50,11 @@ const DEFAULT_EDITOR_SETTINGS = {
   showBackground: true,
   inset: 0,
   autoBackground: true,
+  borderEnabled: false,
+  borderWeight: 2,
+  borderColor: '#000000',
+  borderOpacity: 100,
+  borderType: 'center' as BorderType,
 };
 
 // Helper to parse ratio string into numeric ratio
@@ -129,6 +136,7 @@ function App() {
   const [screenshot, setScreenshot] = useState<CaptureResult | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [showWindowPicker, setShowWindowPicker] = useState(false);
+  const [showLibrary, setShowLibrary] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | undefined>();
 
   // Editor settings (loaded from Go config on startup)
@@ -141,6 +149,12 @@ function App() {
   const [inset, setInset] = useState(DEFAULT_EDITOR_SETTINGS.inset);
   const [autoBackground, setAutoBackground] = useState(DEFAULT_EDITOR_SETTINGS.autoBackground);
   const [extractedColor, setExtractedColor] = useState<string | null>(null);
+  const [insetBackgroundColor, setInsetBackgroundColor] = useState<string | null>(null);
+  const [borderEnabled, setBorderEnabled] = useState(DEFAULT_EDITOR_SETTINGS.borderEnabled);
+  const [borderWeight, setBorderWeight] = useState(DEFAULT_EDITOR_SETTINGS.borderWeight);
+  const [borderColor, setBorderColor] = useState(DEFAULT_EDITOR_SETTINGS.borderColor);
+  const [borderOpacity, setBorderOpacity] = useState(DEFAULT_EDITOR_SETTINGS.borderOpacity);
+  const [borderType, setBorderType] = useState<BorderType>(DEFAULT_EDITOR_SETTINGS.borderType);
   const [editorSettingsLoaded, setEditorSettingsLoaded] = useState(false);
   // Stores settings when background is hidden, so they can be restored
   const [savedBackgroundSettings, setSavedBackgroundSettings] = useState<{
@@ -161,8 +175,10 @@ function App() {
     canRedo,
   } = useUndoRedo<Annotation[]>([]);
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
-  const [strokeColor, setStrokeColor] = useState('#ef4444');
+  const [strokeColor, setStrokeColor] = useState<string | null>('#ef4444'); // null = no stroke
+  const [fillColor, setFillColor] = useState<string | null>(null); // null = transparent
   const [strokeWidth, setStrokeWidth] = useState(4);
+  const [shapeCornerRadius, setShapeCornerRadius] = useState(0); // For rectangle annotations
   const [fontSize, setFontSize] = useState(48);
   const [fontStyle, setFontStyle] = useState<'normal' | 'bold' | 'italic' | 'bold italic'>('normal');
 
@@ -230,6 +246,13 @@ function App() {
           if (cfg.showBackground !== undefined) setShowBackground(cfg.showBackground);
           if (cfg.inset !== undefined) setInset(cfg.inset);
           if (cfg.autoBackground !== undefined) setAutoBackground(cfg.autoBackground);
+          if (cfg.insetBackgroundColor) setInsetBackgroundColor(cfg.insetBackgroundColor);
+          if (cfg.shapeCornerRadius !== undefined) setShapeCornerRadius(cfg.shapeCornerRadius);
+          if (cfg.borderEnabled !== undefined) setBorderEnabled(cfg.borderEnabled);
+          if (cfg.borderWeight !== undefined) setBorderWeight(cfg.borderWeight);
+          if (cfg.borderColor) setBorderColor(cfg.borderColor);
+          if (cfg.borderOpacity !== undefined) setBorderOpacity(cfg.borderOpacity);
+          if (cfg.borderType) setBorderType(cfg.borderType as BorderType);
         }
       } catch (err) {
         console.error('Failed to load editor settings:', err);
@@ -242,10 +265,26 @@ function App() {
   // Persist editor settings to Go config when they change (after initial load)
   useEffect(() => {
     if (!editorSettingsLoaded) return;
-    SaveEditorConfig({ padding, cornerRadius, shadowSize, backgroundColor, outputRatio, showBackground, inset, autoBackground }).catch(err => {
+    SaveEditorConfig({
+      padding,
+      cornerRadius,
+      shadowSize,
+      backgroundColor,
+      outputRatio,
+      showBackground,
+      inset,
+      autoBackground,
+      insetBackgroundColor: insetBackgroundColor || undefined,
+      shapeCornerRadius,
+      borderEnabled,
+      borderWeight,
+      borderColor,
+      borderOpacity,
+      borderType,
+    }).catch(err => {
       console.error('Failed to save editor settings:', err);
     });
-  }, [padding, cornerRadius, shadowSize, backgroundColor, outputRatio, showBackground, inset, autoBackground, editorSettingsLoaded]);
+  }, [padding, cornerRadius, shadowSize, backgroundColor, outputRatio, showBackground, inset, autoBackground, insetBackgroundColor, shapeCornerRadius, borderEnabled, borderWeight, borderColor, borderOpacity, borderType, editorSettingsLoaded]);
 
   // Load export settings from config on startup
   useEffect(() => {
@@ -339,6 +378,7 @@ function App() {
       // Apply auto-color if enabled
       if (autoBackground) {
         setBackgroundColor(color);
+        setInsetBackgroundColor(color);
       }
     };
   }, [screenshot]); // Intentionally exclude autoBackground to prevent re-extraction
@@ -348,6 +388,7 @@ function App() {
     setAutoBackground(auto);
     if (auto && extractedColor) {
       setBackgroundColor(extractedColor);
+      setInsetBackgroundColor(extractedColor);
     }
   }, [extractedColor]);
 
@@ -698,16 +739,23 @@ function App() {
       handleNativeRegionSelect(data.width, data.height, data.screenshot);
     };
 
+    // Handle tray library event (left-click on tray icon)
+    const handleTrayLibrary = () => {
+      setShowLibrary(true);
+    };
+
     EventsOn('hotkey:fullscreen', handleFullscreen);
     EventsOn('hotkey:region', handleRegion);
     EventsOn('hotkey:window', handleWindow);
     EventsOn('region:selected', handleRegionSelected);
+    EventsOn('tray:library', handleTrayLibrary);
 
     return () => {
       EventsOff('hotkey:fullscreen');
       EventsOff('hotkey:region');
       EventsOff('hotkey:window');
       EventsOff('region:selected');
+      EventsOff('tray:library');
     };
   }, [handleCapture, handleNativeRegionSelect]);
 
@@ -715,6 +763,53 @@ function App() {
   const handleMinimizeToTray = useCallback(() => {
     MinimizeToTray();
   }, []);
+
+  // Library handlers
+  const handleLibraryClose = useCallback(() => {
+    setShowLibrary(false);
+  }, []);
+
+  const handleLibraryEdit = useCallback(async (image: LibraryImage) => {
+    // Close library first
+    setShowLibrary(false);
+
+    try {
+      const result = await OpenInEditor(image.filepath);
+      if (result) {
+        // Clear previous editor state
+        setScreenshot(result as CaptureResult);
+        resetAnnotations([]);
+        setSelectedAnnotationId(null);
+        setActiveTool('select');
+        // Reset crop state for new image
+        setCropState({
+          originalImage: null,
+          croppedImage: null,
+          originalAnnotations: [],
+          lastCropArea: null,
+          isCropApplied: false,
+        });
+        setCropArea(null);
+        setCropMode(false);
+        // Track source path for "Save" functionality
+        setLastSavedPath(image.filepath);
+        setStatusMessage('Opened from library');
+        setTimeout(() => setStatusMessage(undefined), 2000);
+      }
+    } catch (error) {
+      console.error('Failed to open image:', error);
+      setStatusMessage('Failed to open image');
+      setTimeout(() => setStatusMessage(undefined), 3000);
+    }
+  }, [resetAnnotations]);
+
+  const handleLibraryCapture = useCallback(() => {
+    setShowLibrary(false);
+    // Small delay ensures library closes before capture UI appears
+    setTimeout(() => {
+      handleCapture('region');
+    }, 100);
+  }, [handleCapture]);
 
   // Annotation handlers
   const handleAnnotationAdd = useCallback((annotation: Annotation) => {
@@ -732,12 +827,29 @@ function App() {
   }, []);
 
   // Update selected annotation color when stroke color changes
-  const handleStrokeColorChange = useCallback((color: string) => {
+  const handleStrokeColorChange = useCallback((color: string | null) => {
     setStrokeColor(color);
     if (selectedAnnotationId) {
-      handleAnnotationUpdate(selectedAnnotationId, { stroke: color });
+      const selectedAnnotation = annotations.find(a => a.id === selectedAnnotationId);
+      // Only apply no-stroke to shapes that support it (rectangle, ellipse)
+      if (color === null && selectedAnnotation?.type !== 'rectangle' && selectedAnnotation?.type !== 'ellipse') {
+        return; // Don't allow no-stroke for non-shape annotations
+      }
+      handleAnnotationUpdate(selectedAnnotationId, { stroke: color || undefined });
     }
-  }, [selectedAnnotationId, handleAnnotationUpdate]);
+  }, [selectedAnnotationId, annotations, handleAnnotationUpdate]);
+
+  // Update selected annotation fill color when fill color changes
+  const handleFillColorChange = useCallback((color: string | null) => {
+    setFillColor(color);
+    if (selectedAnnotationId) {
+      const selectedAnnotation = annotations.find(a => a.id === selectedAnnotationId);
+      // Only apply fill to shapes that support it (rectangle, ellipse)
+      if (selectedAnnotation?.type === 'rectangle' || selectedAnnotation?.type === 'ellipse') {
+        handleAnnotationUpdate(selectedAnnotationId, { fill: color || undefined });
+      }
+    }
+  }, [selectedAnnotationId, annotations, handleAnnotationUpdate]);
 
   // Update selected annotation stroke width when it changes
   const handleStrokeWidthChange = useCallback((width: number) => {
@@ -746,6 +858,17 @@ function App() {
       handleAnnotationUpdate(selectedAnnotationId, { strokeWidth: width });
     }
   }, [selectedAnnotationId, handleAnnotationUpdate]);
+
+  // Update selected rectangle corner radius when it changes
+  const handleShapeCornerRadiusChange = useCallback((radius: number) => {
+    setShapeCornerRadius(radius);
+    if (selectedAnnotationId) {
+      const selectedAnnotation = annotations.find(a => a.id === selectedAnnotationId);
+      if (selectedAnnotation?.type === 'rectangle') {
+        handleAnnotationUpdate(selectedAnnotationId, { cornerRadius: radius });
+      }
+    }
+  }, [selectedAnnotationId, annotations, handleAnnotationUpdate]);
 
   // Update selected text annotation font size when it changes
   const handleFontSizeChange = useCallback((size: number) => {
@@ -1466,12 +1589,16 @@ function App() {
           <AnnotationToolbar
             activeTool={activeTool}
             strokeColor={strokeColor}
+            fillColor={fillColor}
             strokeWidth={strokeWidth}
+            cornerRadius={shapeCornerRadius}
             fontSize={fontSize}
             fontStyle={fontStyle}
             onToolChange={handleToolChange}
             onColorChange={handleStrokeColorChange}
+            onFillColorChange={handleFillColorChange}
             onStrokeWidthChange={handleStrokeWidthChange}
+            onCornerRadiusChange={handleShapeCornerRadiusChange}
             onFontSizeChange={handleFontSizeChange}
             onFontStyleChange={handleFontStyleChange}
             onCurvedChange={handleCurvedChange}
@@ -1509,13 +1636,20 @@ function App() {
           backgroundColor={backgroundColor}
           outputRatio={outputRatio}
           inset={inset}
-          insetBackgroundColor={extractedColor ?? undefined}
+          insetBackgroundColor={insetBackgroundColor ?? extractedColor ?? undefined}
+          borderEnabled={borderEnabled}
+          borderWeight={borderWeight}
+          borderColor={borderColor}
+          borderOpacity={borderOpacity}
+          borderType={borderType}
           stageRef={stageRef}
           activeTool={activeTool}
           annotations={annotations}
           selectedAnnotationId={selectedAnnotationId}
           strokeColor={strokeColor}
+          fillColor={fillColor}
           strokeWidth={strokeWidth}
+          shapeCornerRadius={shapeCornerRadius}
           fontSize={fontSize}
           fontStyle={fontStyle}
           nextNumber={nextNumber}
@@ -1546,6 +1680,12 @@ function App() {
             inset={inset}
             autoBackground={autoBackground}
             extractedColor={extractedColor}
+            insetBackgroundColor={insetBackgroundColor}
+            borderEnabled={borderEnabled}
+            borderWeight={borderWeight}
+            borderColor={borderColor}
+            borderOpacity={borderOpacity}
+            borderType={borderType}
             onPaddingChange={setPadding}
             onCornerRadiusChange={setCornerRadius}
             onShadowSizeChange={setShadowSize}
@@ -1554,6 +1694,12 @@ function App() {
             onShowBackgroundChange={handleShowBackgroundChange}
             onInsetChange={setInset}
             onAutoBackgroundChange={handleAutoBackgroundChange}
+            onInsetBackgroundColorChange={setInsetBackgroundColor}
+            onBorderEnabledChange={setBorderEnabled}
+            onBorderWeightChange={setBorderWeight}
+            onBorderColorChange={setBorderColor}
+            onBorderOpacityChange={setBorderOpacity}
+            onBorderTypeChange={setBorderType}
           />
         )}
       </div>
@@ -1564,6 +1710,7 @@ function App() {
           onQuickSave={handleQuickSave}
           onCopyToClipboard={handleCopyToClipboard}
           onCopyPath={handleCopyPath}
+          onOpenLibrary={() => setShowLibrary(true)}
           onCloudUpload={handleCloudUpload}
           lastSavedPath={lastSavedPath}
           isExporting={isExporting}
@@ -1579,6 +1726,13 @@ function App() {
         isOpen={showWindowPicker}
         onClose={() => setShowWindowPicker(false)}
         onSelect={handleWindowSelect}
+      />
+
+      <LibraryWindow
+        isOpen={showLibrary}
+        onClose={handleLibraryClose}
+        onCapture={handleLibraryCapture}
+        onEdit={handleLibraryEdit}
       />
 
       <SettingsModal

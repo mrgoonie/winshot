@@ -224,6 +224,7 @@ function RectangleShape({ annotation, isSelected, onSelect, onUpdate }: ShapePro
         stroke={annotation.stroke}
         strokeWidth={annotation.strokeWidth}
         fill={annotation.fill}
+        cornerRadius={annotation.cornerRadius || 0}
         draggable
         onClick={onSelect}
         onTap={onSelect}
@@ -1044,7 +1045,7 @@ function TextShape({ annotation, isSelected, onSelect, onUpdate }: ShapeProps) {
     textarea.style.margin = '0';
     textarea.style.overflow = 'hidden';
     textarea.style.background = 'rgba(15, 23, 42, 0.95)';
-    textarea.style.color = annotation.stroke;
+    textarea.style.color = annotation.stroke || '#ef4444';
     textarea.style.outline = 'none';
     textarea.style.resize = 'none';
     textarea.style.fontFamily = annotation.fontFamily || 'Arial';

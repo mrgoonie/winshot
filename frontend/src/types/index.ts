@@ -46,9 +46,10 @@ export interface Annotation {
   y: number;
   width: number;
   height: number;
-  stroke: string;
+  stroke?: string; // Optional: undefined = no stroke for shapes
   strokeWidth: number;
-  fill?: string;
+  fill?: string; // Optional: undefined = no fill
+  cornerRadius?: number; // For rectangles: rounded corners (0-50)
   // For arrows and lines
   points?: number[];
   // For arrows - curved style
@@ -86,6 +87,9 @@ export interface CropState {
 // Output canvas ratio - determines the final export dimensions
 export type OutputRatio = 'auto' | '1:1' | '4:3' | '3:2' | '16:9' | '5:3' | '9:16' | '3:4' | '2:3';
 
+// Border position type - determines where border stroke is rendered relative to edge
+export type BorderType = 'outside' | 'center' | 'inside';
+
 // App configuration types
 export interface HotkeyConfig {
   fullscreen: string;
@@ -115,4 +119,14 @@ export interface AppConfig {
   startup: StartupConfig;
   quickSave: QuickSaveConfig;
   export: ExportConfig;
+}
+
+// Library types - for screenshot history
+export interface LibraryImage {
+  filepath: string;
+  filename: string;
+  modifiedDate: string;
+  thumbnail: string; // Base64 PNG
+  width: number;
+  height: number;
 }

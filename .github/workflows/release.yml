@@ -76,13 +76,21 @@ jobs:
           npm install
         shell: pwsh
 
+      - name: Get version from package.json
+        if: steps.check.outputs.should_release == 'true'
+        id: version
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+
       - name: Build portable executable
         if: steps.check.outputs.should_release == 'true'
-        run: wails build -clean -platform windows/amd64
+        run: wails build -clean -platform windows/amd64 -ldflags "-X main.Version=${{ steps.version.outputs.VERSION }}"
 
       - name: Build NSIS installer
         if: steps.check.outputs.should_release == 'true'
-        run: wails build -platform windows/amd64 -nsis
+        run: wails build -platform windows/amd64 -nsis -ldflags "-X main.Version=${{ steps.version.outputs.VERSION }}"
 
       - name: Upload build artifacts
         if: steps.check.outputs.should_release == 'true'

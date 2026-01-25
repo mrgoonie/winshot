@@ -49,14 +49,21 @@ type WindowConfig struct {
 
 // EditorConfig holds editor panel settings (persisted separately from localStorage)
 type EditorConfig struct {
-	Padding         int    `json:"padding"`
-	CornerRadius    int    `json:"cornerRadius"`
-	ShadowSize      int    `json:"shadowSize"`
-	BackgroundColor string `json:"backgroundColor"`
-	OutputRatio     string `json:"outputRatio"`
-	ShowBackground  bool   `json:"showBackground"`
-	Inset           int    `json:"inset"`          // 0-50 percentage for screenshot scaling
-	AutoBackground  bool   `json:"autoBackground"` // Auto-extract edge color for background
+	Padding              int    `json:"padding"`
+	CornerRadius         int    `json:"cornerRadius"`
+	ShadowSize           int    `json:"shadowSize"`
+	BackgroundColor      string `json:"backgroundColor"`
+	OutputRatio          string `json:"outputRatio"`
+	ShowBackground       bool   `json:"showBackground"`
+	Inset                int    `json:"inset"`                          // 0-50 percentage for screenshot scaling
+	AutoBackground       bool   `json:"autoBackground"`                 // Auto-extract edge color for background
+	InsetBackgroundColor string `json:"insetBackgroundColor,omitempty"` // Custom inset background color
+	ShapeCornerRadius    int    `json:"shapeCornerRadius"`              // Default corner radius for rectangle annotations (0-50)
+	BorderEnabled        bool   `json:"borderEnabled"`                  // Enable/disable screenshot border
+	BorderWeight         int    `json:"borderWeight"`                   // Border stroke width in pixels (1-50)
+	BorderColor          string `json:"borderColor"`                    // Border color hex code
+	BorderOpacity        int    `json:"borderOpacity"`                  // Border opacity percentage (0-100)
+	BorderType           string `json:"borderType"`                     // Border position: outside, center, inside
 }
 
 // R2Config holds Cloudflare R2 settings (secrets stored in Credential Manager)
@@ -123,14 +130,20 @@ func Default() *Config {
 			Height: 800,
 		},
 		Editor: EditorConfig{
-			Padding:         40,
-			CornerRadius:    12,
-			ShadowSize:      20,
-			BackgroundColor: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-			OutputRatio:     "auto",
-			ShowBackground:  true,
-			Inset:           0,
-			AutoBackground:  true,
+			Padding:           40,
+			CornerRadius:      12,
+			ShadowSize:        20,
+			BackgroundColor:   "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+			OutputRatio:       "auto",
+			ShowBackground:    true,
+			Inset:             0,
+			AutoBackground:    true,
+			ShapeCornerRadius: 0,
+			BorderEnabled:     false,
+			BorderWeight:      2,
+			BorderColor:       "#000000",
+			BorderOpacity:     100,
+			BorderType:        "center",
 		},
 		Update: UpdateConfig{
 			CheckOnStartup: true,
