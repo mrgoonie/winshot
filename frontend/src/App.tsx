@@ -4,6 +4,7 @@ import Konva from 'konva';
 import { TitleBar } from './components/title-bar';
 import { CaptureToolbar } from './components/capture-toolbar';
 import { WindowPicker } from './components/window-picker';
+import { LibraryWindow } from './components/library-window';
 import { EditorCanvas } from './components/editor-canvas';
 import { SettingsPanel } from './components/settings-panel';
 import { SettingsModal } from './components/settings-modal';
@@ -12,7 +13,7 @@ import { StatusBar } from './components/status-bar';
 import { AnnotationToolbar } from './components/annotation-toolbar';
 import { ExportToolbar } from './components/export-toolbar';
 import { CropToolbar } from './components/crop-toolbar';
-import { CaptureResult, CaptureMode, WindowInfo, Annotation, EditorTool, OutputRatio, CropArea, CropAspectRatio, CropState } from './types';
+import { CaptureResult, CaptureMode, WindowInfo, Annotation, EditorTool, OutputRatio, CropArea, CropAspectRatio, CropState, LibraryImage } from './types';
 import {
   CaptureFullscreen,
   CaptureWindow,
@@ -33,6 +34,7 @@ import {
   GetGDriveStatus,
   UploadToR2,
   UploadToGDrive,
+  OpenInEditor,
 } from '../wailsjs/go/main/App';
 import { updater } from '../wailsjs/go/models';
 import { EventsOn, EventsOff, WindowGetSize } from '../wailsjs/runtime/runtime';
@@ -129,6 +131,7 @@ function App() {
   const [screenshot, setScreenshot] = useState<CaptureResult | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [showWindowPicker, setShowWindowPicker] = useState(false);
+  const [showLibrary, setShowLibrary] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | undefined>();
 
   // Editor settings (loaded from Go config on startup)
@@ -716,16 +719,23 @@ function App() {
       handleNativeRegionSelect(data.width, data.height, data.screenshot);
     };
 
+    // Handle tray library event (left-click on tray icon)
+    const handleTrayLibrary = () => {
+      setShowLibrary(true);
+    };
+
     EventsOn('hotkey:fullscreen', handleFullscreen);
     EventsOn('hotkey:region', handleRegion);
     EventsOn('hotkey:window', handleWindow);
     EventsOn('region:selected', handleRegionSelected);
+    EventsOn('tray:library', handleTrayLibrary);
 
     return () => {
       EventsOff('hotkey:fullscreen');
       EventsOff('hotkey:region');
       EventsOff('hotkey:window');
       EventsOff('region:selected');
+      EventsOff('tray:library');
     };
   }, [handleCapture, handleNativeRegionSelect]);
 
@@ -733,6 +743,53 @@ function App() {
   const handleMinimizeToTray = useCallback(() => {
     MinimizeToTray();
   }, []);
+
+  // Library handlers
+  const handleLibraryClose = useCallback(() => {
+    setShowLibrary(false);
+  }, []);
+
+  const handleLibraryEdit = useCallback(async (image: LibraryImage) => {
+    // Close library first
+    setShowLibrary(false);
+
+    try {
+      const result = await OpenInEditor(image.filepath);
+      if (result) {
+        // Clear previous editor state
+        setScreenshot(result as CaptureResult);
+        resetAnnotations([]);
+        setSelectedAnnotationId(null);
+        setActiveTool('select');
+        // Reset crop state for new image
+        setCropState({
+          originalImage: null,
+          croppedImage: null,
+          originalAnnotations: [],
+          lastCropArea: null,
+          isCropApplied: false,
+        });
+        setCropArea(null);
+        setCropMode(false);
+        // Track source path for "Save" functionality
+        setLastSavedPath(image.filepath);
+        setStatusMessage('Opened from library');
+        setTimeout(() => setStatusMessage(undefined), 2000);
+      }
+    } catch (error) {
+      console.error('Failed to open image:', error);
+      setStatusMessage('Failed to open image');
+      setTimeout(() => setStatusMessage(undefined), 3000);
+    }
+  }, [resetAnnotations]);
+
+  const handleLibraryCapture = useCallback(() => {
+    setShowLibrary(false);
+    // Small delay ensures library closes before capture UI appears
+    setTimeout(() => {
+      handleCapture('region');
+    }, 100);
+  }, [handleCapture]);
 
   // Annotation handlers
   const handleAnnotationAdd = useCallback((annotation: Annotation) => {
@@ -1618,6 +1675,7 @@ function App() {
           onQuickSave={handleQuickSave}
           onCopyToClipboard={handleCopyToClipboard}
           onCopyPath={handleCopyPath}
+          onOpenLibrary={() => setShowLibrary(true)}
           onCloudUpload={handleCloudUpload}
           lastSavedPath={lastSavedPath}
           isExporting={isExporting}
@@ -1633,6 +1691,13 @@ function App() {
         isOpen={showWindowPicker}
         onClose={() => setShowWindowPicker(false)}
         onSelect={handleWindowSelect}
+      />
+
+      <LibraryWindow
+        isOpen={showLibrary}
+        onClose={handleLibraryClose}
+        onCapture={handleLibraryCapture}
+        onEdit={handleLibraryEdit}
       />
 
       <SettingsModal
