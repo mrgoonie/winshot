@@ -46,14 +46,6 @@ A lightweight, feature-rich screenshot application built with Wails (Go + React)
 
 ---
 
-## Screenshots
-
-*[Screenshots section - placeholder for visual examples]*
-
-Coming soon. See GitHub releases for previews.
-
----
-
 ## Installation
 
 ### Option 1: Portable Executable (Recommended)
