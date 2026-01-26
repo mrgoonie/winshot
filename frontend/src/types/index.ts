@@ -27,7 +27,11 @@ export interface EditorState {
 }
 
 // Annotation types
-export type AnnotationType = 'rectangle' | 'ellipse' | 'arrow' | 'line' | 'text' | 'spotlight' | 'number';
+export type AnnotationType = 'rectangle' | 'ellipse' | 'arrow' | 'line' | 'text' | 'spotlight' | 'number' | 'redact';
+
+// Redact types
+export type RedactMode = 'blur' | 'pixelate';
+export type RedactIntensity = 'low' | 'medium' | 'high';
 
 // Crop types
 export interface CropArea {
@@ -66,6 +70,9 @@ export interface Annotation {
   dimOpacity?: number; // Opacity of the dimmed area (0-1, default 0.7)
   // For number annotations
   number?: number; // The numeric value displayed in the circle
+  // For redact annotations (blur/pixelate)
+  redactMode?: RedactMode;
+  redactIntensity?: RedactIntensity;
 }
 
 export type EditorTool = 'select' | 'crop' | AnnotationType;

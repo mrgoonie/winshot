@@ -38,6 +38,9 @@ interface EditorCanvasProps {
   onAnnotationSelect: (id: string | null) => void;
   onAnnotationUpdate: (id: string, updates: Partial<Annotation>) => void;
   onToolChange?: (tool: EditorTool) => void;
+  // Redact props
+  redactMode: 'blur' | 'pixelate';
+  redactIntensity: 'low' | 'medium' | 'high';
   // Crop props
   cropMode: boolean;
   cropArea: CropArea | null;
@@ -203,6 +206,9 @@ export function EditorCanvas({
   onAnnotationSelect,
   onAnnotationUpdate,
   onToolChange,
+  // Redact props
+  redactMode,
+  redactIntensity,
   // Crop props
   cropMode,
   cropArea,
@@ -529,9 +535,12 @@ export function EditorCanvas({
       // Apply corner radius for rectangles
       cornerRadius: annotationType === 'rectangle' ? shapeCornerRadius : undefined,
       points: annotationType === 'arrow' || annotationType === 'line' ? [0, 0, 0, 0] : undefined,
+      // Apply redact properties for redact annotations
+      redactMode: annotationType === 'redact' ? redactMode : undefined,
+      redactIntensity: annotationType === 'redact' ? redactIntensity : undefined,
     };
     setTempAnnotation(newAnnotation);
-  }, [activeTool, scale, strokeColor, fillColor, strokeWidth, shapeCornerRadius, fontSize, fontStyle, nextNumber, generateId, onAnnotationSelect, onAnnotationAdd, isTransformerNode, spacePressed, handlePanStart]);
+  }, [activeTool, scale, strokeColor, fillColor, strokeWidth, shapeCornerRadius, fontSize, fontStyle, nextNumber, redactMode, redactIntensity, generateId, onAnnotationSelect, onAnnotationAdd, isTransformerNode, spacePressed, handlePanStart]);
 
   // Handle mouse move for drawing
   const handleMouseMove = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -830,6 +839,11 @@ export function EditorCanvas({
               onSelect={onAnnotationSelect}
               onUpdate={onAnnotationUpdate}
               scale={scale}
+              screenshotSrc={imageSrc}
+              imageOffsetX={actualPaddingX + insetOffsetX}
+              imageOffsetY={actualPaddingY + insetOffsetY}
+              imageWidth={innerWidth * insetScale}
+              imageHeight={innerHeight * insetScale}
             />
 
             {/* Spotlight overlays - dim areas outside spotlight regions */}

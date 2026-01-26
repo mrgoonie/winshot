@@ -62,6 +62,22 @@ export namespace config {
 		    return a;
 		}
 	}
+	export class LibraryConfig {
+	    maxImages: number;
+	    displayMode: string;
+	    showOnTrayClick: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new LibraryConfig(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.maxImages = source["maxImages"];
+	        this.displayMode = source["displayMode"];
+	        this.showOnTrayClick = source["showOnTrayClick"];
+	    }
+	}
 	export class UpdateConfig {
 	    checkOnStartup: boolean;
 	    skippedVersion?: string;
@@ -196,22 +212,6 @@ export namespace config {
 	        this.window = source["window"];
 	    }
 	}
-	export class LibraryConfig {
-	    maxImages: number;
-	    displayMode: string;
-	    showOnTrayClick: boolean;
-
-	    static createFrom(source: any = {}) {
-	        return new LibraryConfig(source);
-	    }
-
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.maxImages = source["maxImages"];
-	        this.displayMode = source["displayMode"];
-	        this.showOnTrayClick = source["showOnTrayClick"];
-	    }
-	}
 	export class Config {
 	    hotkeys: HotkeyConfig;
 	    startup: StartupConfig;
@@ -223,11 +223,11 @@ export namespace config {
 	    cloud?: CloudConfig;
 	    library: LibraryConfig;
 	    backgroundImages?: string[];
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Config(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.hotkeys = this.convertValues(source["hotkeys"], HotkeyConfig);
@@ -260,6 +260,7 @@ export namespace config {
 		    return a;
 		}
 	}
+	
 	
 	
 	

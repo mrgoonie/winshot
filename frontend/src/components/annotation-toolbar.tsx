@@ -18,7 +18,9 @@ import {
   Redo2,
   Hash,
   ChevronDown,
+  EyeOff,
 } from 'lucide-react';
+import { RedactMode, RedactIntensity } from '../types';
 
 interface AnnotationToolbarProps {
   activeTool: EditorTool;
@@ -43,6 +45,11 @@ interface AnnotationToolbarProps {
   canRedo: boolean;
   onUndo: () => void;
   onRedo: () => void;
+  // Redact tool props
+  redactMode: RedactMode;
+  redactIntensity: RedactIntensity;
+  onRedactModeChange: (mode: RedactMode) => void;
+  onRedactIntensityChange: (intensity: RedactIntensity) => void;
 }
 
 const COLORS = [
@@ -207,6 +214,10 @@ export function AnnotationToolbar({
   canRedo,
   onUndo,
   onRedo,
+  redactMode,
+  redactIntensity,
+  onRedactModeChange,
+  onRedactIntensityChange,
 }: AnnotationToolbarProps) {
   // Show text controls when text tool is active or a text annotation is selected
   const showTextControls = activeTool === 'text' || selectedAnnotation?.type === 'text';
@@ -234,6 +245,11 @@ export function AnnotationToolbar({
   // Show arrow controls when an arrow annotation is selected
   const showArrowControls = selectedAnnotation?.type === 'arrow';
   const isArrowCurved = selectedAnnotation?.type === 'arrow' && selectedAnnotation?.curved;
+
+  // Show redact controls when redact tool is active or redact annotation is selected
+  const showRedactControls = activeTool === 'redact' || selectedAnnotation?.type === 'redact';
+  const currentRedactMode = selectedAnnotation?.type === 'redact' ? selectedAnnotation.redactMode || 'blur' : redactMode;
+  const currentRedactIntensity = selectedAnnotation?.type === 'redact' ? selectedAnnotation.redactIntensity || 'medium' : redactIntensity;
 
   // Get current font values (from selected annotation or defaults)
   const currentFontSize = selectedAnnotation?.type === 'text' ? selectedAnnotation.fontSize || 48 : fontSize;
@@ -275,6 +291,7 @@ export function AnnotationToolbar({
     { id: 'text', label: 'Text', shortcut: 'T', icon: <Type className="w-5 h-5" /> },
     { id: 'number', label: 'Number', shortcut: 'N', icon: <Hash className="w-5 h-5" /> },
     { id: 'spotlight', label: 'Spotlight', shortcut: 'S', icon: <Lightbulb className="w-5 h-5" /> },
+    { id: 'redact', label: 'Redact', shortcut: 'D', icon: <EyeOff className="w-5 h-5" /> },
     { id: 'crop', label: 'Crop', shortcut: 'C', icon: <Crop className="w-5 h-5" /> },
   ];
 
@@ -426,6 +443,56 @@ export function AnnotationToolbar({
           <Spline className="w-4 h-4" />
           <span className="text-xs font-medium">Curve</span>
         </button>
+      )}
+
+      {/* Redact Controls - Mode and Intensity */}
+      {showRedactControls && (
+        <div className="flex items-center gap-2 px-2 border-l border-white/10">
+          {/* Mode Toggle: Blur / Pixelate */}
+          <div className="flex items-center gap-1 bg-white/5 rounded-lg p-0.5">
+            <button
+              onClick={() => onRedactModeChange('blur')}
+              className={`px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+                currentRedactMode === 'blur'
+                  ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              title="Blur mode"
+            >
+              Blur
+            </button>
+            <button
+              onClick={() => onRedactModeChange('pixelate')}
+              className={`px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+                currentRedactMode === 'pixelate'
+                  ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              title="Pixelate mode"
+            >
+              Pixel
+            </button>
+          </div>
+
+          {/* Intensity Selector */}
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-slate-400 font-medium mr-1">Intensity</span>
+            {(['low', 'medium', 'high'] as const).map((intensity) => (
+              <button
+                key={intensity}
+                onClick={() => onRedactIntensityChange(intensity)}
+                className={`w-6 h-6 rounded-md flex items-center justify-center text-xs font-medium transition-all duration-200 ${
+                  currentRedactIntensity === intensity
+                    ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/30'
+                    : 'text-slate-400 hover:text-white hover:bg-white/10'
+                }`}
+                title={`${intensity.charAt(0).toUpperCase() + intensity.slice(1)} intensity`}
+              >
+                {intensity.charAt(0).toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Spacer */}

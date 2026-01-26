@@ -181,6 +181,8 @@ function App() {
   const [shapeCornerRadius, setShapeCornerRadius] = useState(0); // For rectangle annotations
   const [fontSize, setFontSize] = useState(48);
   const [fontStyle, setFontStyle] = useState<'normal' | 'bold' | 'italic' | 'bold italic'>('normal');
+  const [redactMode, setRedactMode] = useState<'blur' | 'pixelate'>('blur');
+  const [redactIntensity, setRedactIntensity] = useState<'low' | 'medium' | 'high'>('medium');
 
   // Compute next available number (finds lowest positive integer not in use)
   const nextNumber = useMemo(() => {
@@ -910,6 +912,28 @@ function App() {
     }
   }, [selectedAnnotationId, annotations, handleAnnotationUpdate]);
 
+  // Update redact mode (blur/pixelate) - also updates selected redact annotation if any
+  const handleRedactModeChange = useCallback((mode: 'blur' | 'pixelate') => {
+    setRedactMode(mode);
+    if (selectedAnnotationId) {
+      const selectedAnnotation = annotations.find(a => a.id === selectedAnnotationId);
+      if (selectedAnnotation?.type === 'redact') {
+        handleAnnotationUpdate(selectedAnnotationId, { redactMode: mode });
+      }
+    }
+  }, [selectedAnnotationId, annotations, handleAnnotationUpdate]);
+
+  // Update redact intensity - also updates selected redact annotation if any
+  const handleRedactIntensityChange = useCallback((intensity: 'low' | 'medium' | 'high') => {
+    setRedactIntensity(intensity);
+    if (selectedAnnotationId) {
+      const selectedAnnotation = annotations.find(a => a.id === selectedAnnotationId);
+      if (selectedAnnotation?.type === 'redact') {
+        handleAnnotationUpdate(selectedAnnotationId, { redactIntensity: intensity });
+      }
+    }
+  }, [selectedAnnotationId, annotations, handleAnnotationUpdate]);
+
   const handleDeleteSelected = useCallback(() => {
     if (selectedAnnotationId) {
       setAnnotations((prev) => prev.filter((ann) => ann.id !== selectedAnnotationId));
@@ -1182,6 +1206,9 @@ function App() {
             break;
           case 's':
             handleToolChange('spotlight');
+            break;
+          case 'd':
+            handleToolChange('redact');
             break;
           case 'c':
             handleCropToolSelect();
@@ -1617,6 +1644,10 @@ function App() {
             canRedo={canRedo}
             onUndo={undoAnnotations}
             onRedo={redoAnnotations}
+            redactMode={redactMode}
+            redactIntensity={redactIntensity}
+            onRedactModeChange={handleRedactModeChange}
+            onRedactIntensityChange={handleRedactIntensityChange}
           />
         </>
       )}
@@ -1665,6 +1696,9 @@ function App() {
           onAnnotationSelect={handleAnnotationSelect}
           onAnnotationUpdate={handleAnnotationUpdate}
           onToolChange={handleToolChange}
+          // Redact props
+          redactMode={redactMode}
+          redactIntensity={redactIntensity}
           // Crop props
           cropMode={cropMode}
           cropArea={cropArea}

@@ -186,6 +186,7 @@ function calculateCurvedArrowVertices(
 }
 
 import { Annotation } from '../types';
+import { RedactShape } from './redact-annotation-shape';
 
 interface AnnotationShapesProps {
   annotations: Annotation[];
@@ -193,6 +194,12 @@ interface AnnotationShapesProps {
   onSelect: (id: string | null) => void;
   onUpdate: (id: string, updates: Partial<Annotation>) => void;
   scale: number;
+  // For redact annotations (needed for clipping/filtering)
+  screenshotSrc?: string;
+  imageOffsetX?: number;
+  imageOffsetY?: number;
+  imageWidth?: number;
+  imageHeight?: number;
 }
 
 interface ShapeProps {
@@ -1164,6 +1171,11 @@ export function AnnotationShapes({
   selectedId,
   onSelect,
   onUpdate,
+  screenshotSrc,
+  imageOffsetX,
+  imageOffsetY,
+  imageWidth,
+  imageHeight,
 }: AnnotationShapesProps) {
   return (
     <Group>
@@ -1191,6 +1203,22 @@ export function AnnotationShapes({
             return <NumberShape key={annotation.id} {...props} />;
           case 'spotlight':
             return <SpotlightShape key={annotation.id} {...props} />;
+          case 'redact':
+            // Redact needs screenshot context for clipping and filtering
+            if (screenshotSrc && imageOffsetX !== undefined && imageOffsetY !== undefined && imageWidth && imageHeight) {
+              return (
+                <RedactShape
+                  key={annotation.id}
+                  {...props}
+                  screenshotSrc={screenshotSrc}
+                  imageOffsetX={imageOffsetX}
+                  imageOffsetY={imageOffsetY}
+                  imageWidth={imageWidth}
+                  imageHeight={imageHeight}
+                />
+              );
+            }
+            return null;
           default:
             return null;
         }
