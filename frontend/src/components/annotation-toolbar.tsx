@@ -18,6 +18,7 @@ import {
   Redo2,
   Hash,
   ChevronDown,
+  QrCode,
 } from 'lucide-react';
 
 interface AnnotationToolbarProps {
@@ -43,6 +44,9 @@ interface AnnotationToolbarProps {
   canRedo: boolean;
   onUndo: () => void;
   onRedo: () => void;
+  onQRScan?: () => void;
+  isCapturing?: boolean;
+  hasScreenshot?: boolean;
 }
 
 const COLORS = [
@@ -207,6 +211,9 @@ export function AnnotationToolbar({
   canRedo,
   onUndo,
   onRedo,
+  onQRScan,
+  isCapturing,
+  hasScreenshot,
 }: AnnotationToolbarProps) {
   // Show text controls when text tool is active or a text annotation is selected
   const showTextControls = activeTool === 'text' || selectedAnnotation?.type === 'text';
@@ -430,6 +437,18 @@ export function AnnotationToolbar({
 
       {/* Spacer */}
       <div className="flex-1" />
+
+      {/* Scan QR */}
+      {onQRScan && (
+        <button
+          onClick={onQRScan}
+          disabled={isCapturing || !hasScreenshot}
+          className="p-2 rounded-lg transition-all duration-200 text-slate-400 hover:text-white hover:bg-white/10 disabled:text-slate-600 disabled:cursor-not-allowed opacity-50 disabled:opacity-30"
+          title="Scan QR code from current screenshot (Q)"
+        >
+          <QrCode className="w-5 h-5" />
+        </button>
+      )}
 
       {/* Undo/Redo Buttons */}
       <div className="flex items-center gap-1 px-2 border-l border-white/10">

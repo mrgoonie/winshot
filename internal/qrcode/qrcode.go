@@ -18,6 +18,9 @@ func DecodeQR(imageData []byte) (string, error) {
 
 	qrCodes, err := goqr.Recognize(img)
 	if err != nil {
+		if err.Error() == "no QR code in image" {
+			return "", nil
+		}
 		return "", err
 	}
 

@@ -1214,6 +1214,9 @@ function App() {
           case 's':
             handleToolChange('spotlight');
             break;
+          case 'q':
+            handleQRScan();
+            break;
           case 'c':
             handleCropToolSelect();
             break;
@@ -1621,7 +1624,6 @@ function App() {
         onOpenSettings={() => setShowSettings(true)}
         onImportImage={handleImportImage}
         onClipboardCapture={handleClipboardCapture}
-        onQRScan={handleQRScan}
       />
 
       {screenshot && !cropMode && (
@@ -1649,6 +1651,9 @@ function App() {
             canRedo={canRedo}
             onUndo={undoAnnotations}
             onRedo={redoAnnotations}
+            onQRScan={handleQRScan}
+            isCapturing={isCapturing}
+            hasScreenshot={!!screenshot}
           />
         </>
       )}

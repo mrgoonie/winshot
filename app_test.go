@@ -120,18 +120,18 @@ func TestMinimizeToTrayState(t *testing.T) {
 // TestOnBeforeCloseLogic verifies close-to-tray behavior without runtime
 func TestOnBeforeCloseLogic(t *testing.T) {
 	tests := []struct {
-		name         string
-		closeToTray  bool
+		name          string
+		closeToTray   bool
 		expectPrevent bool
 	}{
 		{
-			name:         "Close-to-tray enabled",
-			closeToTray:  true,
+			name:          "Close-to-tray enabled",
+			closeToTray:   true,
 			expectPrevent: true,
 		},
 		{
-			name:         "Close-to-tray disabled",
-			closeToTray:  false,
+			name:          "Close-to-tray disabled",
+			closeToTray:   false,
 			expectPrevent: false,
 		},
 	}
@@ -242,5 +242,37 @@ func TestCapturingStateTracking(t *testing.T) {
 	app.isCapturing = false
 	if app.isCapturing {
 		t.Error("isCapturing should be false after clearing")
+	}
+}
+
+// TestScanQRCode verifies the QR code scanning logic
+func TestScanQRCode(t *testing.T) {
+	app := NewApp()
+
+	// Case 1: Invalid base64
+	_, err := app.ScanQRCode("invalid-base64-content!")
+	if err == nil {
+		t.Error("ScanQRCode should fail with invalid base64")
+	}
+
+	// Case 2: Valid image but no QR code
+	// 1x1 red PNG
+	base64Img := "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
+	result, err := app.ScanQRCode(base64Img)
+	if err != nil {
+		t.Errorf("ScanQRCode failed with valid image: %v", err)
+	}
+	if result != "No QR code found" {
+		t.Errorf("Expected 'No QR code found', got %s", result)
+	}
+
+	// Case 3: With data:image prefix
+	base64WithPrefix := "data:image/png;base64," + base64Img
+	result, err = app.ScanQRCode(base64WithPrefix)
+	if err != nil {
+		t.Errorf("ScanQRCode failed with data prefix: %v", err)
+	}
+	if result != "No QR code found" {
+		t.Errorf("Expected 'No QR code found' with prefix, got %s", result)
 	}
 }

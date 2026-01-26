@@ -31,6 +31,7 @@ A lightweight, feature-rich screenshot application built with Wails (Go + React)
 - **24 gradient backgrounds** - Vibrant glassmorphism presets
 - **Real-time preview** - See changes instantly
 - **Settings persistence** - Editor preferences saved across sessions
+- **QR Code Scanning** - Detect and scan QR codes from screenshots
 
 ### Export Options
 - **Formats** - PNG (lossless) and JPEG (with quality slider)
@@ -110,6 +111,7 @@ A lightweight, feature-rich screenshot application built with Wails (Go + React)
 | `T` | Text annotation |
 | `N` | Number annotation |
 | `S` | Spotlight annotation |
+| `Q` | Scan QR code |
 | `C` | Crop tool |
 | `Ctrl+Z` | Undo annotation |
 | `Ctrl+Shift+Z` or `Ctrl+Y` | Redo annotation |

@@ -113,6 +113,7 @@ Value: Polished, branded screenshots
 - **Editor settings persistence** - Padding, corner radius, shadow, background
 - **24 Gradient backgrounds** - Vibrant Glassmorphism presets
 - **Real-time preview** - See changes instantly
+- **QR Code Scanning** - Detect and scan QR codes from current screenshot (v1.5.0)
 
 ### 4. Export Options (Implemented)
 - **Formats:** PNG (lossless), JPEG (with quality slider)
