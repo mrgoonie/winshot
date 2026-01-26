@@ -2,7 +2,7 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 import { Stage, Layer, Image as KonvaImage, Rect, Group } from 'react-konva';
 import useImage from 'use-image';
 import Konva from 'konva';
-import { CaptureResult, Annotation, AnnotationType, EditorTool, OutputRatio, CropArea, CropAspectRatio } from '../types';
+import { CaptureResult, Annotation, AnnotationType, EditorTool, OutputRatio, CropArea, CropAspectRatio, BorderType } from '../types';
 import { AnnotationShapes } from './annotation-shapes';
 import { SpotlightOverlay } from './spotlight-overlay';
 import { CropOverlay } from './crop-overlay';
@@ -17,13 +17,20 @@ interface EditorCanvasProps {
   outputRatio: OutputRatio;
   inset: number; // 0-50 percentage for screenshot scaling
   insetBackgroundColor?: string; // Background color revealed when inset > 0 (extracted from screenshot)
+  borderEnabled: boolean;
+  borderWeight: number;
+  borderColor: string;
+  borderOpacity: number;
+  borderType: BorderType;
   stageRef?: React.RefObject<Konva.Stage>;
   // Annotation props
   activeTool: EditorTool;
   annotations: Annotation[];
   selectedAnnotationId: string | null;
-  strokeColor: string;
+  strokeColor: string | null; // null = no stroke
+  fillColor: string | null; // null = transparent
   strokeWidth: number;
+  shapeCornerRadius: number; // For rectangle annotations
   fontSize: number;
   fontStyle: 'normal' | 'bold' | 'italic' | 'bold italic';
   nextNumber: number; // Next number for number annotations
@@ -176,12 +183,19 @@ export function EditorCanvas({
   outputRatio,
   inset,
   insetBackgroundColor,
+  borderEnabled,
+  borderWeight,
+  borderColor,
+  borderOpacity,
+  borderType,
   stageRef,
   activeTool,
   annotations,
   selectedAnnotationId,
   strokeColor,
+  fillColor,
   strokeWidth,
+  shapeCornerRadius,
   fontSize,
   fontStyle,
   nextNumber,
@@ -463,7 +477,7 @@ export function EditorCanvas({
         y,
         width: 200,
         height: 60,
-        stroke: strokeColor,
+        stroke: strokeColor || '#ef4444', // Text always needs a color
         strokeWidth,
         text: '', // Empty text triggers immediate edit mode
         fontSize,
@@ -485,7 +499,7 @@ export function EditorCanvas({
         y,
         width: 36, // Default circle diameter
         height: 36,
-        stroke: strokeColor,
+        stroke: strokeColor || '#ef4444', // Number always needs a color
         strokeWidth,
         number: nextNumber,
       };
@@ -507,12 +521,17 @@ export function EditorCanvas({
       y,
       width: 0,
       height: 0,
-      stroke: strokeColor,
+      // Apply stroke color (null/undefined = no stroke for shapes, default to red for lines/arrows)
+      stroke: strokeColor || ((annotationType === 'rectangle' || annotationType === 'ellipse') ? undefined : '#ef4444'),
       strokeWidth,
+      // Apply fill color for rectangle and ellipse shapes
+      fill: (annotationType === 'rectangle' || annotationType === 'ellipse') && fillColor ? fillColor : undefined,
+      // Apply corner radius for rectangles
+      cornerRadius: annotationType === 'rectangle' ? shapeCornerRadius : undefined,
       points: annotationType === 'arrow' || annotationType === 'line' ? [0, 0, 0, 0] : undefined,
     };
     setTempAnnotation(newAnnotation);
-  }, [activeTool, scale, strokeColor, strokeWidth, fontSize, fontStyle, nextNumber, generateId, onAnnotationSelect, onAnnotationAdd, isTransformerNode, spacePressed, handlePanStart]);
+  }, [activeTool, scale, strokeColor, fillColor, strokeWidth, shapeCornerRadius, fontSize, fontStyle, nextNumber, generateId, onAnnotationSelect, onAnnotationAdd, isTransformerNode, spacePressed, handlePanStart]);
 
   // Handle mouse move for drawing
   const handleMouseMove = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -780,6 +799,28 @@ export function EditorCanvas({
                 displayWidth={innerWidth}
                 displayHeight={innerHeight}
               />
+
+              {/* Border rect - rendered above image */}
+              {borderEnabled && borderWeight > 0 && (() => {
+                // Calculate border offset based on type: outside (-0.5), center (0), inside (+0.5)
+                const offsetMultiplier = borderType === 'outside' ? -1 : borderType === 'inside' ? 1 : 0;
+                const offset = (borderWeight / 2) * offsetMultiplier;
+                // Adjust corner radius to match image's curve when border is offset
+                const borderCornerRadius = Math.max(0, cornerRadius - offset);
+                return (
+                  <Rect
+                    x={offset}
+                    y={offset}
+                    width={innerWidth - offset * 2}
+                    height={innerHeight - offset * 2}
+                    stroke={borderColor}
+                    strokeWidth={borderWeight}
+                    cornerRadius={borderCornerRadius}
+                    opacity={borderOpacity / 100}
+                    listening={false}
+                  />
+                );
+              })()}
             </Group>
 
             {/* Annotations */}

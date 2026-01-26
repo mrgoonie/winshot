@@ -16,6 +16,7 @@ import (
 
 	"winshot/internal/config"
 	"winshot/internal/hotkeys"
+	"winshot/internal/library"
 	"winshot/internal/overlay"
 	"winshot/internal/qrcode"
 	"winshot/internal/screenshot"
@@ -28,6 +29,9 @@ import (
 	"golang.org/x/image/bmp"
 	"golang.org/x/image/webp"
 )
+
+// Version is set at build time via ldflags
+var Version = "dev"
 
 // App struct
 type App struct {
@@ -82,8 +86,8 @@ func (a *App) startup(ctx context.Context) {
 		println("Warning: failed to start overlay manager:", err.Error())
 	}
 
-	// Initialize system tray
-	a.trayIcon = tray.NewTrayIcon("WinShot - Screenshot Tool")
+	// Initialize system tray with version in tooltip
+	a.trayIcon = tray.NewTrayIcon(fmt.Sprintf("WinShot v%s", Version))
 	a.trayIcon.SetCallback(a.onTrayMenu)
 	a.trayIcon.SetOnShow(func() {
 		runtime.WindowShow(a.ctx)
@@ -157,6 +161,12 @@ func (a *App) onTrayMenu(menuID int) {
 		runtime.EventsEmit(a.ctx, "hotkey:region")
 	case tray.MenuWindow:
 		runtime.EventsEmit(a.ctx, "hotkey:window")
+	case tray.MenuLibrary:
+		// Show main window first so library modal has context
+		runtime.WindowShow(a.ctx)
+		a.isWindowHidden = false
+		// Emit event to open library window
+		runtime.EventsEmit(a.ctx, "tray:library")
 	case tray.MenuQuit:
 		// Quit the application - use goroutine to avoid blocking tray menu
 		go func() {
@@ -958,4 +968,112 @@ func (a *App) ClearGDriveCredentials() error {
 	a.credManager.Delete(upload.CredGDriveClientSecret)
 	a.credManager.Delete(upload.CredGDriveToken)
 	return nil
+}
+
+// ==================== Screenshot Library ====================
+
+// GetLibraryImages returns all screenshots from QuickSave folder
+func (a *App) GetLibraryImages() ([]library.LibraryImage, error) {
+	folder := a.config.QuickSave.Folder
+	if folder == "" {
+		// Fallback to default location
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get home directory: %w", err)
+		}
+		folder = filepath.Join(homeDir, "Pictures", "WinShot")
+	}
+
+	opts := library.DefaultScanOptions()
+	return library.ScanFolder(folder, opts)
+}
+
+// OpenInEditor loads an image file into the editor
+// Security: validates path is within QuickSave folder
+func (a *App) OpenInEditor(imagePath string) (*screenshot.CaptureResult, error) {
+	// Validate path is within QuickSave folder (prevent directory traversal)
+	folder := a.config.QuickSave.Folder
+	if folder == "" {
+		homeDir, _ := os.UserHomeDir()
+		folder = filepath.Join(homeDir, "Pictures", "WinShot")
+	}
+
+	absPath, err := filepath.Abs(imagePath)
+	if err != nil {
+		return nil, fmt.Errorf("invalid path: %w", err)
+	}
+
+	absFolder, err := filepath.Abs(folder)
+	if err != nil {
+		return nil, fmt.Errorf("invalid folder path: %w", err)
+	}
+
+	// Security check: ensure file is within QuickSave folder
+	if !strings.HasPrefix(absPath, absFolder+string(filepath.Separator)) {
+		return nil, fmt.Errorf("access denied: file outside QuickSave folder")
+	}
+
+	// Read file
+	data, err := os.ReadFile(absPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file: %w", err)
+	}
+
+	// Decode image
+	var img image.Image
+	ext := strings.ToLower(filepath.Ext(absPath))
+
+	switch ext {
+	case ".png":
+		img, err = png.Decode(bytes.NewReader(data))
+	case ".jpg", ".jpeg":
+		img, err = jpeg.Decode(bytes.NewReader(data))
+	default:
+		img, _, err = image.Decode(bytes.NewReader(data))
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode image: %w", err)
+	}
+
+	bounds := img.Bounds()
+
+	// Re-encode as PNG for consistent handling in frontend
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
+		return nil, fmt.Errorf("failed to encode image: %w", err)
+	}
+
+	return &screenshot.CaptureResult{
+		Width:  bounds.Dx(),
+		Height: bounds.Dy(),
+		Data:   base64.StdEncoding.EncodeToString(buf.Bytes()),
+	}, nil
+}
+
+// DeleteScreenshot removes a screenshot file from disk
+// Security: validates path is within QuickSave folder
+func (a *App) DeleteScreenshot(imagePath string) error {
+	// Validate path is within QuickSave folder (prevent directory traversal)
+	folder := a.config.QuickSave.Folder
+	if folder == "" {
+		homeDir, _ := os.UserHomeDir()
+		folder = filepath.Join(homeDir, "Pictures", "WinShot")
+	}
+
+	absPath, err := filepath.Abs(imagePath)
+	if err != nil {
+		return fmt.Errorf("invalid path: %w", err)
+	}
+
+	absFolder, err := filepath.Abs(folder)
+	if err != nil {
+		return fmt.Errorf("invalid folder path: %w", err)
+	}
+
+	// Security check: ensure file is within QuickSave folder
+	if !strings.HasPrefix(absPath, absFolder+string(filepath.Separator)) {
+		return fmt.Errorf("access denied: file outside QuickSave folder")
+	}
+
+	return os.Remove(absPath)
 }

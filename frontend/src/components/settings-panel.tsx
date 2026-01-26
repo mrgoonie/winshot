@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { OutputRatio } from '../types';
+import { OutputRatio, BorderType } from '../types';
 import { GetBackgroundImages, SaveBackgroundImages } from '../../wailsjs/go/main/App';
 import { X, ImagePlus, Eye, EyeOff } from 'lucide-react';
 
@@ -69,6 +69,12 @@ interface SettingsPanelProps {
   inset: number;
   autoBackground: boolean;
   extractedColor: string | null;
+  insetBackgroundColor: string | null;
+  borderEnabled: boolean;
+  borderWeight: number;
+  borderColor: string;
+  borderOpacity: number;
+  borderType: BorderType;
   onPaddingChange: (value: number) => void;
   onCornerRadiusChange: (value: number) => void;
   onShadowSizeChange: (value: number) => void;
@@ -77,6 +83,12 @@ interface SettingsPanelProps {
   onShowBackgroundChange: (value: boolean) => void;
   onInsetChange: (value: number) => void;
   onAutoBackgroundChange: (value: boolean) => void;
+  onInsetBackgroundColorChange: (value: string) => void;
+  onBorderEnabledChange: (value: boolean) => void;
+  onBorderWeightChange: (value: number) => void;
+  onBorderColorChange: (value: string) => void;
+  onBorderOpacityChange: (value: number) => void;
+  onBorderTypeChange: (value: BorderType) => void;
 }
 
 const GRADIENT_PRESETS = [
@@ -124,6 +136,12 @@ export function SettingsPanel({
   inset,
   autoBackground,
   extractedColor,
+  insetBackgroundColor,
+  borderEnabled,
+  borderWeight,
+  borderColor,
+  borderOpacity,
+  borderType,
   onPaddingChange,
   onCornerRadiusChange,
   onShadowSizeChange,
@@ -132,6 +150,12 @@ export function SettingsPanel({
   onShowBackgroundChange,
   onInsetChange,
   onAutoBackgroundChange,
+  onInsetBackgroundColorChange,
+  onBorderEnabledChange,
+  onBorderWeightChange,
+  onBorderColorChange,
+  onBorderOpacityChange,
+  onBorderTypeChange,
 }: SettingsPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
@@ -257,6 +281,27 @@ export function SettingsPanel({
         />
       </div>
 
+      {/* Inset Background Color - only shown when inset > 0 */}
+      {inset > 0 && showBackground && (
+        <div className="mb-6">
+          <label className="block text-sm text-slate-300 font-medium mb-2">
+            Inset Color
+          </label>
+          <div className="flex items-center gap-3">
+            <input
+              type="color"
+              value={insetBackgroundColor || extractedColor || '#1a1a2e'}
+              onChange={(e) => onInsetBackgroundColorChange(e.target.value)}
+              className="w-10 h-10 rounded-lg cursor-pointer bg-white/5 border border-white/10 hover:border-white/20 transition-colors"
+            />
+            <div className="text-xs">
+              <div className="text-slate-400">Background Color</div>
+              <div className="text-slate-300 font-mono">{insetBackgroundColor || extractedColor || '#1a1a2e'}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Corner Radius */}
       <div className={`mb-6 transition-opacity duration-200 ${!showBackground ? 'opacity-50 pointer-events-none' : ''}`}>
         <div className="flex justify-between items-center mb-2">
@@ -271,6 +316,93 @@ export function SettingsPanel({
           onChange={(e) => onCornerRadiusChange(Number(e.target.value))}
           className="w-full"
         />
+      </div>
+
+      {/* Border Section */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <label className="text-sm text-slate-300 font-medium">Border</label>
+          <button
+            onClick={() => onBorderEnabledChange(!borderEnabled)}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-200
+              ${borderEnabled
+                ? 'bg-violet-500/20 text-violet-300 hover:bg-violet-500/30'
+                : 'bg-slate-500/20 text-slate-400 hover:bg-slate-500/30'
+              }`}
+          >
+            {borderEnabled ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+            <span>{borderEnabled ? 'Enabled' : 'Disabled'}</span>
+          </button>
+        </div>
+
+        {/* Border controls - disabled when border is off */}
+        <div className={`space-y-4 transition-opacity duration-200 ${!borderEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
+          {/* Weight */}
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <label className="text-sm text-slate-300 font-medium">Weight</label>
+              <span className="text-xs text-amber-400 font-semibold bg-amber-500/10 px-2 py-0.5 rounded-full">{borderWeight}px</span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="50"
+              value={borderWeight}
+              onChange={(e) => onBorderWeightChange(Number(e.target.value))}
+              className="w-full"
+            />
+          </div>
+
+          {/* Color */}
+          <div className="flex items-center gap-3">
+            <input
+              type="color"
+              value={borderColor}
+              onChange={(e) => onBorderColorChange(e.target.value)}
+              className="w-10 h-10 rounded-lg cursor-pointer bg-white/5 border border-white/10 hover:border-white/20 transition-colors"
+            />
+            <div className="text-xs">
+              <div className="text-slate-400">Color</div>
+              <div className="text-slate-300 font-mono">{borderColor}</div>
+            </div>
+          </div>
+
+          {/* Opacity */}
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <label className="text-sm text-slate-300 font-medium">Opacity</label>
+              <span className="text-xs text-blue-400 font-semibold bg-blue-500/10 px-2 py-0.5 rounded-full">{borderOpacity}%</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={borderOpacity}
+              onChange={(e) => onBorderOpacityChange(Number(e.target.value))}
+              className="w-full"
+            />
+          </div>
+
+          {/* Type */}
+          <div>
+            <label className="block text-sm text-slate-300 font-medium mb-2">Type</label>
+            <div className="grid grid-cols-3 gap-1.5">
+              {(['outside', 'center', 'inside'] as BorderType[]).map((type) => (
+                <button
+                  key={type}
+                  onClick={() => onBorderTypeChange(type)}
+                  className={`px-2 py-1.5 text-xs rounded-lg transition-all duration-200 font-medium capitalize
+                    ${borderType === type
+                      ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/30'
+                      : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/5'
+                    }`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Shadow/Blur */}

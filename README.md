@@ -46,19 +46,11 @@ A lightweight, feature-rich screenshot application built with Wails (Go + React)
 
 ---
 
-## Screenshots
-
-*[Screenshots section - placeholder for visual examples]*
-
-Coming soon. See GitHub releases for previews.
-
----
-
 ## Installation
 
 ### Option 1: Portable Executable (Recommended)
 
-1. Download `winshot.exe` from [GitHub Releases](https://github.com/[owner]/winshot/releases)
+1. Download `winshot.exe` from [GitHub Releases](https://github.com/mrgoonie/winshot/releases)
 2. Run directly - no installation required
 3. Optionally pin to taskbar or create shortcut
 
@@ -68,7 +60,7 @@ Coming soon. See GitHub releases for previews.
 
 ### Option 2: Installer
 
-1. Download `winshot_installer.exe` from [GitHub Releases](https://github.com/[owner]/winshot/releases)
+1. Download `winshot_installer.exe` from [GitHub Releases](https://github.com/mrgoonie/winshot/releases)
 2. Run installer and follow prompts
 3. Shortcuts created in Start menu and optional desktop
 

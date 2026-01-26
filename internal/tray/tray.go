@@ -79,6 +79,7 @@ const (
 	MenuWindow     = 1004
 	MenuSettings   = 1005
 	MenuQuit       = 1006
+	MenuLibrary    = 1007 // Library window trigger (left-click on tray)
 )
 
 // NOTIFYICONDATAW structure
@@ -288,8 +289,14 @@ func trayWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
 	case WM_TRAYICON:
 		switch lParam {
+		case WM_LBUTTONUP:
+			// Single left-click - open library window
+			if globalTray != nil && globalTray.callback != nil {
+				globalTray.callback(MenuLibrary)
+			}
+			return 0
 		case WM_RBUTTONUP:
-			// Show context menu
+			// Right-click - show context menu
 			if globalTray != nil {
 				globalTray.showMenu()
 			}

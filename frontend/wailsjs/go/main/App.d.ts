@@ -4,6 +4,7 @@ import {screenshot} from '../models';
 import {updater} from '../models';
 import {config} from '../models';
 import {main} from '../models';
+import {library} from '../models';
 import {windows} from '../models';
 import {upload} from '../models';
 
@@ -20,6 +21,8 @@ export function CheckForUpdate(arg1:string):Promise<updater.UpdateInfo>;
 export function ClearGDriveCredentials():Promise<void>;
 
 export function ClearR2Credentials():Promise<void>;
+
+export function DeleteScreenshot(arg1:string):Promise<void>;
 
 export function DisconnectGDrive():Promise<void>;
 
@@ -45,6 +48,8 @@ export function GetGDriveStatus():Promise<main.GDriveStatus>;
 
 export function GetHotkeyConfig():Promise<main.HotkeyConfig>;
 
+export function GetLibraryImages():Promise<Array<library.LibraryImage>>;
+
 export function GetR2Config():Promise<config.R2Config>;
 
 export function GetSkippedVersion():Promise<string>;
@@ -66,6 +71,8 @@ export function IsR2Configured():Promise<boolean>;
 export function MinimizeToTray():Promise<void>;
 
 export function OpenImage():Promise<screenshot.CaptureResult>;
+
+export function OpenInEditor(arg1:string):Promise<screenshot.CaptureResult>;
 
 export function OpenURL(arg1:string):Promise<void>;
 

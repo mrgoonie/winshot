@@ -1,15 +1,115 @@
-# [1.5.0](https://github.com/mrgoonie/winshot/compare/v1.4.1...v1.5.0) (2026-01-11)
+# [1.6.0](https://github.com/mrgoonie/winshot/compare/v1.5.0...v1.6.0) (2026-01-25)
+
+
+### Bug Fixes
+
+* **editor:** align border corner radius with screenshot image ([6685da8](https://github.com/mrgoonie/winshot/commit/6685da8beb6b8fe33fcca781e86975f18b3acf8f))
+* **editor:** render border above screenshot image ([36b93e8](https://github.com/mrgoonie/winshot/commit/36b93e8fc10131c940653f238379a32b1e9b6e60))
+* **release:** add channel config and seed v1.6.0 version series ([8515aac](https://github.com/mrgoonie/winshot/commit/8515aac0a1f6fe9084be5530219f13670ed93e4a))
+* **shape:** persist border radius ([c1a4043](https://github.com/mrgoonie/winshot/commit/c1a4043ff4f725028ea4692e27190b725ef95a3e))
+* **startup:** sync registry on app start when config says enabled ([3088086](https://github.com/mrgoonie/winshot/commit/30880866efec98b87da05e21fbfb99bc1c67cf6a)), closes [#62](https://github.com/mrgoonie/winshot/issues/62)
+* **test:** make R2 credential test environment-aware ([719e5e0](https://github.com/mrgoonie/winshot/commit/719e5e04af52de114002b1f8e51229bdbbebca80))
+
+
+### Features
+
+* **app:** add fill color and corner radius controls to editor state ([df5cfe6](https://github.com/mrgoonie/winshot/commit/df5cfe60d055e738967cf39a4ed77921a79db0f7))
+* **canvas:** render fill colors and corner radius for shapes ([fa92942](https://github.com/mrgoonie/winshot/commit/fa929420c8bbb2e3ab9a3aeab12a3c5ef01916de))
+* **editor:** add screenshot border styling ([4280fe6](https://github.com/mrgoonie/winshot/commit/4280fe6661bdcce150c599afb0002977e5c2313d)), closes [#62](https://github.com/mrgoonie/winshot/issues/62)
+* force release v1.7.0-beta.1 ([bfc7d36](https://github.com/mrgoonie/winshot/commit/bfc7d36aff112974a1569518730684cb428e753c))
+* **library:** add screenshot history library with tray integration ([ed0ac37](https://github.com/mrgoonie/winshot/commit/ed0ac37d5dedaefa060c6c000ff1ed8b92c926ec)), closes [hi#quality](https://github.com/hi/issues/quality)
+* **shape:** persist rectangle corner radius setting ([787cfd4](https://github.com/mrgoonie/winshot/commit/787cfd432bb4bb3306c53682e809a4067a213fe8))
+* **tray:** show version in system tray tooltip ([434af43](https://github.com/mrgoonie/winshot/commit/434af4355f33c67ca042cd0c98cf1dedc41d333c))
+* **types:** add fill color and corner radius to annotation model ([3960593](https://github.com/mrgoonie/winshot/commit/396059311cf84eb8ed8df647b890f138562abdff))
+
+# [1.5.0-beta.3](https://github.com/mrgoonie/winshot/compare/v1.5.0-beta.2...v1.5.0-beta.3) (2026-01-25)
+
+
+### Bug Fixes
+
+* **editor:** align border corner radius with screenshot image ([6685da8](https://github.com/mrgoonie/winshot/commit/6685da8beb6b8fe33fcca781e86975f18b3acf8f))
+* **editor:** render border above screenshot image ([36b93e8](https://github.com/mrgoonie/winshot/commit/36b93e8fc10131c940653f238379a32b1e9b6e60))
+* **startup:** sync registry on app start when config says enabled ([3088086](https://github.com/mrgoonie/winshot/commit/30880866efec98b87da05e21fbfb99bc1c67cf6a)), closes [#62](https://github.com/mrgoonie/winshot/issues/62)
+* **test:** make R2 credential test environment-aware ([719e5e0](https://github.com/mrgoonie/winshot/commit/719e5e04af52de114002b1f8e51229bdbbebca80))
+
+
+### Features
+
+* **editor:** add screenshot border styling ([4280fe6](https://github.com/mrgoonie/winshot/commit/4280fe6661bdcce150c599afb0002977e5c2313d)), closes [#62](https://github.com/mrgoonie/winshot/issues/62)
+* **tray:** show version in system tray tooltip ([434af43](https://github.com/mrgoonie/winshot/commit/434af4355f33c67ca042cd0c98cf1dedc41d333c))
+
+# [1.5.0-beta.2](https://github.com/mrgoonie/winshot/compare/v1.5.0-beta.1...v1.5.0-beta.2) (2026-01-25)
+
+
+### Bug Fixes
+
+* **shape:** persist border radius ([c1a4043](https://github.com/mrgoonie/winshot/commit/c1a4043ff4f725028ea4692e27190b725ef95a3e))
+
+
+### Features
+
+* force release v1.7.0-beta.1 ([bfc7d36](https://github.com/mrgoonie/winshot/commit/bfc7d36aff112974a1569518730684cb428e753c))
+* **library:** add screenshot history library with tray integration ([ed0ac37](https://github.com/mrgoonie/winshot/commit/ed0ac37d5dedaefa060c6c000ff1ed8b92c926ec)), closes [hi#quality](https://github.com/hi/issues/quality)
+
+# [1.5.0-beta.2](https://github.com/mrgoonie/winshot/compare/v1.5.0-beta.1...v1.5.0-beta.2) (2026-01-25)
+
+
+### Bug Fixes
+
+* **shape:** persist border radius ([c1a4043](https://github.com/mrgoonie/winshot/commit/c1a4043ff4f725028ea4692e27190b725ef95a3e))
+
+
+### Features
+
+* force release v1.7.0-beta.1 ([bfc7d36](https://github.com/mrgoonie/winshot/commit/bfc7d36aff112974a1569518730684cb428e753c))
+* **library:** add screenshot history library with tray integration ([ed0ac37](https://github.com/mrgoonie/winshot/commit/ed0ac37d5dedaefa060c6c000ff1ed8b92c926ec)), closes [hi#quality](https://github.com/hi/issues/quality)
+
+# [1.5.0-beta.2](https://github.com/mrgoonie/winshot/compare/v1.5.0-beta.1...v1.5.0-beta.2) (2026-01-25)
+
+
+### Bug Fixes
+
+* **shape:** persist border radius ([c1a4043](https://github.com/mrgoonie/winshot/commit/c1a4043ff4f725028ea4692e27190b725ef95a3e))
+
+
+### Features
+
+* **library:** add screenshot history library with tray integration ([ed0ac37](https://github.com/mrgoonie/winshot/commit/ed0ac37d5dedaefa060c6c000ff1ed8b92c926ec)), closes [hi#quality](https://github.com/hi/issues/quality)
+
+# [1.6.0-beta.1](https://github.com/mrgoonie/winshot/compare/v1.5.0-beta.1...v1.6.0-beta.1) (2026-01-25)
+
+
+### Bug Fixes
+
+* **shape:** persist border radius ([c1a4043](https://github.com/mrgoonie/winshot/commit/c1a4043ff4f725028ea4692e27190b725ef95a3e))
+
+
+### Features
+
+* **library:** add screenshot history library with tray integration ([ed0ac37](https://github.com/mrgoonie/winshot/commit/ed0ac37d5dedaefa060c6c000ff1ed8b92c926ec)), closes [hi#quality](https://github.com/hi/issues/quality)
+
+# [1.6.0-beta.1](https://github.com/mrgoonie/winshot/compare/v1.5.0-beta.1...v1.6.0-beta.1) (2026-01-12)
+
+
+### Bug Fixes
+
+* **shape:** persist border radius ([c1a4043](https://github.com/mrgoonie/winshot/commit/c1a4043ff4f725028ea4692e27190b725ef95a3e))
+
+# [1.6.0-beta.1](https://github.com/mrgoonie/winshot/compare/v1.5.0...v1.6.0-beta.1) (2026-01-12)
 
 
 ### Bug Fixes
 
 * **app:** prevent duplicate instances and sync startup path on version update ([06774a6](https://github.com/mrgoonie/winshot/commit/06774a6a133a2edb69272488c784960b20ad2648))
 * **release:** add @semantic-release/npm plugin to update package.json version ([b30744e](https://github.com/mrgoonie/winshot/commit/b30744e0ad5664eb9000973e5cebf4842729f8c4))
+* **release:** add channel config and seed v1.6.0 version series ([8515aac](https://github.com/mrgoonie/winshot/commit/8515aac0a1f6fe9084be5530219f13670ed93e4a))
 
 
 ### Features
 
+* **app:** add fill color and corner radius controls to editor state ([df5cfe6](https://github.com/mrgoonie/winshot/commit/df5cfe60d055e738967cf39a4ed77921a79db0f7))
 * **app:** add Wails bindings for cloud upload (R2 + GDrive) ([fa87274](https://github.com/mrgoonie/winshot/commit/fa8727442618346088819d838866ce42a0c5eb9e))
+* **canvas:** render fill colors and corner radius for shapes ([fa92942](https://github.com/mrgoonie/winshot/commit/fa929420c8bbb2e3ab9a3aeab12a3c5ef01916de))
 * **cloud:** add Cloud settings tab with R2 and GDrive configuration ([69b799a](https://github.com/mrgoonie/winshot/commit/69b799ae13d1d4e1f9242ac93d08c6cf88c5977c))
 * **cloud:** add Cloud upload button with dropdown menu ([3e27b1c](https://github.com/mrgoonie/winshot/commit/3e27b1c220d2aa9ff8c4f492aa98870ee3973613))
 * **config:** add cloud provider config structs for R2 and GDrive ([502f648](https://github.com/mrgoonie/winshot/commit/502f64826994ed5020209c78ebeebadb5041cfe8))
@@ -21,9 +121,20 @@
 * **hotkey-input:** add preset buttons for PrintScreen assignment ([b1160e4](https://github.com/mrgoonie/winshot/commit/b1160e458bf9c6c5a094f73e65620fca3dc125ad)), closes [#67](https://github.com/mrgoonie/winshot/issues/67)
 * **r2:** add directory prefix support and fix dropdown menu ([7bade9c](https://github.com/mrgoonie/winshot/commit/7bade9ce746e1e589cd6619be62e5aa72a5cd5ec))
 * **settings:** enhance settings panel and go runtime ([bd201a2](https://github.com/mrgoonie/winshot/commit/bd201a2b431ddb6de9414059eb2eb6df1ccb36f4))
+* **shape:** persist rectangle corner radius setting ([787cfd4](https://github.com/mrgoonie/winshot/commit/787cfd432bb4bb3306c53682e809a4067a213fe8))
+* **types:** add fill color and corner radius to annotation model ([3960593](https://github.com/mrgoonie/winshot/commit/396059311cf84eb8ed8df647b890f138562abdff))
 * **upload:** add Cloudflare R2 uploader with retry logic ([558796c](https://github.com/mrgoonie/winshot/commit/558796ce9e45561605c67d21d9520bdec2d71617))
 * **upload:** add Google Drive uploader with OAuth2 flow ([e3ac924](https://github.com/mrgoonie/winshot/commit/e3ac924b510c73da0dd21eebf4dca44bfa6d0bbc))
 * **upload:** add Windows Credential Manager wrapper for cloud upload credentials ([8f2c55a](https://github.com/mrgoonie/winshot/commit/8f2c55a575db0d4976e1ceffee541c99ea6f6487))
+
+# [1.5.0-beta.3](https://github.com/mrgoonie/winshot/compare/v1.5.0-beta.2...v1.5.0-beta.3) (2026-01-12)
+
+
+### Features
+
+* **app:** add fill color and corner radius controls to editor state ([df5cfe6](https://github.com/mrgoonie/winshot/commit/df5cfe60d055e738967cf39a4ed77921a79db0f7))
+* **canvas:** render fill colors and corner radius for shapes ([fa92942](https://github.com/mrgoonie/winshot/commit/fa929420c8bbb2e3ab9a3aeab12a3c5ef01916de))
+* **types:** add fill color and corner radius to annotation model ([3960593](https://github.com/mrgoonie/winshot/commit/396059311cf84eb8ed8df647b890f138562abdff))
 
 # [1.5.0-beta.2](https://github.com/mrgoonie/winshot/compare/v1.5.0-beta.1...v1.5.0-beta.2) (2026-01-11)
 
@@ -68,175 +179,85 @@
 
 ### Bug Fixes
 
-* **release:** add @semantic-release/npm plugin to update package.json version ([#58](https://github.com/mrgoonie/winshot/issues/58)) ([69eedce](https://github.com/mrgoonie/winshot/commit/69eedce30d2154f22ace38a581e88db59605c722))
+* **release:** add @semantic-release/npm plugin to update package.json version ([b30744e](https://github.com/mrgoonie/winshot/commit/b30744e0ad5664eb9000973e5cebf4842729f8c4))
 
 # [1.4.0](https://github.com/mrgoonie/winshot/compare/v1.3.0...v1.4.0) (2025-12-24)
 
 
 ### Features
 
-* **annotation:** implement tapered arrow shapes with curve support ([363f471](https://github.com/mrgoonie/winshot/commit/363f471fb826e808801b712435bc1c32dae78429))
+* **crop:** add crop tool with snapshot-based workflow and aspect ratio support ([e56e9f7](https://github.com/mrgoonie/winshot/commit/e56e9f7aa5e3bb2cf5ad18e4bffb3a59cfb0a1d1))
+* **crop:** add crop UI controls with aspect ratio and crop action buttons ([b32f7a7](https://github.com/mrgoonie/winshot/commit/b32f7a74ab52cb9a1b9f18ae6799a8b46e1ac740))
+* **editor:** add crop state management with snapshot-based workflow ([c5f4e02](https://github.com/mrgoonie/winshot/commit/c5f4e026ded9bc85a39e82a52b90a4df69488a4e))
 
-# [1.3.0](https://github.com/mrgoonie/winshot/compare/v1.2.0...v1.3.0) (2025-12-24)
+# [1.3.0](https://github.com/mrgoonie/winshot/compare/v1.2.0...v1.3.0) (2025-12-21)
+
+
+### Features
+
+* **annotation:** add spotlight annotation tool with customizable dim opacity ([45b1d52](https://github.com/mrgoonie/winshot/commit/45b1d52af1a70ea96f0ac2b9c5f3e2cd87dc2f9e))
+
+# [1.2.0](https://github.com/mrgoonie/winshot/compare/v1.1.0...v1.2.0) (2025-12-15)
 
 
 ### Bug Fixes
 
-* **startup:** resolve minimize to tray and autostart issues ([#48](https://github.com/mrgoonie/winshot/issues/48)) ([1024bf0](https://github.com/mrgoonie/winshot/commit/1024bf07001111a7171cbaaf61f4be49876ec057))
+* **arrow:** enable bidirectional resizing from both endpoints ([d894c6f](https://github.com/mrgoonie/winshot/commit/d894c6fee3b1daeee35b18d9bd9a0e2e50063fd1))
+* **arrows:** fix curved arrow line style and midpoint handle rendering ([e85f98b](https://github.com/mrgoonie/winshot/commit/e85f98b92e1841b9a94f1074dd12c0b2049c76e9))
+* **editor:** fix export background settings for transparent and solid colors ([4cf0e3e](https://github.com/mrgoonie/winshot/commit/4cf0e3eedb45f5de7ad4b7d7e7d52c6eb94cd7c9))
+* **settings:** correct startup path updates on app version change ([fbbe9ea](https://github.com/mrgoonie/winshot/commit/fbbe9ea89c27ac94f4a86c7b09c7d0c994ba84e8))
 
 
 ### Features
 
-* **annotation:** implement tapered arrow shapes with curve support ([363f471](https://github.com/mrgoonie/winshot/commit/363f471fb826e808801b712435bc1c32dae78429))
-* **clipboard:** add Ctrl+V paste and JPEG quality export ([#48](https://github.com/mrgoonie/winshot/issues/48)) ([fe09cce](https://github.com/mrgoonie/winshot/commit/fe09cce30ca37f92134e193ce3b235624e405558))
-* **clipboard:** add multi-format paste and drag-drop image import ([c9700b6](https://github.com/mrgoonie/winshot/commit/c9700b6dd155c2eaf91f3f43aa576c0beb1cc384))
-* **notifications:** add capture notifications and copy path button ([#48](https://github.com/mrgoonie/winshot/issues/48)) ([8b3e94a](https://github.com/mrgoonie/winshot/commit/8b3e94a4eb9d88909c612f9708cfcc28f464065c))
+* **annotation:** add number annotation tool with auto-increment support ([4ff9f54](https://github.com/mrgoonie/winshot/commit/4ff9f548cb5c99ac8acb3f3f3a0a0f2bf6064d39))
+* **arrow:** add curved arrow style with control point handle ([ed4d9ce](https://github.com/mrgoonie/winshot/commit/ed4d9ce7fc5f85bc7df5da8c0edac4ab1ab5f0e9))
+* **editor:** add output ratio dropdown for controlling export canvas dimensions ([f1b49ce](https://github.com/mrgoonie/winshot/commit/f1b49ceef0dc9b62b8d3a3faa40ab1e8b2f5be5e))
+* **export:** add corner radius option and preview for screenshot exports ([0c2f92d](https://github.com/mrgoonie/winshot/commit/0c2f92d2a60db77bfc01b55e91f5eaae00e9f3eb))
 
-# [1.2.0-beta.7](https://github.com/mrgoonie/winshot/compare/v1.2.0-beta.6...v1.2.0-beta.7) (2025-12-24)
+# [1.1.0](https://github.com/mrgoonie/winshot/compare/v1.0.0...v1.1.0) (2025-12-03)
 
 
 ### Bug Fixes
 
-* **startup:** resolve minimize to tray and autostart issues ([#48](https://github.com/mrgoonie/winshot/issues/48)) ([1024bf0](https://github.com/mrgoonie/winshot/commit/1024bf07001111a7171cbaaf61f4be49876ec057))
+* **build:** fix NSIS installer configuration for proper asset paths ([0bc76bd](https://github.com/mrgoonie/winshot/commit/0bc76bd4e55560a2aa6b9e32f0ef95dc5e3a3963))
 
 
 ### Features
 
-* **clipboard:** add Ctrl+V paste and JPEG quality export ([#48](https://github.com/mrgoonie/winshot/issues/48)) ([fe09cce](https://github.com/mrgoonie/winshot/commit/fe09cce30ca37f92134e193ce3b235624e405558))
-* **clipboard:** add multi-format paste and drag-drop image import ([c9700b6](https://github.com/mrgoonie/winshot/commit/c9700b6dd155c2eaf91f3f43aa576c0beb1cc384))
-* **notifications:** add capture notifications and copy path button ([#48](https://github.com/mrgoonie/winshot/issues/48)) ([8b3e94a](https://github.com/mrgoonie/winshot/commit/8b3e94a4eb9d88909c612f9708cfcc28f464065c))
+* **ci:** add automated beta and production release workflows ([2cdd9e7](https://github.com/mrgoonie/winshot/commit/2cdd9e7db01a3a3f0a9bfe3ee1dbb2dede4b12f8))
 
-# [1.2.0](https://github.com/mrgoonie/winshot/compare/v1.1.0...v1.2.0) (2025-12-14)
+# 1.0.0 (2025-12-03)
 
 
 ### Bug Fixes
 
-* **app:** restore window position after region capture ([38e1191](https://github.com/mrgoonie/winshot/commit/38e119109376f84e451322ba84a1d8edd0583d34))
-* **ci:** detect merge commits as releasable for PR-based workflow ([c22be25](https://github.com/mrgoonie/winshot/commit/c22be252d78c5f0b33f9965bac331bf6c1d61861))
-* **ci:** exclude merge commits from release check ([32e0540](https://github.com/mrgoonie/winshot/commit/32e054025de5a8f95d683e7e5069637eb8a22670))
-* **hotkeys:** resolve goroutine thread affinity causing hotkey registration failure ([1d683cc](https://github.com/mrgoonie/winshot/commit/1d683ccaffa9043b235fdaf8e3e88bd89ca295e0))
-* **output:** include padding in auto mode dimensions calculation ([8f07694](https://github.com/mrgoonie/winshot/commit/8f07694f9e74f6d6877781b60220c47b4bbdd5ac))
-* **quick-save:** use configured folder instead of hardcoding save directory ([d868093](https://github.com/mrgoonie/winshot/commit/d868093ae7173e8647ccaba8c38751e50fca6879))
-* resolve 3 bugs from issue [#21](https://github.com/mrgoonie/winshot/issues/21) ([9652b5b](https://github.com/mrgoonie/winshot/commit/9652b5b12697b7d2cee74622d68acdcf5eafb62d))
-* resolve merge conflicts from Vivusk/winshot PR [#36](https://github.com/mrgoonie/winshot/issues/36) ([2515593](https://github.com/mrgoonie/winshot/commit/25155933a02dc995eb9d84f11665acbefacfe878))
-* **settings:** migrate background images from localStorage to backend config ([bfa2744](https://github.com/mrgoonie/winshot/commit/bfa27442f2ac80791a45443458064864692bdab0))
-* **startup:** minimize app window on startup when configured ([3f5f4d1](https://github.com/mrgoonie/winshot/commit/3f5f4d1a7b87e12209e18ba5a0f125bfa0511290)), closes [#31](https://github.com/mrgoonie/winshot/issues/31)
-* **tray:** resolve quit button not working in tray context menu ([a459568](https://github.com/mrgoonie/winshot/commit/a45956844472465b18c8893d6c9ac3f6b8e4da03))
+* **editor:** correct window positioning after capture completes ([3cc4fff](https://github.com/mrgoonie/winshot/commit/3cc4fff5e87f60ca2fb9eeed1b68aae99d61e920))
+* **editor:** fix annotation drawing and selection state management ([aef394f](https://github.com/mrgoonie/winshot/commit/aef394f0e18eb3fb00b0f47ab1ca0d5af7cf2e32))
+* **editor:** fix Copy to Clipboard functionality with proper canvas export ([fbcc7f9](https://github.com/mrgoonie/winshot/commit/fbcc7f9b3cd4d5f81ece2a97e6b40807b1003af6))
+* **export:** deselect annotations before export to avoid selection UI in output ([e3b64a0](https://github.com/mrgoonie/winshot/commit/e3b64a0b0e19f399d64a27b10d8f36ff7eff400b))
+* **hotkeys:** resolve race condition between hotkey registration and setting load ([8d0a58b](https://github.com/mrgoonie/winshot/commit/8d0a58b9e8f7e4b0f53fb65d51e4ae10fd90cf77))
 
 
 ### Features
 
-* add background visibility toggle and improve overlay focus ([39fadf3](https://github.com/mrgoonie/winshot/commit/39fadf3e59c211adc0d56f604266282302d8a80e))
-* **annotations:** implement undo/redo with keyboard shortcuts ([94ed01c](https://github.com/mrgoonie/winshot/commit/94ed01c486628da51398e587edb1fb497f669bf5))
-* **capture:** add clipboard image paste support ([03cf0fd](https://github.com/mrgoonie/winshot/commit/03cf0fd0698e5f199965fa3c923eec469a2c341e))
-* **capture:** add multi-monitor region capture support ([0f1a8d1](https://github.com/mrgoonie/winshot/commit/0f1a8d123162d701baa35f4b121b505fd069a5d3))
-* **clipboard:** auto-copy styled canvas instead of raw screenshot ([20ad92b](https://github.com/mrgoonie/winshot/commit/20ad92b2ef56359aff04cdd299f49146d4820474))
-* **editor:** copy rendered canvas with applied settings to clipboard ([dbe91dd](https://github.com/mrgoonie/winshot/commit/dbe91dd824be72d14812bde88b06d7c90d305f1e))
-* **overlay:** implement native Win32 region selection overlay ([22da2ac](https://github.com/mrgoonie/winshot/commit/22da2acdc2ba59b15fbc70098d97729336ef2b0f))
-* **update:** implement auto-update feature for GitHub Releases ([96194ef](https://github.com/mrgoonie/winshot/commit/96194ef13e13b909f3fb16cf0b025a56005041c0))
-
-# [1.2.0-beta.6](https://github.com/mrgoonie/winshot/compare/v1.2.0-beta.5...v1.2.0-beta.6) (2025-12-14)
-
-
-### Bug Fixes
-
-* **app:** restore window position after region capture ([38e1191](https://github.com/mrgoonie/winshot/commit/38e119109376f84e451322ba84a1d8edd0583d34))
-* **ci:** detect merge commits as releasable for PR-based workflow ([c22be25](https://github.com/mrgoonie/winshot/commit/c22be252d78c5f0b33f9965bac331bf6c1d61861))
-* **ci:** exclude merge commits from release check ([32e0540](https://github.com/mrgoonie/winshot/commit/32e054025de5a8f95d683e7e5069637eb8a22670))
-
-
-### Features
-
-* **update:** implement auto-update feature for GitHub Releases ([96194ef](https://github.com/mrgoonie/winshot/commit/96194ef13e13b909f3fb16cf0b025a56005041c0))
-
-# [1.2.0-beta.5](https://github.com/mrgoonie/winshot/compare/v1.2.0-beta.4...v1.2.0-beta.5) (2025-12-13)
-
-
-### Bug Fixes
-
-* **hotkeys:** resolve goroutine thread affinity causing hotkey registration failure ([1d683cc](https://github.com/mrgoonie/winshot/commit/1d683ccaffa9043b235fdaf8e3e88bd89ca295e0))
-* **output:** include padding in auto mode dimensions calculation ([8f07694](https://github.com/mrgoonie/winshot/commit/8f07694f9e74f6d6877781b60220c47b4bbdd5ac))
-* **quick-save:** use configured folder instead of hardcoding save directory ([d868093](https://github.com/mrgoonie/winshot/commit/d868093ae7173e8647ccaba8c38751e50fca6879))
-* resolve 3 bugs from issue [#21](https://github.com/mrgoonie/winshot/issues/21) ([9652b5b](https://github.com/mrgoonie/winshot/commit/9652b5b12697b7d2cee74622d68acdcf5eafb62d))
-* **settings:** migrate background images from localStorage to backend config ([bfa2744](https://github.com/mrgoonie/winshot/commit/bfa27442f2ac80791a45443458064864692bdab0))
-* **startup:** minimize app window on startup when configured ([3f5f4d1](https://github.com/mrgoonie/winshot/commit/3f5f4d1a7b87e12209e18ba5a0f125bfa0511290)), closes [#31](https://github.com/mrgoonie/winshot/issues/31)
-* **tray:** resolve quit button not working in tray context menu ([a459568](https://github.com/mrgoonie/winshot/commit/a45956844472465b18c8893d6c9ac3f6b8e4da03))
-
-
-### Features
-
-* add background visibility toggle and improve overlay focus ([39fadf3](https://github.com/mrgoonie/winshot/commit/39fadf3e59c211adc0d56f604266282302d8a80e))
-* **annotations:** implement undo/redo with keyboard shortcuts ([94ed01c](https://github.com/mrgoonie/winshot/commit/94ed01c486628da51398e587edb1fb497f669bf5))
-* **capture:** add clipboard image paste support ([03cf0fd](https://github.com/mrgoonie/winshot/commit/03cf0fd0698e5f199965fa3c923eec469a2c341e))
-* **capture:** add multi-monitor region capture support ([0f1a8d1](https://github.com/mrgoonie/winshot/commit/0f1a8d123162d701baa35f4b121b505fd069a5d3))
-* **clipboard:** auto-copy styled canvas instead of raw screenshot ([20ad92b](https://github.com/mrgoonie/winshot/commit/20ad92b2ef56359aff04cdd299f49146d4820474))
-* **editor:** copy rendered canvas with applied settings to clipboard ([dbe91dd](https://github.com/mrgoonie/winshot/commit/dbe91dd824be72d14812bde88b06d7c90d305f1e))
-* **overlay:** implement native Win32 region selection overlay ([22da2ac](https://github.com/mrgoonie/winshot/commit/22da2acdc2ba59b15fbc70098d97729336ef2b0f))
-
-# [1.2.0-beta.4](https://github.com/mrgoonie/winshot/compare/v1.2.0-beta.3...v1.2.0-beta.4) (2025-12-12)
-
-
-### Bug Fixes
-
-* resolve merge conflicts from Vivusk/winshot PR [#36](https://github.com/mrgoonie/winshot/issues/36) ([2515593](https://github.com/mrgoonie/winshot/commit/25155933a02dc995eb9d84f11665acbefacfe878))
-
-# [1.2.0-beta.3](https://github.com/mrgoonie/winshot/compare/v1.2.0-beta.2...v1.2.0-beta.3) (2025-12-12)
-
-
-### Features
-
-* add background visibility toggle and improve overlay focus ([8fc91e2](https://github.com/mrgoonie/winshot/commit/8fc91e2ac1d55a3fba3f29b34aed1f2e23a5a9a6))
-
-# [1.2.0-beta.2](https://github.com/mrgoonie/winshot/compare/v1.2.0-beta.1...v1.2.0-beta.2) (2025-12-12)
-
-
-### Features
-
-* **annotations:** implement undo/redo with keyboard shortcuts ([d5d6a9e](https://github.com/mrgoonie/winshot/commit/d5d6a9e1b9eb63e61a0d1f81de1f61a5cce9a3d7))
-
-# [1.2.0-beta.1](https://github.com/mrgoonie/winshot/compare/v1.1.0...v1.2.0-beta.1) (2025-12-12)
-
-
-### Features
-
-* **capture:** add clipboard image paste support ([a00bc3b](https://github.com/mrgoonie/winshot/commit/a00bc3beeab32d900b393e50b77e8acc1bc9a2b5))
-* **overlay:** implement native Win32 region selection overlay ([caf8dca](https://github.com/mrgoonie/winshot/commit/caf8dcaac37f38b8ad94f63af36cdd8e5ddbd393))
-
-# [1.1.0](https://github.com/mrgoonie/winshot/compare/v1.0.2...v1.1.0) (2025-12-11)
-
-
-### Bug Fixes
-
-* ensure consistent hotkey display in both config and app ([93f3a0f](https://github.com/mrgoonie/winshot/commit/93f3a0f4b386dadb72e2e88b21f64f14f9f78f3e))
-* handle empty screenshot gracefully with user notification ([7aed78f](https://github.com/mrgoonie/winshot/commit/7aed78fd0de53d95c6af21492df1bd5ed58e00b7))
-* resolve settings modal hotkey editing issues ([9eabb5c](https://github.com/mrgoonie/winshot/commit/9eabb5c7ef8a0d42a4c63bde4a3f0065e8d9e65d))
-
-
-### Features
-
-* add version display and update checking functionality ([b474dd2](https://github.com/mrgoonie/winshot/commit/b474dd283e8d5f394bdcb3dc4f930b1e51b1b29b))
-
-## [1.0.2](https://github.com/mrgoonie/winshot/compare/v1.0.1...v1.0.2) (2025-12-10)
-
-
-### Bug Fixes
-
-* bind configurable hotkeys to fullscreen, region, and window capture ([39a98c0](https://github.com/mrgoonie/winshot/commit/39a98c073ad22108c6ea3d51f7a51f34e0ff19ec))
-
-## [1.0.1](https://github.com/mrgoonie/winshot/compare/v1.0.0...v1.0.1) (2025-12-09)
-
-
-### Bug Fixes
-
-* resolve Wails v3 dev server issues with frontend DevServer configuration ([22e6cb0](https://github.com/mrgoonie/winshot/commit/22e6cb0f2c50b87e83a1fca94f5f0efb5e84a520))
-
-# 1.0.0 (2025-12-09)
-
-
-### Features
-
-* **capture:** add fullscreen, region, and window capture functionality ([a4f3c8f](https://github.com/mrgoonie/winshot/commit/a4f3c8f7e8c9c2b1b6e1e4f7a9c2d5e8f0b3c6d9))
-* **editor:** add image styling with padding, corners, shadow, and background ([d5e6f7a](https://github.com/mrgoonie/winshot/commit/d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4))
-* **export:** add PNG/JPEG export with clipboard support ([e6f7a8b](https://github.com/mrgoonie/winshot/commit/e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5))
-* **hotkeys:** add global hotkey configuration ([f7a8b9c](https://github.com/mrgoonie/winshot/commit/f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6))
-* **tray:** add system tray support with minimize to tray ([a8b9c0d](https://github.com/mrgoonie/winshot/commit/a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7))
+* **annotation:** add arrow annotation tool with arrowhead rendering ([0ec66b3](https://github.com/mrgoonie/winshot/commit/0ec66b3f399def7dc3af4cab42b0ad94f8f84dfe))
+* **annotation:** add draggable annotation toolbar with tool selection ([1f5f1ec](https://github.com/mrgoonie/winshot/commit/1f5f1ec7ac89f8a54e90dc3c3e3e42e47ea94660))
+* **annotation:** add line annotation tool for drawing simple lines ([8e58d91](https://github.com/mrgoonie/winshot/commit/8e58d9186df3d80aff65a92e7f1ef23cbbe2fa0d))
+* **annotation:** add rectangle and ellipse annotation tools ([aba3b15](https://github.com/mrgoonie/winshot/commit/aba3b155b26f29de39fe24e0da12ccc83ba6e3b3))
+* **annotation:** add text annotation tool with editable text labels ([17f91fc](https://github.com/mrgoonie/winshot/commit/17f91fce04b75f2e26dfab4fb2cb09e0b15dc8f9))
+* **annotations:** add transform handles for annotation resizing ([0def6df](https://github.com/mrgoonie/winshot/commit/0def6df1e3be88f6ab65409b731629e12e35af3b))
+* **capture:** add region selection capture with transparent overlay ([9b39a15](https://github.com/mrgoonie/winshot/commit/9b39a158f2bc419e32f66dd04e5dc2cfee19a1c7))
+* **capture:** add window selection capture with thumbnail previews ([5ac9b96](https://github.com/mrgoonie/winshot/commit/5ac9b96aa0e5010a4b000f5b76d25113efa1fb3b))
+* **capture:** implement fullscreen capture with multi-monitor support ([8c3cf44](https://github.com/mrgoonie/winshot/commit/8c3cf446b4e3f8c92b3d3d10ffb4a0a96a4ef2cf))
+* **config:** add hotkey and startup configuration management ([9dbbd9c](https://github.com/mrgoonie/winshot/commit/9dbbd9cd80d2acb4b8e6df99c6f4f78ff0e6a7f1))
+* **config:** add quick save and export settings configuration ([98a8ddb](https://github.com/mrgoonie/winshot/commit/98a8ddb90bc8a40fd74f55e8b1009b5fc2d97f11))
+* **editor:** add canvas editor with react-konva for screenshot display ([4b06dc3](https://github.com/mrgoonie/winshot/commit/4b06dc384ee32f30c1ff2f8e28b7f3cd2fb24eed))
+* **editor:** add save file dialog for exporting screenshots ([d58d361](https://github.com/mrgoonie/winshot/commit/d58d361b0a4f0110afce3a4c59f78f45a731ae6f))
+* **export:** add background customization for saved screenshots ([c05b2ba](https://github.com/mrgoonie/winshot/commit/c05b2baec29f5d0ca5f4e9e68d2cc93a89b0b6aa))
+* **hotkeys:** add global hotkey registration with runtime configurability ([1a86f36](https://github.com/mrgoonie/winshot/commit/1a86f36d6f95e4fde64ac0b369f3a97bb6e2e79b))
+* **settings:** add hotkey customization with input recording ([7f33b71](https://github.com/mrgoonie/winshot/commit/7f33b711a0ec2ee94f2b59f7dc0db8fc3ffaf1fd))
+* **tray:** add system tray integration with capture menu options ([7b63f6b](https://github.com/mrgoonie/winshot/commit/7b63f6bb8d1c2f3da4f19b0b98912f50aa464a1d))
+* **ui:** add dark-themed bottom bar with capture mode buttons ([76f48b9](https://github.com/mrgoonie/winshot/commit/76f48b969f39cb2e91d5047b9ac0e431b14b98ea))
+* **ui:** add settings panel with tabbed interface for configuration ([7cd1f70](https://github.com/mrgoonie/winshot/commit/7cd1f70b6b2bcb3b3f2a2dbb06c2e6a27f3ac1f7))
+* initial project setup with Wails and React frontend ([5b73ae9](https://github.com/mrgoonie/winshot/commit/5b73ae94ff38cd3ea2a6f26f27e0ddd0e7aa64b4))

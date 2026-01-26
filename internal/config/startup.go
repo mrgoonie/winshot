@@ -80,15 +80,14 @@ func enableStartup() error {
 }
 
 // SyncStartupPath updates the registry startup path to match current executable.
-// This fixes the duplicate app issue when user downloads new version to different location.
-// Call this on app startup when startup is enabled.
+// This fixes two issues:
+// 1. Duplicate app issue when user downloads new version to different location
+// 2. Missing registry entry when config says enabled but registry was never written
+// Call this on app startup when startup is enabled in config.
 func SyncStartupPath() error {
-	enabled, err := IsStartupEnabled()
-	if err != nil || !enabled {
-		return nil // No sync needed if startup not enabled
-	}
-
-	// Re-enable startup to update path to current executable
+	// Always enable startup to ensure registry matches config.
+	// If registry already has correct path, this is a no-op.
+	// If registry is missing or has wrong path, this fixes it.
 	return enableStartup()
 }
 
