@@ -14,18 +14,20 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wailsapp/wails/v2/pkg/runtime"
-	"golang.org/x/image/bmp"
-	"golang.org/x/image/webp"
 	"winshot/internal/config"
 	"winshot/internal/hotkeys"
 	"winshot/internal/library"
 	"winshot/internal/overlay"
+	"winshot/internal/qrcode"
 	"winshot/internal/screenshot"
 	"winshot/internal/tray"
 	"winshot/internal/updater"
 	"winshot/internal/upload"
 	winEnum "winshot/internal/windows"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"golang.org/x/image/bmp"
+	"golang.org/x/image/webp"
 )
 
 // Version is set at build time via ldflags
@@ -40,7 +42,7 @@ type App struct {
 	config           *config.Config
 	lastWidth        int
 	lastHeight       int
-	preCaptureWidth  int  // Window size before capture (protected from resize events)
+	preCaptureWidth  int // Window size before capture (protected from resize events)
 	preCaptureHeight int
 	preCaptureX      int  // Window X position before capture
 	preCaptureY      int  // Window Y position before capture
@@ -211,8 +213,8 @@ func (a *App) OnBeforeClose(ctx context.Context) bool {
 
 // VirtualScreenBounds represents the combined bounds of all monitors
 type VirtualScreenBounds struct {
-	X      int `json:"x"`      // Can be negative (monitor left of primary)
-	Y      int `json:"y"`      // Can be negative (monitor above primary)
+	X      int `json:"x"` // Can be negative (monitor left of primary)
+	Y      int `json:"y"` // Can be negative (monitor above primary)
 	Width  int `json:"width"`
 	Height int `json:"height"`
 }
@@ -751,6 +753,30 @@ func (a *App) OpenImage() (*screenshot.CaptureResult, error) {
 // GetClipboardImage reads an image from the Windows clipboard
 func (a *App) GetClipboardImage() (*screenshot.CaptureResult, error) {
 	return screenshot.GetClipboardImage()
+}
+
+// ScanQRCode decodes a QR code from a base64 encoded image
+func (a *App) ScanQRCode(base64Img string) (string, error) {
+	// Strip the data:image/...;base64, prefix if present
+	if idx := strings.Index(base64Img, ","); idx != -1 {
+		base64Img = base64Img[idx+1:]
+	}
+
+	data, err := base64.StdEncoding.DecodeString(base64Img)
+	if err != nil {
+		return "", fmt.Errorf("failed to decode base64 image: %v", err)
+	}
+
+	result, err := qrcode.DecodeQR(data)
+	if err != nil {
+		return "", fmt.Errorf("failed to scan QR code: %v", err)
+	}
+
+	if result == "" {
+		return "No QR code found", nil
+	}
+
+	return result, nil
 }
 
 // CheckForUpdate checks GitHub for a newer version

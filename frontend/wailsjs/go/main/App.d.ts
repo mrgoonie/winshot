@@ -96,6 +96,8 @@ export function SaveR2Config(arg1:string,arg2:string,arg3:string,arg4:string):Pr
 
 export function SaveR2Credentials(arg1:string,arg2:string):Promise<void>;
 
+export function ScanQRCode(arg1:string):Promise<string>;
+
 export function SelectFolder():Promise<string>;
 
 export function SetSkippedVersion(arg1:string):Promise<void>;

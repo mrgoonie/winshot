@@ -13,6 +13,7 @@ import { StatusBar } from './components/status-bar';
 import { AnnotationToolbar } from './components/annotation-toolbar';
 import { ExportToolbar } from './components/export-toolbar';
 import { CropToolbar } from './components/crop-toolbar';
+import { QRResultModal } from './components/qr-result-modal';
 import { CaptureResult, CaptureMode, WindowInfo, Annotation, EditorTool, OutputRatio, CropArea, CropAspectRatio, CropState, BorderType, LibraryImage } from './types';
 import {
   CaptureFullscreen,
@@ -34,6 +35,7 @@ import {
   GetGDriveStatus,
   UploadToR2,
   UploadToGDrive,
+  ScanQRCode,
   OpenInEditor,
 } from '../wailsjs/go/main/App';
 import { updater } from '../wailsjs/go/models';
@@ -231,6 +233,11 @@ function App() {
   const [isGDriveConnected, setIsGDriveConnected] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // QR Scan state
+  const [qrResult, setQrResult] = useState<string | null>(null);
+  const [isQrScanning, setIsQrScanning] = useState(false);
+  const [showQrModal, setShowQrModal] = useState(false);
 
   // Load editor settings from Go config on startup
   useEffect(() => {
@@ -628,6 +635,38 @@ function App() {
       setTimeout(() => setStatusMessage(undefined), 3000);
     }
   }, [resetAnnotations]);
+
+  const handleQRScan = useCallback(async () => {
+    if (!screenshot || !stageRef.current) return;
+
+    setIsQrScanning(true);
+    setStatusMessage('Scanning for QR code...');
+
+    try {
+      // Get image from canvas to include any modifications/annotations if needed
+      // but usually we want to scan the original or the current state
+      const dataUrl = stageRef.current.toDataURL({
+        pixelRatio: 2, // Higher quality for better decoding
+      });
+
+      const result = await ScanQRCode(dataUrl);
+      
+      if (result === 'No QR code found') {
+        setStatusMessage('No QR code found in image');
+        setTimeout(() => setStatusMessage(undefined), 3000);
+      } else {
+        setQrResult(result);
+        setShowQrModal(true);
+        setStatusMessage(undefined);
+      }
+    } catch (error) {
+      console.error('QR Scan failed:', error);
+      setStatusMessage('Failed to scan QR code');
+      setTimeout(() => setStatusMessage(undefined), 3000);
+    } finally {
+      setIsQrScanning(false);
+    }
+  }, [screenshot]);
 
   // Drag & drop state
   const [isDragging, setIsDragging] = useState(false);
@@ -1175,6 +1214,9 @@ function App() {
           case 's':
             handleToolChange('spotlight');
             break;
+          case 'q':
+            handleQRScan();
+            break;
           case 'c':
             handleCropToolSelect();
             break;
@@ -1609,6 +1651,9 @@ function App() {
             canRedo={canRedo}
             onUndo={undoAnnotations}
             onRedo={redoAnnotations}
+            onQRScan={handleQRScan}
+            isCapturing={isCapturing}
+            hasScreenshot={!!screenshot}
           />
         </>
       )}
@@ -1744,6 +1789,12 @@ function App() {
         isOpen={showUpdateModal}
         onClose={() => setShowUpdateModal(false)}
         updateInfo={updateInfo}
+      />
+
+      <QRResultModal
+        isOpen={showQrModal}
+        onClose={() => setShowQrModal(false)}
+        result={qrResult}
       />
 
       {/* Toast notification for cloud upload */}

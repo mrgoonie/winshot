@@ -1,3 +1,27 @@
+# [1.6.0](https://github.com/mrgoonie/winshot/compare/v1.5.0...v1.6.0) (2026-01-25)
+
+
+### Bug Fixes
+
+* **editor:** align border corner radius with screenshot image ([6685da8](https://github.com/mrgoonie/winshot/commit/6685da8beb6b8fe33fcca781e86975f18b3acf8f))
+* **editor:** render border above screenshot image ([36b93e8](https://github.com/mrgoonie/winshot/commit/36b93e8fc10131c940653f238379a32b1e9b6e60))
+* **release:** add channel config and seed v1.6.0 version series ([8515aac](https://github.com/mrgoonie/winshot/commit/8515aac0a1f6fe9084be5530219f13670ed93e4a))
+* **shape:** persist border radius ([c1a4043](https://github.com/mrgoonie/winshot/commit/c1a4043ff4f725028ea4692e27190b725ef95a3e))
+* **startup:** sync registry on app start when config says enabled ([3088086](https://github.com/mrgoonie/winshot/commit/30880866efec98b87da05e21fbfb99bc1c67cf6a)), closes [#62](https://github.com/mrgoonie/winshot/issues/62)
+* **test:** make R2 credential test environment-aware ([719e5e0](https://github.com/mrgoonie/winshot/commit/719e5e04af52de114002b1f8e51229bdbbebca80))
+
+
+### Features
+
+* **app:** add fill color and corner radius controls to editor state ([df5cfe6](https://github.com/mrgoonie/winshot/commit/df5cfe60d055e738967cf39a4ed77921a79db0f7))
+* **canvas:** render fill colors and corner radius for shapes ([fa92942](https://github.com/mrgoonie/winshot/commit/fa929420c8bbb2e3ab9a3aeab12a3c5ef01916de))
+* **editor:** add screenshot border styling ([4280fe6](https://github.com/mrgoonie/winshot/commit/4280fe6661bdcce150c599afb0002977e5c2313d)), closes [#62](https://github.com/mrgoonie/winshot/issues/62)
+* force release v1.7.0-beta.1 ([bfc7d36](https://github.com/mrgoonie/winshot/commit/bfc7d36aff112974a1569518730684cb428e753c))
+* **library:** add screenshot history library with tray integration ([ed0ac37](https://github.com/mrgoonie/winshot/commit/ed0ac37d5dedaefa060c6c000ff1ed8b92c926ec)), closes [hi#quality](https://github.com/hi/issues/quality)
+* **shape:** persist rectangle corner radius setting ([787cfd4](https://github.com/mrgoonie/winshot/commit/787cfd432bb4bb3306c53682e809a4067a213fe8))
+* **tray:** show version in system tray tooltip ([434af43](https://github.com/mrgoonie/winshot/commit/434af4355f33c67ca042cd0c98cf1dedc41d333c))
+* **types:** add fill color and corner radius to annotation model ([3960593](https://github.com/mrgoonie/winshot/commit/396059311cf84eb8ed8df647b890f138562abdff))
+
 # [1.5.0-beta.3](https://github.com/mrgoonie/winshot/compare/v1.5.0-beta.2...v1.5.0-beta.3) (2026-01-25)
 
 

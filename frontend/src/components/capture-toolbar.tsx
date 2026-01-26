@@ -1,5 +1,5 @@
 import { CaptureMode } from '../types';
-import { Monitor, Scan, AppWindow, Settings, ChevronDown, FolderOpen, Clipboard } from 'lucide-react';
+import { Monitor, Scan, AppWindow, Settings, ChevronDown, FolderOpen, Clipboard, QrCode } from 'lucide-react';
 
 interface CaptureToolbarProps {
   onCapture: (mode: CaptureMode) => void;
