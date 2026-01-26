@@ -208,23 +208,38 @@ export function SettingsPanel({
   const maxPadding = Math.floor(Math.min(imageWidth, imageHeight) / 3);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || uploadedImages.length >= MAX_BACKGROUND_IMAGES) return;
+    const files = e.target.files;
+    if (!files || files.length === 0 || uploadedImages.length >= MAX_BACKGROUND_IMAGES) return;
 
-    // Reset input first for responsiveness
+    // Calculate how many images we can still add - copy files BEFORE resetting input
+    const slotsAvailable = MAX_BACKGROUND_IMAGES - uploadedImages.length;
+    const filesToProcess = Array.from(files).slice(0, slotsAvailable);
+
+    // Reset input after copying files (FileList is live reference, clears when input resets)
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
 
+    // Use allSettled for partial success - don't fail all uploads if one fails
+    const results = await Promise.allSettled(filesToProcess.map(compressImage));
+    const compressedImages = results
+      .filter((r): r is PromiseFulfilledResult<string> => r.status === 'fulfilled')
+      .map(r => r.value);
+
+    if (compressedImages.length === 0) return;
+
+    const newImages = [...uploadedImages, ...compressedImages];
+    setUploadedImages(newImages);
+
+    // Persist to backend - revert on failure
     try {
-      const dataUrl = await compressImage(file);
-      const newImages = [...uploadedImages, dataUrl];
-      setUploadedImages(newImages);
-      SaveBackgroundImages(newImages).catch(() => {});
-      onBackgroundChange(`url(${dataUrl})`);
-    } catch (error) {
-      console.error('Failed to process image:', error);
+      await SaveBackgroundImages(newImages);
+    } catch {
+      setUploadedImages(uploadedImages);
+      return;
     }
+
+    onBackgroundChange(`url(${compressedImages[0]})`);
   };
 
   const handleRemoveImage = (index: number) => {
@@ -560,6 +575,7 @@ export function SettingsPanel({
           ref={fileInputRef}
           type="file"
           accept="image/*"
+          multiple
           onChange={handleImageUpload}
           className="hidden"
         />

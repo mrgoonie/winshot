@@ -740,8 +740,16 @@ function App() {
     };
 
     // Handle tray library event (left-click on tray icon)
-    const handleTrayLibrary = () => {
-      setShowLibrary(true);
+    // Only show library if enabled in settings
+    const handleTrayLibrary = async () => {
+      try {
+        const cfg = await GetConfig();
+        if (cfg.library?.showOnTrayClick) {
+          setShowLibrary(true);
+        }
+      } catch (error) {
+        console.error('Failed to check library config:', error);
+      }
     };
 
     EventsOn('hotkey:fullscreen', handleFullscreen);

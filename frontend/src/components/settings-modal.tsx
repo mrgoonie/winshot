@@ -12,7 +12,6 @@ import {
   GetGDriveConfig,
   SaveGDriveConfig,
   SaveGDriveCredentials,
-  HasGDriveCredentials,
   GetGDriveStatus,
   StartGDriveAuth,
   DisconnectGDrive,
@@ -26,7 +25,7 @@ interface SettingsModalProps {
   onClose: () => void;
 }
 
-type SettingsTab = 'hotkeys' | 'startup' | 'quicksave' | 'export' | 'updates' | 'cloud';
+type SettingsTab = 'hotkeys' | 'startup' | 'quicksave' | 'export' | 'library' | 'updates' | 'cloud';
 
 // Local interface for easier state management
 interface LocalConfig {
@@ -50,6 +49,11 @@ interface LocalConfig {
     jpegQuality: number;
     includeBackground: boolean;
     autoCopyToClipboard: boolean;
+  };
+  library: {
+    maxImages: number;
+    displayMode: string;
+    showOnTrayClick: boolean;
   };
   update: {
     checkOnStartup: boolean;
@@ -110,6 +114,11 @@ const defaultConfig: LocalConfig = {
     jpegQuality: 95,
     includeBackground: true,
     autoCopyToClipboard: true,
+  },
+  library: {
+    maxImages: 20,
+    displayMode: 'grid',
+    showOnTrayClick: false,
   },
   update: {
     checkOnStartup: true,
@@ -186,6 +195,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           jpegQuality: cfg.export?.jpegQuality || 95,
           includeBackground: cfg.export?.includeBackground ?? true,
           autoCopyToClipboard: cfg.export?.autoCopyToClipboard ?? true,
+        },
+        library: {
+          maxImages: cfg.library?.maxImages ?? 20,
+          displayMode: cfg.library?.displayMode || 'grid',
+          showOnTrayClick: cfg.library?.showOnTrayClick ?? false,
         },
         update: {
           checkOnStartup: cfg.update?.checkOnStartup ?? true,
@@ -305,6 +319,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         startup: new config.StartupConfig(localConfig.startup),
         quickSave: new config.QuickSaveConfig(localConfig.quickSave),
         export: new config.ExportConfig(localConfig.export),
+        library: new config.LibraryConfig(localConfig.library),
         update: new config.UpdateConfig(localConfig.update),
       });
       await SaveConfig(cfg);
@@ -345,6 +360,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     { id: 'startup', label: 'Startup' },
     { id: 'quicksave', label: 'Quick Save' },
     { id: 'export', label: 'Export' },
+    { id: 'library', label: 'Library' },
     { id: 'updates', label: 'Updates' },
     { id: 'cloud', label: 'Cloud' },
   ];
@@ -629,6 +645,102 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <p className="text-xs text-slate-400 mt-0.5">Uses your default export format (PNG/JPEG)</p>
                 </div>
               </label>
+            </div>
+          )}
+
+          {activeTab === 'library' && (
+            <div className="space-y-5">
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-sm text-slate-300 font-medium">Max Images to Display</label>
+                  <span className="text-xs text-violet-400 font-semibold bg-violet-500/10 px-2 py-0.5 rounded-full">
+                    {localConfig.library.maxImages === 0 ? 'Unlimited' : localConfig.library.maxImages}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="5"
+                  value={localConfig.library.maxImages}
+                  onChange={(e) =>
+                    setLocalConfig((prev) => ({
+                      ...prev,
+                      library: { ...prev.library, maxImages: Number(e.target.value) },
+                    }))
+                  }
+                  className="w-full"
+                />
+                <p className="text-xs text-slate-500 mt-1">Set to 0 for unlimited (may impact performance)</p>
+              </div>
+
+              <div>
+                <label className="block text-sm text-slate-300 font-medium mb-3">Display Mode</label>
+                <div className="flex gap-3">
+                  <label className={`flex-1 flex items-center justify-center gap-2 cursor-pointer p-3 rounded-xl font-medium transition-all duration-200 ${
+                    localConfig.library.displayMode === 'grid'
+                      ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/30'
+                      : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/5'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="displayMode"
+                      checked={localConfig.library.displayMode === 'grid'}
+                      onChange={() =>
+                        setLocalConfig((prev) => ({
+                          ...prev,
+                          library: { ...prev.library, displayMode: 'grid' },
+                        }))
+                      }
+                      className="sr-only"
+                    />
+                    <span>Grid</span>
+                  </label>
+                  <label className={`flex-1 flex items-center justify-center gap-2 cursor-pointer p-3 rounded-xl font-medium transition-all duration-200 ${
+                    localConfig.library.displayMode === 'list'
+                      ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/30'
+                      : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/5'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="displayMode"
+                      checked={localConfig.library.displayMode === 'list'}
+                      onChange={() =>
+                        setLocalConfig((prev) => ({
+                          ...prev,
+                          library: { ...prev.library, displayMode: 'list' },
+                        }))
+                      }
+                      className="sr-only"
+                    />
+                    <span>List</span>
+                  </label>
+                </div>
+                <p className="text-xs text-slate-500 mt-2">List mode loads thumbnails on-demand to reduce memory usage</p>
+              </div>
+
+              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg bg-white/5 hover:bg-white/8 border border-white/5 transition-all duration-200">
+                <input
+                  type="checkbox"
+                  checked={localConfig.library.showOnTrayClick}
+                  onChange={(e) =>
+                    setLocalConfig((prev) => ({
+                      ...prev,
+                      library: { ...prev.library, showOnTrayClick: e.target.checked },
+                    }))
+                  }
+                />
+                <div>
+                  <span className="text-slate-200">Show library on tray icon click</span>
+                  <p className="text-xs text-slate-400 mt-0.5">Left-click on tray icon opens the library window</p>
+                </div>
+              </label>
+
+              <div className="p-3 rounded-lg bg-white/5 border border-white/5">
+                <p className="text-sm text-slate-400">
+                  These settings help optimize performance when you have many screenshots saved. Lower the max images limit if you experience slow loading times.
+                </p>
+              </div>
             </div>
           )}
 

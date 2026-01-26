@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { LibraryImage } from '../types';
-import { GetLibraryImages, DeleteScreenshot } from '../../wailsjs/go/main/App';
-import { X, Camera, Edit, Trash2, RefreshCw, Image, Calendar } from 'lucide-react';
+import { GetLibraryImages, DeleteScreenshot, GetConfig } from '../../wailsjs/go/main/App';
+import { X, Camera, Edit, Trash2, RefreshCw, Image, Calendar, Grid, List } from 'lucide-react';
 
 interface LibraryWindowProps {
   isOpen: boolean;
@@ -15,6 +15,7 @@ export function LibraryWindow({ isOpen, onClose, onCapture, onEdit }: LibraryWin
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [displayMode, setDisplayMode] = useState<'grid' | 'list'>('grid');
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Derived state for selected image
@@ -22,14 +23,26 @@ export function LibraryWindow({ isOpen, onClose, onCapture, onEdit }: LibraryWin
     ? images[selectedIndex]
     : null;
 
-  // Load images when modal opens
+  // Load config and images when modal opens
   useEffect(() => {
     if (isOpen) {
-      loadImages();
+      loadConfigAndImages();
       // Focus container for keyboard events
       setTimeout(() => containerRef.current?.focus(), 100);
     }
   }, [isOpen]);
+
+  const loadConfigAndImages = async () => {
+    try {
+      const cfg = await GetConfig();
+      if (cfg.library?.displayMode) {
+        setDisplayMode(cfg.library.displayMode as 'grid' | 'list');
+      }
+    } catch (error) {
+      console.error('Failed to load config:', error);
+    }
+    await loadImages();
+  };
 
   // Reset selection when images change
   useEffect(() => {
@@ -45,7 +58,8 @@ export function LibraryWindow({ isOpen, onClose, onCapture, onEdit }: LibraryWin
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      const cols = 4; // Grid columns
+      // List mode: 1 column, Grid mode: 4 columns
+      const cols = displayMode === 'list' ? 1 : 4;
 
       switch (e.key) {
         case 'ArrowRight':
@@ -102,7 +116,7 @@ export function LibraryWindow({ isOpen, onClose, onCapture, onEdit }: LibraryWin
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, images, selectedImage, onEdit, onClose]);
+  }, [isOpen, images, selectedImage, onEdit, onClose, displayMode]);
 
   // Scroll selected item into view
   useEffect(() => {
@@ -224,7 +238,49 @@ export function LibraryWindow({ isOpen, onClose, onCapture, onEdit }: LibraryWin
                 Capture Screenshot
               </button>
             </div>
+          ) : displayMode === 'list' ? (
+            // List View - memory efficient, no thumbnails displayed
+            <div className="flex flex-col gap-1">
+              {images.map((image, index) => (
+                <button
+                  key={image.filepath}
+                  data-index={index}
+                  onClick={() => handleSelect(index)}
+                  onDoubleClick={() => handleDoubleClick(image)}
+                  className={`group flex items-center gap-3 p-3 rounded-lg transition-all duration-200
+                              border ${selectedIndex === index
+                                ? 'border-violet-500 bg-violet-500/10'
+                                : 'border-transparent hover:bg-white/5'
+                              }`}
+                >
+                  {/* File icon */}
+                  <div className="w-10 h-10 bg-slate-800 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Image className="w-5 h-5 text-violet-400" />
+                  </div>
+
+                  {/* File info */}
+                  <div className="flex-1 min-w-0 text-left">
+                    <div className="text-white text-sm truncate font-medium">{image.filename}</div>
+                    <div className="flex items-center gap-3 text-xs text-slate-400 mt-0.5">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {formatDate(image.modifiedDate)}
+                      </span>
+                      <span>{image.width}x{image.height}</span>
+                    </div>
+                  </div>
+
+                  {/* Selection indicator */}
+                  {selectedIndex === index && (
+                    <div className="bg-violet-500 text-white text-xs px-2 py-1 rounded font-medium flex-shrink-0">
+                      {index + 1}/{images.length}
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
           ) : (
+            // Grid View - original thumbnail display
             <div className="grid grid-cols-4 gap-4">
               {images.map((image, index) => (
                 <button
@@ -288,6 +344,32 @@ export function LibraryWindow({ isOpen, onClose, onCapture, onEdit }: LibraryWin
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               Refresh
             </button>
+
+            {/* View Toggle */}
+            <div className="flex items-center bg-white/5 rounded-lg p-1">
+              <button
+                onClick={() => setDisplayMode('grid')}
+                className={`p-1.5 rounded transition-all duration-200 ${
+                  displayMode === 'grid'
+                    ? 'bg-violet-500 text-white'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+                title="Grid view"
+              >
+                <Grid className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setDisplayMode('list')}
+                className={`p-1.5 rounded transition-all duration-200 ${
+                  displayMode === 'list'
+                    ? 'bg-violet-500 text-white'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+                title="List view (less memory)"
+              >
+                <List className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">

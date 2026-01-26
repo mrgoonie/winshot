@@ -85,6 +85,13 @@ type CloudConfig struct {
 	GDrive GDriveConfig `json:"gdrive,omitempty"`
 }
 
+// LibraryConfig holds screenshot library display settings
+type LibraryConfig struct {
+	MaxImages       int    `json:"maxImages"`       // Max images to display (default: 20, 0 = unlimited)
+	DisplayMode     string `json:"displayMode"`     // "grid" or "list" (default: grid)
+	ShowOnTrayClick bool   `json:"showOnTrayClick"` // Show library on tray left-click (default: false)
+}
+
 // Config holds all application settings
 type Config struct {
 	Hotkeys          HotkeyConfig    `json:"hotkeys"`
@@ -95,6 +102,7 @@ type Config struct {
 	Editor           EditorConfig    `json:"editor"`
 	Update           UpdateConfig    `json:"update"`
 	Cloud            CloudConfig     `json:"cloud,omitempty"`
+	Library          LibraryConfig   `json:"library"`
 	BackgroundImages []string        `json:"backgroundImages,omitempty"`
 }
 
@@ -152,6 +160,11 @@ func Default() *Config {
 		Cloud: CloudConfig{
 			R2:     R2Config{},
 			GDrive: GDriveConfig{},
+		},
+		Library: LibraryConfig{
+			MaxImages:       20,
+			DisplayMode:     "grid",
+			ShowOnTrayClick: false,
 		},
 	}
 }

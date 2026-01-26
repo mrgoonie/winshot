@@ -946,7 +946,7 @@ func (a *App) ClearGDriveCredentials() error {
 
 // ==================== Screenshot Library ====================
 
-// GetLibraryImages returns all screenshots from QuickSave folder
+// GetLibraryImages returns screenshots from QuickSave folder with configured limits
 func (a *App) GetLibraryImages() ([]library.LibraryImage, error) {
 	folder := a.config.QuickSave.Folder
 	if folder == "" {
@@ -959,6 +959,10 @@ func (a *App) GetLibraryImages() ([]library.LibraryImage, error) {
 	}
 
 	opts := library.DefaultScanOptions()
+	// Apply configured max images limit (0 = use default 500)
+	if a.config.Library.MaxImages > 0 {
+		opts.MaxFiles = a.config.Library.MaxImages
+	}
 	return library.ScanFolder(folder, opts)
 }
 
